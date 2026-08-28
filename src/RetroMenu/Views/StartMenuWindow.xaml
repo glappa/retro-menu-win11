@@ -86,6 +86,12 @@
             </Button>
         </DataTemplate>
 
+        <!-- group caption in the search results -->
+        <DataTemplate x:Key="SearchHeaderTemplate">
+            <TextBlock Text="{Binding Name}" FontWeight="Bold" Margin="5,7,0,3"
+                       Foreground="{DynamicResource RightPaneForeground}" />
+        </DataTemplate>
+
         <DataTemplate x:Key="RightSeparatorTemplate">
             <Rectangle Height="1.5" Margin="0,3,0,3"
                        Fill="{DynamicResource RightSeparatorBrush}" />
@@ -94,6 +100,11 @@
         <views:StartItemTemplateSelector x:Key="PlaceSelector"
                                          ItemTemplate="{StaticResource PlaceTemplate}"
                                          SeparatorTemplate="{StaticResource RightSeparatorTemplate}" />
+
+        <views:StartItemTemplateSelector x:Key="ResultSelector"
+                                         ItemTemplate="{StaticResource LeftItemTemplate}"
+                                         SeparatorTemplate="{StaticResource RightSeparatorTemplate}"
+                                         HeaderTemplate="{StaticResource SearchHeaderTemplate}" />
     </Window.Resources>
 
     <!-- the margin leaves room for the drop shadow on the right -->
@@ -161,6 +172,26 @@
                                 Background="{DynamicResource LeftPaneBackground}"
                                 TextElement.Foreground="{DynamicResource LeftPaneForeground}">
                             <DockPanel x:Name="LeftColumnHost" LastChildFill="True">
+                                <StackPanel x:Name="SearchHost" DockPanel.Dock="Bottom"
+                                            Margin="0,0,0,5" Visibility="Collapsed">
+                                    <Border Background="{DynamicResource SearchBoxBackground}"
+                                            BorderBrush="{DynamicResource SearchBoxBorder}"
+                                            BorderThickness="1" Padding="3,2">
+                                        <Grid>
+                                            <TextBox x:Name="SearchBox" BorderThickness="0"
+                                                     Background="Transparent" Padding="0"
+                                                     Foreground="{DynamicResource SearchBoxForeground}"
+                                                     TextChanged="OnSearchTextChanged"
+                                                     KeyDown="OnSearchKeyDown" />
+                                            <TextBlock x:Name="SearchHint" IsHitTestVisible="False"
+                                                       Margin="2,0,0,0"
+                                                       Foreground="{DynamicResource SearchHintForeground}" />
+                                        </Grid>
+                                    </Border>
+                                    <CheckBox x:Name="FilesToggle" Margin="1,4,0,0"
+                                              Style="{StaticResource RetroCheckBox}"
+                                              Click="OnSearchFilesToggled" />
+                                </StackPanel>
                                 <StackPanel DockPanel.Dock="Bottom">
                                     <Rectangle Height="1.5" Margin="0,3,0,3"
                                                Fill="{DynamicResource LeftSeparatorBrush}" />
@@ -182,22 +213,6 @@
                                     </Button>
                                 </StackPanel>
 
-                                <Border x:Name="SearchHost" DockPanel.Dock="Bottom"
-                                        Margin="0,2,0,4" Visibility="Collapsed"
-                                        Background="{DynamicResource SearchBoxBackground}"
-                                        BorderBrush="{DynamicResource SearchBoxBorder}"
-                                        BorderThickness="1" Padding="3,2">
-                                    <Grid>
-                                        <TextBox x:Name="SearchBox" BorderThickness="0"
-                                                 Background="Transparent" Padding="0"
-                                                 Foreground="{DynamicResource SearchBoxForeground}"
-                                                 TextChanged="OnSearchTextChanged"
-                                                 KeyDown="OnSearchKeyDown" />
-                                        <TextBlock x:Name="SearchHint" IsHitTestVisible="False"
-                                                   Margin="2,0,0,0"
-                                                   Foreground="{DynamicResource SearchHintForeground}" />
-                                    </Grid>
-                                </Border>
 
                                 <Grid>
                                     <ScrollViewer x:Name="NormalScroll"
@@ -221,7 +236,10 @@
                                         <StackPanel Button.Click="OnItemClick"
                                                     MouseRightButtonUp="OnItemRightClick">
                                             <ItemsControl x:Name="SearchResults"
-                                                          ItemTemplate="{StaticResource LeftItemTemplate}" />
+                                                          ItemTemplateSelector="{StaticResource ResultSelector}" />
+                                            <TextBlock x:Name="SearchNote" Margin="6,4,4,0"
+                                                       Visibility="Collapsed" Opacity="0.6"
+                                                       TextWrapping="Wrap" />
                                             <TextBlock x:Name="NoResults" Margin="6,6,0,0"
                                                        Visibility="Collapsed" Opacity="0.7" />
                                         </StackPanel>

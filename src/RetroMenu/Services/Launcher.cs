@@ -12,6 +12,9 @@ namespace RetroMenu.Services
     {
         public const string Separator = "separator";
 
+        /// <summary>Marks a group caption in the search results.</summary>
+        public const string GroupHeader = "header";
+
         // The shell still exposes "Search" and "Run..." as namespace items, which is
         // where their icons come from.
         private const string SearchShellItem = "shell:::{2559a1f0-21d7-11d4-bdaf-00c04f60b9f0}";
@@ -224,6 +227,8 @@ namespace RetroMenu.Services
         /// </summary>
         public static List<StartItem> BuildDefaultAppSlots()
         {
+            if (Demo.IsActive) return Demo.DefaultAppSlots();
+
             var slots = new List<StartItem>();
 
             var browser = DefaultApps.Browser();

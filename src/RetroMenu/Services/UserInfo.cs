@@ -17,6 +17,8 @@ namespace RetroMenu.Services
 
         public static string DisplayName()
         {
+            if (Demo.IsActive) return Demo.UserName;
+
             string configured = AppSettings.Instance.UserName;
             if (!string.IsNullOrWhiteSpace(configured)) return configured;
 
@@ -35,8 +37,10 @@ namespace RetroMenu.Services
             return Environment.UserName;
         }
 
-        public static BitmapImage Picture()
+        public static System.Windows.Media.Imaging.BitmapSource Picture()
         {
+            if (Demo.IsActive) return Demo.UserPicture();
+
             foreach (var candidate in Candidates())
             {
                 try

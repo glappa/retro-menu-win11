@@ -32,8 +32,10 @@ namespace RetroMenu.Services
         public string Language { get; set; } = "auto";     // auto | de | en
         public string WinKeyMode { get; set; } = "Neutralize"; // Neutralize | Swallow | Off
         public int FrequentCount { get; set; } = 6;
-        /// <summary>Windows XP had no search box; off keeps the menu authentic.</summary>
-        public bool ShowSearchBox { get; set; } = false;
+        public bool ShowSearchBox { get; set; } = true;
+
+        /// <summary>Search files through the Windows index as well as programs.</summary>
+        public bool SearchFiles { get; set; } = false;
 
         /// <summary>
         /// The XP menu is 384 device pixels wide. On a big modern screen that can

@@ -15,6 +15,12 @@ namespace RetroMenu
         public static App Me => (App)Current;
 
         public ProgramCatalog Catalog { get; } = new ProgramCatalog();
+
+        /// <summary>Every program on the machine, for the search box.</summary>
+        public ProgramIndex Programs { get; } = new ProgramIndex();
+
+        /// <summary>Windows settings pages, also for the search box.</summary>
+        public SettingsIndex Settings { get; } = new SettingsIndex();
         public RetroBarBridge RetroBar { get; private set; }
 
         private Mutex _singleInstance;
@@ -23,6 +29,7 @@ namespace RetroMenu
         private TrayIconService _tray;
         private FileSystemWatcher[] _programWatchers = Array.Empty<FileSystemWatcher>();
         private DispatcherTimer _rescanDebounce;
+        private EventWaitHandle _quitSignal;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -40,6 +47,24 @@ namespace RetroMenu
                 return;
             }
 
+            // --quit asks a running instance to close properly. Killing the process
+            // instead leaves its notification icon behind as a dead square until the
+            // taskbar next rebuilds its tray.
+            if (e.Args.Any(a => string.Equals(a, "--quit", StringComparison.OrdinalIgnoreCase)))
+            {
+                try
+                {
+                    if (EventWaitHandle.TryOpenExisting(QuitSignalName, out var running))
+                    {
+                        running.Set();
+                        running.Dispose();
+                    }
+                }
+                catch { }
+                Shutdown();
+                return;
+            }
+
             _singleInstance = new Mutex(true, "RetroMenuWin11.SingleInstance", out bool created);
             if (!created)
             {
@@ -47,12 +72,22 @@ namespace RetroMenu
                 return;
             }
 
+            ListenForQuitSignal();
+
+            // Last chance to take the notification icon down with us.
+            AppDomain.CurrentDomain.ProcessExit += (_, __) => _tray?.Dispose();
+            SessionEnding += (_, __) => _tray?.Dispose();
+
             DispatcherUnhandledException += (_, args) =>
             {
                 MessageBox.Show(args.Exception.ToString(), "Retro Menu",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 args.Handled = true;
             };
+
+            // --demo replaces the user and their programs with placeholders, so the
+            // screenshots in the README give nothing away.
+            Demo.IsActive = e.Args.Any(a => string.Equals(a, "--demo", StringComparison.OrdinalIgnoreCase));
 
             AppSettings.Load();
 
@@ -69,7 +104,12 @@ namespace RetroMenu
             _tray = new TrayIconService();
             _tray.OpenRequested += () => ToggleMenu(true);
             _tray.SettingsRequested += ShowSettings;
-            _tray.RefreshRequested += () => Catalog.RefreshAsync();
+            _tray.RefreshRequested += () =>
+            {
+                Catalog.RefreshAsync();
+                Programs.RefreshAsync();
+                Settings.RefreshAsync();
+            };
             _tray.ExitRequested += Quit;
             _tray.Show();
 
@@ -87,12 +127,39 @@ namespace RetroMenu
 
             Catalog.Refreshed += OnCatalogRefreshed;
             Catalog.RefreshAsync();
+
+            // The machine wide scan is slower and only feeds the search box, so it
+            // follows behind the Start Menu catalogue.
+            Programs.RefreshAsync();
+            Settings.RefreshAsync();
             WatchProgramFolders();
 
             if (e.Args.Any(a => string.Equals(a, "--show", StringComparison.OrdinalIgnoreCase)))
             {
                 Dispatcher.BeginInvoke(new Action(() => ToggleMenu(true)), DispatcherPriority.ApplicationIdle);
             }
+        }
+
+        private const string QuitSignalName = @"Local\RetroMenuWin11.Quit";
+
+        /// <summary>Waits in the background for another instance started with --quit.</summary>
+        private void ListenForQuitSignal()
+        {
+            try
+            {
+                _quitSignal = new EventWaitHandle(false, EventResetMode.AutoReset, QuitSignalName);
+                var waiter = new Thread(() =>
+                {
+                    _quitSignal.WaitOne();
+                    Dispatcher.BeginInvoke(new Action(Quit));
+                })
+                {
+                    IsBackground = true,
+                    Name = "RetroMenu quit signal"
+                };
+                waiter.Start();
+            }
+            catch { /* without the signal --quit simply does nothing */ }
         }
 
         private static void DumpShellMenu(string path)
@@ -233,6 +300,7 @@ namespace RetroMenu
         {
             _hook?.Dispose();
             _tray?.Dispose();
+            _quitSignal?.Dispose();
             RetroBar?.Dispose();
             foreach (var watcher in _programWatchers) watcher.Dispose();
             Shutdown();

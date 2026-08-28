@@ -96,6 +96,40 @@
         </Setter>
     </Style>
 
+    <!-- A tick box in the plain, square style of the era. -->
+    <Style x:Key="RetroCheckBox" TargetType="CheckBox">
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border x:Name="Box" Width="12" Height="12" Margin="0,0,5,0"
+                                VerticalAlignment="Center"
+                                Background="{DynamicResource SearchBoxBackground}"
+                                BorderBrush="{DynamicResource SearchBoxBorder}"
+                                BorderThickness="1">
+                            <Path x:Name="Tick" Visibility="Collapsed"
+                                  Margin="1.5" Stretch="Uniform"
+                                  Data="M 0,3.4 L 2.9,6.3 L 8,0.7"
+                                  Stroke="{DynamicResource LeftPaneForeground}"
+                                  StrokeThickness="1.7" />
+                        </Border>
+                        <ContentPresenter VerticalAlignment="Center" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Tick" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Box" Property="BorderBrush"
+                                    Value="{DynamicResource ItemHighlightBackground}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ============ cascading All Programs menu ============ -->
 
     <ControlTemplate x:Key="RetroSubmenuItem" TargetType="MenuItem">

@@ -29,6 +29,15 @@ namespace RetroMenu.Services
 
         public void Refresh()
         {
+            if (Demo.IsActive)
+            {
+                Root = Demo.Tree();
+                Flat = new List<StartItem>();
+                Flatten(Root, Flat);
+                Refreshed?.Invoke();
+                return;
+            }
+
             var root = new StartItem { Name = "", Kind = StartItemKind.Folder };
 
             foreach (var dir in StartMenuRoots())
@@ -220,7 +229,7 @@ namespace RetroMenu.Services
             query = query.Trim();
 
             return Flat
-                .Select(item => new { item, rank = Rank(item.Name, query) })
+                .Select(item => new { item, rank = SearchRank.Of(item.Name, query) })
                 .Where(x => x.rank > 0)
                 .OrderByDescending(x => x.rank)
                 .ThenBy(x => x.item.Name, StringComparer.CurrentCultureIgnoreCase)
@@ -229,17 +238,5 @@ namespace RetroMenu.Services
                 .ToList();
         }
 
-        private static int Rank(string name, string query)
-        {
-            if (string.IsNullOrEmpty(name)) return 0;
-            if (name.Equals(query, StringComparison.CurrentCultureIgnoreCase)) return 4;
-            if (name.StartsWith(query, StringComparison.CurrentCultureIgnoreCase)) return 3;
-
-            // Word start, e.g. "stu" finds "Android Studio".
-            foreach (var word in name.Split(' ', '-', '_', '.'))
-                if (word.StartsWith(query, StringComparison.CurrentCultureIgnoreCase)) return 2;
-
-            return name.IndexOf(query, StringComparison.CurrentCultureIgnoreCase) >= 0 ? 1 : 0;
-        }
     }
 }

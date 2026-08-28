@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -26,7 +27,11 @@ namespace RetroMenu.Views
         private Button _hoverAnchor;
 
         private readonly DispatcherTimer _allProgramsTimer;
+        private readonly DispatcherTimer _fileSearchTimer;
         private ShellContextMenu _shellMenu;
+        private int _searchToken;
+        private List<StartItem> _programHits = new List<StartItem>();
+        private List<StartItem> _settingHits = new List<StartItem>();
 
         public StartMenuWindow()
         {
@@ -45,6 +50,10 @@ namespace RetroMenu.Views
                 _allProgramsTimer.Stop();
                 if (!_popupOpen && AllProgramsButton.IsMouseOver) OpenAllPrograms();
             };
+
+            // Programs appear as you type; the file index is asked once typing pauses.
+            _fileSearchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(350) };
+            _fileSearchTimer.Tick += (_, __) => { _fileSearchTimer.Stop(); SearchFiles(); };
         }
 
         public bool IsOpen => IsVisible;
@@ -125,6 +134,21 @@ namespace RetroMenu.Views
         {
             // A cascading submenu takes the focus for a moment; that must not close us.
             if (_popupOpen) return;
+
+            // Nor may the gap between one flyout closing and the next one opening:
+            // right-clicking a second entry dismisses the first menu, and the focus
+            // passes through nobody on the way. As long as the pointer is still on
+            // the menu the user is plainly not finished with it.
+            if (IsMouseOver)
+            {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (IsVisible && IsMouseOver && !IsActive && !_popupOpen)
+                        NativeMethods.ForceForeground(_handle);
+                }), DispatcherPriority.Input);
+                return;
+            }
+
             HideMenu();
         }
 
@@ -367,6 +391,8 @@ namespace RetroMenu.Views
 
             SearchHost.Visibility = AppSettings.Instance.ShowSearchBox
                 ? Visibility.Visible : Visibility.Collapsed;
+            FilesToggle.Content = Lang.T("SearchFiles");
+            FilesToggle.IsChecked = AppSettings.Instance.SearchFiles;
 
             ApplyFontSmoothing();
             BuildLeftColumn();
@@ -382,6 +408,16 @@ namespace RetroMenu.Views
 
         private void BuildLeftColumn()
         {
+            if (Demo.IsActive)
+            {
+                var demoTop = Launcher.BuildDefaultAppSlots();
+                demoTop.AddRange(Demo.Pinned());
+                TopItems.ItemsSource = demoTop;
+                FrequentItems.ItemsSource = Demo.Frequent();
+                TopSeparator.Visibility = Visibility.Visible;
+                return;
+            }
+
             var settings = AppSettings.Instance;
             SeedPinsOnce();
 
@@ -787,10 +823,34 @@ namespace RetroMenu.Views
 
         // ---------------------------------------------------------------- search
 
-        private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
+        private void OnSearchFilesToggled(object sender, RoutedEventArgs e)
+        {
+            AppSettings.Instance.SearchFiles = FilesToggle.IsChecked == true;
+            AppSettings.Instance.Save();
+            RunSearch();
+        }
+
+        private void OnSearchTextChanged(object sender, TextChangedEventArgs e) => RunSearch();
+
+        private static StartItem Header(string key) => new StartItem
+        {
+            Name = Lang.T(key),
+            Kind = StartItemKind.Command,
+            Command = Launcher.GroupHeader
+        };
+
+        /// <summary>
+        /// Programs, then Windows settings, then optionally files — grouped under
+        /// captions with the likeliest hit on top, the way the Windows 11 search
+        /// presents them.
+        /// </summary>
+        private void RunSearch()
         {
             string query = SearchBox.Text;
             SearchHint.Visibility = string.IsNullOrEmpty(query) ? Visibility.Visible : Visibility.Collapsed;
+
+            _fileSearchTimer.Stop();
+            _searchToken++;
 
             if (string.IsNullOrWhiteSpace(query))
             {
@@ -798,10 +858,104 @@ namespace RetroMenu.Views
                 return;
             }
 
-            var hits = App.Me.Catalog.Search(query, 40);
-            SearchResults.ItemsSource = hits;
-            NoResults.Visibility = hits.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            // Start Menu entries first, then anything else installed on the machine
+            // that carries a name we have not already shown.
+            var programs = App.Me.Catalog.Search(query, 20);
+            var seen = new HashSet<string>(programs.Select(p => p.Name), StringComparer.CurrentCultureIgnoreCase);
+
+            foreach (var extra in App.Me.Programs.Search(query, 30))
+            {
+                if (programs.Count >= 20) break;
+                if (seen.Add(extra.Name)) programs.Add(extra);
+            }
+
+            _programHits = programs;
+            _settingHits = App.Me.Settings.Search(query, 10)
+                .Where(entry => seen.Add(entry.Name))
+                .ToList();
+
+            Compose(null);
             ShowSearchResults(true);
+
+            if (FilesToggle.IsChecked == true)
+            {
+                SearchNote.Text = Lang.T("Searching");
+                SearchNote.Visibility = Visibility.Visible;
+                _fileSearchTimer.Start();
+            }
+        }
+
+        private void Compose(List<StartItem> files)
+        {
+            var list = new List<StartItem>();
+            var settings = _settingHits;
+
+            if (_programHits.Count > 0)
+            {
+                list.Add(Header("BestMatch"));
+                list.Add(_programHits[0]);
+
+                if (_programHits.Count > 1)
+                {
+                    list.Add(Header("AppsGroup"));
+                    list.AddRange(_programHits.Skip(1).Take(12));
+                }
+            }
+            else if (settings.Count > 0)
+            {
+                list.Add(Header("BestMatch"));
+                list.Add(settings[0]);
+                settings = settings.Skip(1).ToList();
+            }
+
+            if (settings.Count > 0)
+            {
+                list.Add(Header("SettingsGroup"));
+                list.AddRange(settings.Take(6));
+            }
+
+            if (files != null && files.Count > 0)
+            {
+                list.Add(Header("FilesGroup"));
+                list.AddRange(files.Take(15));
+            }
+
+            SearchResults.ItemsSource = list;
+            NoResults.Visibility = list.Count == 0 && SearchNote.Visibility != Visibility.Visible
+                ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        /// <summary>Asks the Windows index, then folds the answer in if it is still wanted.</summary>
+        private void SearchFiles()
+        {
+            string query = SearchBox.Text;
+            if (string.IsNullOrWhiteSpace(query)) return;
+
+            int token = _searchToken;
+
+            Task.Run(() => FileSearch.Query(query, 25)).ContinueWith(task =>
+            {
+                var files = task.Status == TaskStatus.RanToCompletion
+                    ? task.Result
+                    : new List<StartItem>();
+
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (token != _searchToken) return;
+
+                    if (FileSearch.IsAvailable)
+                    {
+                        SearchNote.Visibility = Visibility.Collapsed;
+                    }
+                    else
+                    {
+                        SearchNote.Text = Lang.T("NoIndex");
+                        SearchNote.Visibility = Visibility.Visible;
+                    }
+
+                    Compose(files);
+                }));
+            });
         }
 
         private void ShowSearchResults(bool show)
@@ -810,8 +964,11 @@ namespace RetroMenu.Views
             NormalScroll.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
             if (show) return;
 
+            _programHits = new List<StartItem>();
+            _settingHits = new List<StartItem>();
             SearchResults.ItemsSource = null;
             NoResults.Visibility = Visibility.Collapsed;
+            SearchNote.Visibility = Visibility.Collapsed;
             SearchHint.Visibility = string.IsNullOrEmpty(SearchBox.Text)
                 ? Visibility.Visible : Visibility.Collapsed;
         }
@@ -820,7 +977,8 @@ namespace RetroMenu.Views
         {
             if (e.Key == Key.Enter)
             {
-                var first = (SearchResults.ItemsSource as IEnumerable<StartItem>)?.FirstOrDefault();
+                var first = (SearchResults.ItemsSource as IEnumerable<StartItem>)
+                    ?.FirstOrDefault(item => item.Command != Launcher.GroupHeader);
                 if (first != null)
                 {
                     HideMenu();
