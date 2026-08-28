@@ -7,8 +7,6 @@ RetroBar ersetzt die Taskleiste, lässt aber das moderne Windows-11-Startmenü s
 Genau diese Lücke schließt dieses Projekt: Die Windows-Taste (und der Start-Knopf von
 RetroBar) öffnen ab jetzt ein klassisches zweispaltiges Menü statt der Kacheloberfläche.
 
-![Das Menü](docs/screenshot.png)
-
 ## Was drin ist
 
 * **Nachgemessenes XP-Layout** statt Nachempfinden: 384 Pixel breit, zwei Spalten zu
@@ -45,8 +43,6 @@ RetroBar) öffnen ab jetzt ein klassisches zweispaltiges Menü statt der Kachelo
 * **Themes**, die zu RetroBar passen – und auf Wunsch automatisch dessen Design
   übernehmen.
 * **Ein Startknopf, zwei Wege**: Windows-Taste oder der Start-Knopf von RetroBar.
-
-![Alle Programme](docs/all-programs.png)
 
 ## Installation
 
