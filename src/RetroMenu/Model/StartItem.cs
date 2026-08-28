@@ -50,6 +50,12 @@ namespace RetroMenu.Model
         public bool Bold { get; set; }
 
         /// <summary>
+        /// Installed since the last time the menu looked. XP highlighted such entries
+        /// in All Programs until they had been opened once.
+        /// </summary>
+        public bool IsNew { get; set; }
+
+        /// <summary>
         /// A shell folder to fill a cascading submenu from, e.g. the Recent
         /// Documents folder behind "My Recent Documents".
         /// </summary>

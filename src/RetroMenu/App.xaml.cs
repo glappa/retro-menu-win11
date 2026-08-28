@@ -28,6 +28,18 @@ namespace RetroMenu
         {
             base.OnStartup(e);
 
+            // Debug aid: --dumpmenu <file> writes the shell context menu it reads for
+            // that file to the log and exits. Runs before the single instance guard so
+            // it works while the menu is already running.
+            int dumpAt = Array.FindIndex(e.Args, a =>
+                string.Equals(a, "--dumpmenu", StringComparison.OrdinalIgnoreCase));
+            if (dumpAt >= 0 && dumpAt + 1 < e.Args.Length)
+            {
+                DumpShellMenu(e.Args[dumpAt + 1]);
+                Shutdown();
+                return;
+            }
+
             _singleInstance = new Mutex(true, "RetroMenuWin11.SingleInstance", out bool created);
             if (!created)
             {
@@ -81,6 +93,26 @@ namespace RetroMenu
             {
                 Dispatcher.BeginInvoke(new Action(() => ToggleMenu(true)), DispatcherPriority.ApplicationIdle);
             }
+        }
+
+        private static void DumpShellMenu(string path)
+        {
+            using var menu = new ShellContextMenu();
+            bool ok = menu.Open(path, IntPtr.Zero, false);
+            Log.Write($"dumpmenu {path}: opened={ok} entries={menu.Entries.Count}");
+
+            void Print(System.Collections.Generic.List<ShellMenuEntry> entries, string indent)
+            {
+                foreach (var entry in entries)
+                {
+                    Log.Write(indent + (entry.IsSeparator
+                        ? "---"
+                        : $"[{entry.Id}] {entry.Text}{(entry.IsEnabled ? "" : " (disabled)")}"));
+                    if (entry.HasChildren) Print(entry.Children, indent + "    ");
+                }
+            }
+
+            Print(menu.Entries, "  ");
         }
 
         public static string ActiveThemeName()

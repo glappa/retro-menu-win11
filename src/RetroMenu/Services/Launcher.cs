@@ -114,6 +114,10 @@ namespace RetroMenu.Services
                 case "help":
                     Shell("https://support.microsoft.com/windows", null);
                     break;
+                case "useraccounts":
+                    // Clicking the picture in XP's header opened User Accounts.
+                    Process.Start(Silent("control.exe", "/name Microsoft.UserAccounts"));
+                    break;
                 case "lock":
                     NativeMethods.LockWorkStation();
                     break;

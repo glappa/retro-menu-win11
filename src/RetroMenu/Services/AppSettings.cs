@@ -46,6 +46,9 @@ namespace RetroMenu.Services
         /// </summary>
         public bool KeepTaskbarVisible { get; set; } = true;
 
+        /// <summary>Play the system "Menu popup" sound, as XP did.</summary>
+        public bool PlaySounds { get; set; } = true;
+
         public bool ShowRunAsAdmin { get; set; } = true;
         public bool ShowStoreApps { get; set; } = true;
         public string UserName { get; set; } = "";
@@ -55,6 +58,9 @@ namespace RetroMenu.Services
 
         public List<string> Pinned { get; set; } = new List<string>();
         public Dictionary<string, int> LaunchCounts { get; set; } = new Dictionary<string, int>();
+
+        /// <summary>Everything the catalogue has seen, so new arrivals can be marked.</summary>
+        public List<string> KnownPrograms { get; set; } = new List<string>();
 
         [JsonIgnore]
         public bool AutoStart
@@ -93,6 +99,7 @@ namespace RetroMenu.Services
                     {
                         loaded.Pinned ??= new List<string>();
                         loaded.LaunchCounts ??= new Dictionary<string, int>();
+                        loaded.KnownPrograms ??= new List<string>();
                         Instance = loaded;
                     }
                 }
@@ -134,6 +141,9 @@ namespace RetroMenu.Services
         public void RegisterLaunch(string id)
         {
             if (string.IsNullOrEmpty(id)) return;
+
+            // Installers, uninstallers and help files never belonged in XP's list.
+            if (!MfuFilter.ShouldRemember(id)) return;
             LaunchCounts.TryGetValue(id, out int count);
             LaunchCounts[id] = count + 1;
 

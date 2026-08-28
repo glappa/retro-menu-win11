@@ -108,6 +108,8 @@
     <SolidColorBrush x:Key="CascadeForeground" Color="#FF000000" />
     <SolidColorBrush x:Key="CascadeHighlight" Color="#FF708153" />
     <SolidColorBrush x:Key="CascadeHighlightForeground" Color="#FFFFFFFF" />
+    <!-- background behind a program installed since the menu last looked -->
+    <SolidColorBrush x:Key="NewItemHighlight" Color="#FFDDE9C6" />
     <SolidColorBrush x:Key="CascadeSeparator" Color="#FFACA899" />
 
     <SolidColorBrush x:Key="SearchBoxBackground" Color="#FFFFFFFF" />

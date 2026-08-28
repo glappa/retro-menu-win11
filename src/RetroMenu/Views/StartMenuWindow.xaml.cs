@@ -25,6 +25,9 @@ namespace RetroMenu.Views
         private StartItem _hoverItem;
         private Button _hoverAnchor;
 
+        private readonly DispatcherTimer _allProgramsTimer;
+        private ShellContextMenu _shellMenu;
+
         public StartMenuWindow()
         {
             InitializeComponent();
@@ -34,6 +37,14 @@ namespace RetroMenu.Views
             // XP opened the "My Recent Documents" and "Connect To" flyouts on hover.
             _hoverTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(320) };
             _hoverTimer.Tick += (_, __) => { _hoverTimer.Stop(); OpenPlaceSubmenu(); };
+
+            // XP also opened All Programs by resting on it, not only by clicking.
+            _allProgramsTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+            _allProgramsTimer.Tick += (_, __) =>
+            {
+                _allProgramsTimer.Stop();
+                if (!_popupOpen && AllProgramsButton.IsMouseOver) OpenAllPrograms();
+            };
         }
 
         public bool IsOpen => IsVisible;
@@ -66,6 +77,7 @@ namespace RetroMenu.Views
             if (_handle == IntPtr.Zero) EnsureHandle();
             NativeMethods.ForceForeground(_handle);
             AnnounceToTaskbar();
+            Sounds.MenuPopup();
 
             if (SearchHost.Visibility == Visibility.Visible)
             {
@@ -80,6 +92,7 @@ namespace RetroMenu.Views
             if (!IsVisible) return;
             _popupOpen = false;
             _hoverTimer.Stop();
+            _allProgramsTimer.Stop();
             _hoverItem = null;
             SearchBox.Clear();
             ShowSearchResults(false);
@@ -117,16 +130,147 @@ namespace RetroMenu.Views
 
         private void OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key != Key.Escape) return;
-
-            if (!string.IsNullOrEmpty(SearchBox.Text))
+            if (e.Key == Key.Escape)
             {
-                SearchBox.Clear();
+                if (!string.IsNullOrEmpty(SearchBox.Text))
+                {
+                    SearchBox.Clear();
+                    e.Handled = true;
+                    return;
+                }
+                HideMenu();
                 e.Handled = true;
                 return;
             }
+
+            if (_popupOpen) return;
+
+            switch (e.Key)
+            {
+                case Key.Down:
+                    e.Handled = Step(+1);
+                    return;
+                case Key.Up:
+                    e.Handled = Step(-1);
+                    return;
+                case Key.Left:
+                    e.Handled = SwitchColumn(toLeft: true);
+                    return;
+                case Key.Right:
+                    if (Equals(Keyboard.FocusedElement, AllProgramsButton))
+                    {
+                        OpenAllPrograms();
+                        e.Handled = true;
+                        return;
+                    }
+                    e.Handled = SwitchColumn(toLeft: false);
+                    return;
+                case Key.Enter:
+                    if (Keyboard.FocusedElement is Button pressed)
+                    {
+                        pressed.RaiseEvent(new RoutedEventArgs(
+                            System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+                        e.Handled = true;
+                    }
+                    return;
+            }
+
+            // Typing a letter jumps to the next entry starting with it, as in XP.
+            if (SearchBox.IsKeyboardFocusWithin) return;
+            if (e.Key < Key.A || e.Key > Key.Z) return;
+            e.Handled = JumpToLetter(e.Key.ToString()[0]);
+        }
+
+        // ---------------------------------------------------------------- keyboard walk
+
+        private static List<Button> ButtonsIn(DependencyObject root)
+        {
+            var found = new List<Button>();
+            if (root == null) return found;
+
+            void Walk(DependencyObject node)
+            {
+                int count = VisualTreeHelper.GetChildrenCount(node);
+                for (int i = 0; i < count; i++)
+                {
+                    var child = VisualTreeHelper.GetChild(node, i);
+                    if (child is Button button)
+                    {
+                        if (button.IsVisible) found.Add(button);
+                        continue;
+                    }
+                    Walk(child);
+                }
+            }
+
+            Walk(root);
+            return found;
+        }
+
+        /// <summary>Left column top to bottom, with All Programs last where it sits.</summary>
+        private List<Button> LeftButtons()
+        {
+            var list = ButtonsIn(SearchScroll.Visibility == Visibility.Visible ? SearchScroll : NormalScroll);
+            list.Add(AllProgramsButton);
+            return list;
+        }
+
+        private List<Button> RightButtons() => ButtonsIn(PlaceItems);
+
+        private bool Step(int direction)
+        {
+            var focused = Keyboard.FocusedElement as Button;
+            var list = RightButtons().Contains(focused) ? RightButtons() : LeftButtons();
+            if (list.Count == 0) return false;
+
+            int index = list.IndexOf(focused);
+            if (index < 0) index = direction > 0 ? -1 : 0;
+
+            index = (index + direction + list.Count) % list.Count;
+            list[index].Focus();
+            return true;
+        }
+
+        private bool SwitchColumn(bool toLeft)
+        {
+            var focused = Keyboard.FocusedElement as Button;
+            var from = toLeft ? RightButtons() : LeftButtons();
+            var to = toLeft ? LeftButtons() : RightButtons();
+            if (to.Count == 0) return false;
+
+            int index = from.IndexOf(focused);
+            if (index < 0) index = 0;
+
+            to[Math.Min(index, to.Count - 1)].Focus();
+            return true;
+        }
+
+        private bool JumpToLetter(char letter)
+        {
+            var focused = Keyboard.FocusedElement as Button;
+            var list = RightButtons().Contains(focused) ? RightButtons() : LeftButtons();
+            if (list.Count == 0) return false;
+
+            int start = list.IndexOf(focused) + 1;
+            for (int offset = 0; offset < list.Count; offset++)
+            {
+                var candidate = list[(start + offset) % list.Count];
+                string name = (candidate.DataContext as StartItem)?.Name;
+                if (string.IsNullOrEmpty(name)) continue;
+                if (char.ToUpperInvariant(name[0]) != letter) continue;
+
+                candidate.Focus();
+                return true;
+            }
+            return false;
+        }
+
+        // ---------------------------------------------------------------- header
+
+        private void OnHeaderClick(object sender, MouseButtonEventArgs e)
+        {
             HideMenu();
-            e.Handled = true;
+            Launcher.Power("useraccounts");
         }
 
         private void ApplyMenuScale()
@@ -325,13 +469,7 @@ namespace RetroMenu.Views
             var settings = AppSettings.Instance;
             var menu = new ContextMenu();
 
-            menu.Items.Add(Command(Lang.T("Open"), () => { HideMenu(); Launcher.Launch(item); }));
-
-            if (settings.ShowRunAsAdmin && item.Kind == StartItemKind.Shortcut)
-                menu.Items.Add(Command(Lang.T("RunAsAdmin"), () => { HideMenu(); Launcher.LaunchAsAdmin(item); }));
-
-            menu.Items.Add(new Separator());
-
+            // Our own two entries first, where XP kept its pinning commands.
             if (settings.IsPinned(item.Id))
                 menu.Items.Add(Command(Lang.T("Unpin"), () => { settings.Unpin(item.Id); BuildLeftColumn(); }));
             else
@@ -340,16 +478,89 @@ namespace RetroMenu.Views
             menu.Items.Add(Command(Lang.T("RemoveFromList"),
                 () => { settings.ForgetLaunch(item.Id); BuildLeftColumn(); }));
 
-            if (item.Kind == StartItemKind.Shortcut)
+            // Underneath, the genuine Explorer menu: Open, Run as administrator,
+            // Send to, Cut, Copy, Delete, Rename, Properties and any shell extension.
+            _shellMenu?.Dispose();
+            _shellMenu = new ShellContextMenu();
+
+            bool extended = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+            bool haveShellMenu = item.Kind == StartItemKind.Shortcut
+                                 && !string.IsNullOrEmpty(item.ParsingName)
+                                 && _shellMenu.Open(item.ParsingName, _handle, extended);
+
+            if (haveShellMenu)
             {
                 menu.Items.Add(new Separator());
-                menu.Items.Add(Command(Lang.T("OpenFileLocation"),
-                    () => { HideMenu(); Launcher.OpenFileLocation(item); }));
+                AddShellEntries(menu.Items, _shellMenu.Entries);
             }
+            else
+            {
+                _shellMenu.Dispose();
+                _shellMenu = null;
+
+                // No shell menu for Store apps and for anything the shell declines.
+                menu.Items.Insert(0, new Separator());
+                menu.Items.Insert(0, Command(Lang.T("Open"), () => { HideMenu(); Launcher.Launch(item); }));
+
+                if (settings.ShowRunAsAdmin && item.Kind == StartItemKind.Shortcut)
+                {
+                    menu.Items.Add(new Separator());
+                    menu.Items.Add(Command(Lang.T("RunAsAdmin"),
+                        () => { HideMenu(); Launcher.LaunchAsAdmin(item); }));
+                    menu.Items.Add(Command(Lang.T("OpenFileLocation"),
+                        () => { HideMenu(); Launcher.OpenFileLocation(item); }));
+                }
+            }
+
+            menu.Closed += (_, __) =>
+            {
+                _shellMenu?.Dispose();
+                _shellMenu = null;
+            };
 
             menu.PlacementTarget = e.OriginalSource as UIElement;
             OpenPopup(menu);
             e.Handled = true;
+        }
+
+        private void AddShellEntries(ItemCollection into, System.Collections.Generic.List<ShellMenuEntry> entries)
+        {
+            foreach (var entry in entries)
+            {
+                if (entry.IsSeparator)
+                {
+                    if (into.Count > 0 && into[into.Count - 1] is not Separator)
+                        into.Add(new Separator());
+                    continue;
+                }
+
+                var element = new MenuItem { Header = entry.Text, IsEnabled = entry.IsEnabled };
+
+                if (entry.HasChildren)
+                {
+                    AddShellEntries(element.Items, entry.Children);
+                }
+                else
+                {
+                    uint id = entry.Id;
+                    element.Click += (_, __) =>
+                    {
+                        // Hand the menu object over before hiding, or the Closed
+                        // handler disposes it out from under the command.
+                        var shell = _shellMenu;
+                        _shellMenu = null;
+                        HideMenu();
+                        shell?.Invoke(id);
+                        shell?.Dispose();
+                    };
+                }
+
+                into.Add(element);
+            }
+
+            // A menu that ends on a separator looks unfinished.
+            while (into.Count > 0 && into[into.Count - 1] is Separator)
+                into.RemoveAt(into.Count - 1);
         }
 
         private static MenuItem Command(string header, Action action)
@@ -485,8 +696,21 @@ namespace RetroMenu.Views
 
         // ---------------------------------------------------------------- all programs
 
-        private void OnAllProgramsClick(object sender, RoutedEventArgs e)
+        private void OnAllProgramsClick(object sender, RoutedEventArgs e) => OpenAllPrograms();
+
+        private void OnAllProgramsEnter(object sender, MouseEventArgs e)
         {
+            if (_popupOpen) return;
+            _allProgramsTimer.Stop();
+            _allProgramsTimer.Start();
+        }
+
+        private void OnAllProgramsLeave(object sender, MouseEventArgs e) => _allProgramsTimer.Stop();
+
+        private void OpenAllPrograms()
+        {
+            if (_popupOpen) return;
+
             var root = App.Me.Catalog.Root;
             var menu = new ContextMenu
             {
@@ -514,6 +738,10 @@ namespace RetroMenu.Views
                     Icon = IconFor(child)
                 };
 
+                // XP marked programs installed since the last look until opened once.
+                if (child.IsNew && TryFindResource("NewItemHighlight") is Brush highlight)
+                    entry.Background = highlight;
+
                 if (child.IsFolder)
                 {
                     entry.Items.Add(new MenuItem { Header = Lang.T("Loading"), IsEnabled = false });
@@ -524,6 +752,7 @@ namespace RetroMenu.Views
                     entry.Click += (s, _) =>
                     {
                         var item = (StartItem)((MenuItem)s).DataContext;
+                        item.IsNew = false;
                         HideMenu();
                         Launcher.Launch(item);
                     };
@@ -540,6 +769,8 @@ namespace RetroMenu.Views
             if (entry.Tag is string filled && filled == "done") return;
 
             entry.Tag = "done";
+            folder.IsNew = false;
+            entry.Background = null;
             entry.Items.Clear();
             Populate(entry.Items, folder.Children);
             e.Handled = true;

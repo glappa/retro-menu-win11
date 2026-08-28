@@ -26,8 +26,13 @@ namespace RetroMenu.Services
                     if (file.Exists && file.Length > 256 * 1024)
                         file.Delete();
 
+                    // A byte order mark up front, so editors and PowerShell read the
+                    // umlauts in program names correctly.
+                    var encoding = new System.Text.UTF8Encoding(!File.Exists(FilePath));
+
                     File.AppendAllText(FilePath,
-                        DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "  " + message + Environment.NewLine);
+                        DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "  " + message + Environment.NewLine,
+                        encoding);
                 }
             }
             catch { }

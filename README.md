@@ -30,9 +30,18 @@ RetroBar) öffnen ab jetzt ein klassisches zweispaltiges Menü statt der Kachelo
   tauchen in den klassischen Ordnern deshalb nie auf.
 * **Suchfeld** über alle gefundenen Programme, Enter startet den ersten Treffer.
   Standardmäßig aus, weil XP keines hatte — einschaltbar in den Einstellungen.
-* **Anheften und Verlauf**: Rechtsklick auf einen Eintrag zum Anheften, Lösen, als
-  Administrator starten oder Dateipfad öffnen. Die Liste „häufig verwendet" füllt sich
-  selbst, genau wie früher.
+* **Das echte Explorer-Kontextmenü** auf jedem Eintrag – Öffnen, Als Administrator
+  ausführen, Senden an ▸, Ausschneiden, Kopieren, Verknüpfung erstellen, Löschen,
+  Eigenschaften und alles, was Shell-Erweiterungen beisteuern. Genau wie unter XP,
+  nur eben im Retro-Anstrich statt als Windows-11-Popup. Mit gedrückter Umschalttaste
+  kommen die erweiterten Befehle dazu, auch das wie im Explorer.
+* **Häufig verwendet nach XP-Regeln**: Installer, Deinstallationsprogramme,
+  Liesmich-Dateien und eine Reihe Systemwerkzeuge landen nicht in der Liste, und ein
+  Programm kann sich per `NoStartPage` selbst heraushalten.
+* **Neu installierte Programme werden hervorgehoben**, bis sie einmal geöffnet wurden.
+* **Tastatur**: Pfeiltasten durch beide Spalten, Buchstaben springen zum nächsten
+  Eintrag, Eingabe startet, Pfeil rechts auf „Alle Programme" klappt auf.
+* **Klick auf das Benutzerbild** öffnet die Benutzerkonten – wie damals.
 * **Themes**, die zu RetroBar passen – und auf Wunsch automatisch dessen Design
   übernehmen.
 * **Ein Startknopf, zwei Wege**: Windows-Taste oder der Start-Knopf von RetroBar.
@@ -74,6 +83,10 @@ jeder Anmeldung genügt der Haken **„Mit Windows starten"** in den Einstellung
 | Tippen | sucht in allen Programmen |
 | Rechtsklick auf einen Eintrag | Anheften, Lösen, als Administrator starten, Dateipfad |
 | Zeigen auf ▸-Einträge | klappt „Zuletzt verwendete Dokumente" bzw. „Verbindung herstellen" auf |
+| Zeigen auf „Alle Programme" | klappt nach kurzem Verweilen von selbst auf |
+| Pfeiltasten / Buchstaben / Eingabe | Bedienung ohne Maus |
+| Umschalt + Rechtsklick | erweiterte Befehle im Kontextmenü |
+| Klick auf das Benutzerbild | Benutzerkonten |
 
 Alle Kombinationen mit der Windows-Taste (Win+E, Win+R, Win+D, Win+L …) funktionieren
 unverändert weiter.
@@ -141,13 +154,30 @@ Alles liegt in `%AppData%\RetroMenuWin11\settings.json`:
 | `FrequentCount` | Wie viele „häufig verwendet"-Einträge |
 | `MenuScale` | 1.0 ist XP-Originalgröße; auf großen Bildschirmen darf es mehr sein |
 | `KeepTaskbarVisible` | Auto-Hide-Taskleiste einblenden, solange das Menü offen ist |
+| `PlaySounds` | Systemklang „Menü öffnen" beim Aufklappen |
 | `ShowSearchBox`, `ShowStoreApps`, `ShowRunAsAdmin` | Ein/aus |
+| `KnownPrograms` | Womit erkannt wird, was neu dazugekommen ist |
 | `Pinned`, `LaunchCounts` | Angeheftetes und Startzähler |
 | `UserName` | Überschreibt den angezeigten Namen |
 
 Daneben liegt `retromenu.log`. Mit gesetzter Umgebungsvariable `RETROMENU_DEBUG=1`
 protokolliert das Programm zusätzlich jedes Ereignis der Windows-Taste – hilfreich,
-wenn der Hook auf einem Rechner nicht so will.
+wenn der Hook auf einem Rechner nicht so will. `RetroMenu.exe --dumpmenu <Datei>`
+schreibt das Shell-Kontextmenü, das für diese Datei gelesen wird, in dieselbe Datei
+und beendet sich wieder.
+
+## Woher die Details stammen
+
+Der Quellcode von Windows XP ist nicht öffentlich, und das, was 2020 in Umlauf kam,
+ist geleakter Microsoft-Code – daraus ist hier nichts abgeschrieben. Stattdessen:
+
+* **Aussehen**: an einer originalgetreuen XP-Nachbildung Pixel für Pixel abgemessen
+  (Maße, Verlaufsstufen, Farben, Schriftgrößen).
+* **Verhalten**: über die dokumentierten Windows-Schnittstellen nachgebaut –
+  `IContextMenu` für das Kontextmenü, `AssocQueryString` für die Standardprogramme,
+  `IShellItemImageFactory` für die Symbole, `WH_KEYBOARD_LL` für die Windows-Taste.
+* **Regeln**, etwa welche Programme XP aus „häufig verwendet" heraushielt, aus dem
+  beobachtbaren Verhalten und den dokumentierten Registry-Schaltern (`NoStartPage`).
 
 ## Bekannte Grenzen
 
@@ -173,6 +203,7 @@ wenn der Hook auf einem Rechner nicht so will.
 * Scrollleisten im XP-Stil statt der WPF-Standardleisten
 * Nachgemessene Verläufe auch für Olive und Silber – die beiden entstehen bisher aus
   den blauen Werten per Farbtonverschiebung
+* Angeheftetes per Ziehen umsortieren und Programme per Ziehen anheften
 * Tastaturnavigation in den Spalten (aktuell nur Suche und Kaskade)
 * Weitere Sprachen
 

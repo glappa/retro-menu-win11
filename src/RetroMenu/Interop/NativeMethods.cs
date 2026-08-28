@@ -354,6 +354,8 @@ namespace RetroMenu.Interop
         public static Guid IShellItemImageFactory = new Guid("BCC18B79-BA16-442F-80C4-8A59C30C463B");
         public static Guid IEnumShellItems = new Guid("70629033-E363-4A28-A567-0DB78006E6D7");
         public static Guid BHID_EnumItems = new Guid("94F60519-2850-4924-AA5A-D15E84868039");
+        public static Guid IShellFolder = new Guid("000214E6-0000-0000-C000-000000000046");
+        public static Guid IContextMenu = new Guid("000214E4-0000-0000-C000-000000000046");
     }
 
     internal static class Sigdn

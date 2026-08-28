@@ -43,6 +43,7 @@ namespace RetroMenu.Services
 
             var flat = new List<StartItem>();
             Flatten(root, flat);
+            MarkNewArrivals(flat);
 
             Root = root;
             Flat = flat;
@@ -155,6 +156,38 @@ namespace RetroMenu.Services
             }
 
             root.Children.Insert(0, folder);
+        }
+
+        /// <summary>
+        /// Anything that was not in the catalogue last time counts as newly
+        /// installed, which is what XP highlighted in All Programs. On the very
+        /// first run everything is simply recorded, or the whole menu would light up.
+        /// </summary>
+        private static void MarkNewArrivals(List<StartItem> flat)
+        {
+            var settings = AppSettings.Instance;
+            bool firstRun = settings.KnownPrograms.Count == 0;
+            var known = new HashSet<string>(settings.KnownPrograms, StringComparer.OrdinalIgnoreCase);
+
+            var added = new List<string>();
+            foreach (var item in flat)
+            {
+                if (string.IsNullOrEmpty(item.Id)) continue;
+                if (known.Contains(item.Id)) continue;
+
+                added.Add(item.Id);
+                if (!firstRun) item.IsNew = true;
+            }
+
+            if (added.Count == 0) return;
+
+            settings.KnownPrograms.AddRange(added);
+
+            // Programs come and go; keep the list from growing without end.
+            if (settings.KnownPrograms.Count > 4000)
+                settings.KnownPrograms.RemoveRange(0, settings.KnownPrograms.Count - 3000);
+
+            settings.Save();
         }
 
         private static void CollectNames(StartItem folder, HashSet<string> into)
