@@ -1,0 +1,77 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Windows XP Luna, blue. Matches RetroBar's "Windows XP Blue". -->
+
+    <FontFamily x:Key="MenuFontFamily">Tahoma</FontFamily>
+    <sys:Double x:Key="MenuFontSize">12</sys:Double>
+    <sys:Double x:Key="UserNameFontSize">15</sys:Double>
+
+    <CornerRadius x:Key="MenuCornerRadius">8,8,0,0</CornerRadius>
+    <Thickness x:Key="MenuBorderThickness">1</Thickness>
+    <sys:Double x:Key="HeaderHeight">58</sys:Double>
+    <sys:Double x:Key="FooterHeight">38</sys:Double>
+
+    <SolidColorBrush x:Key="MenuBorderBrush" Color="#FF0A3A8C" />
+
+    <LinearGradientBrush x:Key="HeaderBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF4C93EE" Offset="0" />
+        <GradientStop Color="#FF2A6FE0" Offset="0.35" />
+        <GradientStop Color="#FF1A56C6" Offset="0.75" />
+        <GradientStop Color="#FF0E3FA5" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="HeaderLineBrush" Color="#FF89B6F5" />
+    <SolidColorBrush x:Key="HeaderForeground" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="UserTileBorder" Color="#FFB9D5FA" />
+
+    <SolidColorBrush x:Key="LeftPaneBackground" Color="#FFFFFFFF" />
+    <LinearGradientBrush x:Key="RightPaneBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFE4EFFD" Offset="0" />
+        <GradientStop Color="#FFC8DEFA" Offset="1" />
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="LeftPaneForeground" Color="#FF000000" />
+    <SolidColorBrush x:Key="RightPaneForeground" Color="#FF002A6B" />
+
+    <LinearGradientBrush x:Key="ItemHighlightBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF4A90EE" Offset="0" />
+        <GradientStop Color="#FF215FC9" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="ItemHighlightForeground" Color="#FFFFFFFF" />
+
+    <SolidColorBrush x:Key="SeparatorBrush" Color="#FFB6CFEB" />
+    <SolidColorBrush x:Key="RightSeparatorBrush" Color="#FF9EC0EA" />
+
+    <LinearGradientBrush x:Key="AllProgramsBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFEAF2FD" Offset="0" />
+        <GradientStop Color="#FFC2DAF8" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="AllProgramsForeground" Color="#FF002A6B" />
+    <LinearGradientBrush x:Key="AllProgramsArrowBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF8CCB4A" Offset="0" />
+        <GradientStop Color="#FF3D7C1B" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="FooterBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF2E76E4" Offset="0" />
+        <GradientStop Color="#FF1B58C9" Offset="0.5" />
+        <GradientStop Color="#FF0F41A8" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="FooterLineBrush" Color="#FF7EAEF2" />
+    <SolidColorBrush x:Key="FooterForeground" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="FooterButtonHover" Color="#40FFFFFF" />
+
+    <SolidColorBrush x:Key="CascadeBackground" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="CascadeBorder" Color="#FF8E9BB0" />
+    <SolidColorBrush x:Key="CascadeForeground" Color="#FF000000" />
+    <SolidColorBrush x:Key="CascadeHighlight" Color="#FF316AC5" />
+    <SolidColorBrush x:Key="CascadeHighlightForeground" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="CascadeSeparator" Color="#FFC6C6C6" />
+
+    <SolidColorBrush x:Key="SearchBoxBackground" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="SearchBoxBorder" Color="#FF7F9DB9" />
+    <SolidColorBrush x:Key="SearchBoxForeground" Color="#FF000000" />
+    <SolidColorBrush x:Key="SearchHintForeground" Color="#FF808080" />
+
+</ResourceDictionary>

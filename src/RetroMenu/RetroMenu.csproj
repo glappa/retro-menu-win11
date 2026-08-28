@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>RetroMenu</AssemblyName>
+    <RootNamespace>RetroMenu</RootNamespace>
+    <Product>Retro Menu for Windows 11</Product>
+    <Company>glappa</Company>
+    <Version>0.1.0</Version>
+    <PlatformTarget>x64</PlatformTarget>
+    <ApplicationIcon>Assets\retromenu.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- WPF reads the DPI awareness from the manifest; the WinForms check does not know that. -->
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\retromenu.ico" />
+  </ItemGroup>
+
+</Project>

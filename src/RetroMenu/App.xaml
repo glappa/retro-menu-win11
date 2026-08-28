@@ -1,0 +1,14 @@
+<Application x:Class="RetroMenu.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             ShutdownMode="OnExplicitShutdown">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- index 0 is the theme and gets swapped at runtime -->
+                <ResourceDictionary Source="/RetroMenu;component/Themes/XPBlue.xaml" />
+                <ResourceDictionary Source="/RetroMenu;component/Themes/Shared.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
