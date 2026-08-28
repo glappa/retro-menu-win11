@@ -10,7 +10,7 @@
         Topmost="True"
         ResizeMode="NoResize"
         WindowStartupLocation="Manual"
-        Width="452" Height="548"
+        SizeToContent="WidthAndHeight"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display"
@@ -19,34 +19,75 @@
 
     <Window.Resources>
 
-        <DataTemplate x:Key="ProgramTemplate">
-            <Button Style="{StaticResource MenuEntryButton}" Padding="6,3"
-                    ToolTip="{Binding Tooltip}" Tag="{Binding}">
+        <!-- the grey second line under "Internet" / "E-mail" -->
+        <Style x:Key="SubtextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource SubtextForeground}" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}"
+                             Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource ItemHighlightForeground}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="PlaceArrowStyle" TargetType="Path">
+            <Setter Property="Fill" Value="{DynamicResource ArrowBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}"
+                             Value="True">
+                    <Setter Property="Fill" Value="{DynamicResource ItemHighlightForeground}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- left column: 34px row, 30px icon -->
+        <DataTemplate x:Key="LeftItemTemplate">
+            <Button Style="{StaticResource MenuEntryButton}" Height="34" Margin="0,0,0,4"
+                    ToolTip="{Binding Tooltip}">
                 <StackPanel Orientation="Horizontal">
-                    <Image Width="32" Height="32" Margin="0,0,7,0"
+                    <Image Width="30" Height="30" Margin="0,0,3,0"
                            Source="{Binding LargeIcon}"
                            RenderOptions.BitmapScalingMode="HighQuality" />
-                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"
-                               MaxWidth="168" TextTrimming="CharacterEllipsis" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontWeight="{Binding TitleWeight}"
+                                   MaxWidth="140" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Subtext}" MaxWidth="140"
+                                   Visibility="{Binding SubtextVisibility}"
+                                   Style="{StaticResource SubtextStyle}" />
+                    </StackPanel>
                 </StackPanel>
             </Button>
         </DataTemplate>
 
+        <!-- right column: 26px row, 22px icon, text may wrap to two lines -->
         <DataTemplate x:Key="PlaceTemplate">
-            <Button Style="{StaticResource MenuEntryButton}" Padding="8,2" Tag="{Binding}">
-                <StackPanel Orientation="Horizontal">
-                    <Image Width="24" Height="24" Margin="0,0,7,0"
+            <Button Style="{StaticResource MenuEntryButton}" Height="26" Margin="0,0,0,4"
+                    ToolTip="{Binding Name}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Image Width="22" Height="22" Margin="0,0,3,0"
                            Source="{Binding LargeIcon}"
                            RenderOptions.BitmapScalingMode="HighQuality" />
-                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"
-                               FontWeight="Bold" MaxWidth="150"
-                               TextTrimming="CharacterEllipsis" />
-                </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding Name}"
+                               FontWeight="{Binding TitleWeight}"
+                               TextWrapping="Wrap" LineHeight="13"
+                               LineStackingStrategy="BlockLineHeight"
+                               VerticalAlignment="Center" />
+                    <Path Grid.Column="2" Margin="3,0,2,0" VerticalAlignment="Center"
+                          Data="M 0,0 L 3.5,3.5 L 0,7 Z"
+                          Visibility="{Binding ArrowVisibility}"
+                          Style="{StaticResource PlaceArrowStyle}" />
+                </Grid>
             </Button>
         </DataTemplate>
 
         <DataTemplate x:Key="RightSeparatorTemplate">
-            <Rectangle Height="1" Margin="14,4,10,4"
+            <Rectangle Height="1.5" Margin="0,3,0,3"
                        Fill="{DynamicResource RightSeparatorBrush}" />
         </DataTemplate>
 
@@ -55,14 +96,17 @@
                                          SeparatorTemplate="{StaticResource RightSeparatorTemplate}" />
     </Window.Resources>
 
+    <!-- the margin leaves room for the drop shadow on the right -->
     <Border x:Name="Root"
-            Background="{DynamicResource LeftPaneBackground}"
-            BorderBrush="{DynamicResource MenuBorderBrush}"
-            BorderThickness="{DynamicResource MenuBorderThickness}"
+            Margin="0,0,7,0"
+            Background="{DynamicResource FrameBrush}"
             CornerRadius="{DynamicResource MenuCornerRadius}"
             SnapsToDevicePixels="True">
+        <Border.LayoutTransform>
+            <ScaleTransform x:Name="RootScale" ScaleX="1" ScaleY="1" />
+        </Border.LayoutTransform>
         <Border.Effect>
-            <DropShadowEffect BlurRadius="10" ShadowDepth="3" Direction="315" Opacity="0.45" />
+            <DropShadowEffect BlurRadius="7" ShadowDepth="3" Direction="315" Opacity="0.5" />
         </Border.Effect>
 
         <Grid>
@@ -76,114 +120,129 @@
             <Border Grid.Row="0"
                     Height="{DynamicResource HeaderHeight}"
                     Background="{DynamicResource HeaderBackground}"
-                    CornerRadius="7,7,0,0">
+                    CornerRadius="{DynamicResource MenuCornerRadius}">
                 <Grid>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="9,0">
-                        <Border Width="42" Height="42" CornerRadius="4"
+                    <Rectangle Height="3" VerticalAlignment="Top" Margin="0,1,0,0"
+                               Fill="{DynamicResource HeaderTopHighlight}" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="5,0">
+                        <Border Width="42" Height="42" CornerRadius="3" Margin="0,0,5,0"
+                                BorderThickness="2"
                                 BorderBrush="{DynamicResource UserTileBorder}"
-                                BorderThickness="2" Background="#30FFFFFF">
+                                Background="#20FFFFFF">
                             <Image x:Name="UserPicture" Stretch="UniformToFill"
                                    RenderOptions.BitmapScalingMode="HighQuality" />
                         </Border>
-                        <TextBlock x:Name="UserName" Margin="10,0,0,0"
-                                   VerticalAlignment="Center"
+                        <TextBlock x:Name="UserName" VerticalAlignment="Center"
                                    FontWeight="Bold"
                                    FontSize="{DynamicResource UserNameFontSize}"
-                                   Foreground="{DynamicResource HeaderForeground}" />
+                                   Foreground="{DynamicResource HeaderForeground}">
+                            <TextBlock.Effect>
+                                <DropShadowEffect ShadowDepth="1.4" Direction="315"
+                                                  BlurRadius="1" Opacity="0.7" Color="Black" />
+                            </TextBlock.Effect>
+                        </TextBlock>
                     </StackPanel>
-                    <Rectangle Height="1" VerticalAlignment="Bottom"
-                               Fill="{DynamicResource HeaderLineBrush}" Opacity="0.8" />
                 </Grid>
             </Border>
 
-            <!-- ============ body ============ -->
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="236" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+            <!-- ============ the two columns ============ -->
+            <Grid Grid.Row="1" Margin="2,0,2,0">
+                <Border BorderThickness="0,1,0,1" BorderBrush="{DynamicResource MenuTopLineBrush}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="190" />
+                            <ColumnDefinition Width="190" />
+                        </Grid.ColumnDefinitions>
 
-                <!-- left column -->
-                <Border Grid.Column="0" Background="{DynamicResource LeftPaneBackground}"
-                        TextElement.Foreground="{DynamicResource LeftPaneForeground}">
-                    <DockPanel>
-                        <Border DockPanel.Dock="Bottom"
-                                Background="{DynamicResource AllProgramsBackground}"
-                                Padding="4,3">
-                            <Button x:Name="AllProgramsButton"
-                                    Style="{StaticResource AllProgramsButton}"
-                                    HorizontalAlignment="Stretch"
-                                    Click="OnAllProgramsClick">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <TextBlock x:Name="AllProgramsLabel" FontWeight="Bold"
-                                               VerticalAlignment="Center"
-                                               Foreground="{DynamicResource AllProgramsForeground}" />
-                                    <Border Width="16" Height="16" CornerRadius="2" Margin="7,0,0,0"
-                                            Background="{DynamicResource AllProgramsArrowBackground}">
-                                        <Path Data="M 0,0 L 4,4 L 0,8 Z" Fill="White"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
+                        <!-- left column -->
+                        <Border Grid.Column="0" Padding="5,6,5,0"
+                                Background="{DynamicResource LeftPaneBackground}"
+                                TextElement.Foreground="{DynamicResource LeftPaneForeground}">
+                            <DockPanel LastChildFill="True">
+                                <StackPanel DockPanel.Dock="Bottom">
+                                    <Rectangle Height="1.5" Margin="0,3,0,3"
+                                               Fill="{DynamicResource LeftSeparatorBrush}" />
+                                    <Button x:Name="AllProgramsButton" Height="24" Margin="0,0,0,4"
+                                            Style="{StaticResource MenuEntryButton}"
+                                            Click="OnAllProgramsClick">
+                                        <StackPanel Orientation="Horizontal" Margin="33,0,0,0">
+                                            <TextBlock x:Name="AllProgramsLabel" FontWeight="Bold"
+                                                       VerticalAlignment="Center" />
+                                            <Path Margin="6,0,0,0" Width="11" Height="13"
+                                                  Stretch="Fill" VerticalAlignment="Center"
+                                                  Data="M 0,0 L 11,6.5 L 0,13 Z"
+                                                  Fill="{StaticResource AllProgramsArrowFill}"
+                                                  Stroke="{StaticResource AllProgramsArrowStroke}"
+                                                  StrokeThickness="1" StrokeLineJoin="Round" />
+                                        </StackPanel>
+                                    </Button>
                                 </StackPanel>
-                            </Button>
-                        </Border>
 
-                        <Border x:Name="SearchHost" DockPanel.Dock="Bottom" Padding="7,4,7,5">
-                            <Border Background="{DynamicResource SearchBoxBackground}"
-                                    BorderBrush="{DynamicResource SearchBoxBorder}"
-                                    BorderThickness="1" Padding="3,2">
+                                <Border x:Name="SearchHost" DockPanel.Dock="Bottom"
+                                        Margin="0,2,0,4" Visibility="Collapsed"
+                                        Background="{DynamicResource SearchBoxBackground}"
+                                        BorderBrush="{DynamicResource SearchBoxBorder}"
+                                        BorderThickness="1" Padding="3,2">
+                                    <Grid>
+                                        <TextBox x:Name="SearchBox" BorderThickness="0"
+                                                 Background="Transparent" Padding="0"
+                                                 Foreground="{DynamicResource SearchBoxForeground}"
+                                                 TextChanged="OnSearchTextChanged"
+                                                 KeyDown="OnSearchKeyDown" />
+                                        <TextBlock x:Name="SearchHint" IsHitTestVisible="False"
+                                                   Margin="2,0,0,0"
+                                                   Foreground="{DynamicResource SearchHintForeground}" />
+                                    </Grid>
+                                </Border>
+
                                 <Grid>
-                                    <TextBox x:Name="SearchBox" BorderThickness="0"
-                                             Background="Transparent"
-                                             Foreground="{DynamicResource SearchBoxForeground}"
-                                             TextChanged="OnSearchTextChanged"
-                                             KeyDown="OnSearchKeyDown" />
-                                    <TextBlock x:Name="SearchHint" IsHitTestVisible="False"
-                                               Margin="2,0,0,0"
-                                               Foreground="{DynamicResource SearchHintForeground}" />
+                                    <ScrollViewer x:Name="NormalScroll"
+                                                  VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled">
+                                        <StackPanel Button.Click="OnItemClick"
+                                                    MouseRightButtonUp="OnItemRightClick">
+                                            <ItemsControl x:Name="TopItems"
+                                                          ItemTemplate="{StaticResource LeftItemTemplate}" />
+                                            <Rectangle x:Name="TopSeparator" Height="1.5"
+                                                       Margin="0,3,0,3"
+                                                       Fill="{DynamicResource LeftSeparatorBrush}" />
+                                            <ItemsControl x:Name="FrequentItems"
+                                                          ItemTemplate="{StaticResource LeftItemTemplate}" />
+                                        </StackPanel>
+                                    </ScrollViewer>
+
+                                    <ScrollViewer x:Name="SearchScroll" Visibility="Collapsed"
+                                                  VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled">
+                                        <StackPanel Button.Click="OnItemClick"
+                                                    MouseRightButtonUp="OnItemRightClick">
+                                            <ItemsControl x:Name="SearchResults"
+                                                          ItemTemplate="{StaticResource LeftItemTemplate}" />
+                                            <TextBlock x:Name="NoResults" Margin="6,6,0,0"
+                                                       Visibility="Collapsed" Opacity="0.7" />
+                                        </StackPanel>
+                                    </ScrollViewer>
                                 </Grid>
-                            </Border>
+                            </DockPanel>
                         </Border>
 
-                        <Grid>
-                            <ScrollViewer x:Name="NormalScroll" VerticalScrollBarVisibility="Auto"
-                                          Padding="0,4,0,4">
-                                <StackPanel Button.Click="OnItemClick"
-                                            MouseRightButtonUp="OnItemRightClick">
-                                    <ItemsControl x:Name="PinnedItems"
-                                                  ItemTemplate="{StaticResource ProgramTemplate}"
-                                                  Margin="4,0" />
-                                    <Rectangle x:Name="PinnedSeparator" Height="1" Margin="10,5"
-                                               Fill="{DynamicResource SeparatorBrush}" />
-                                    <ItemsControl x:Name="FrequentItems"
-                                                  ItemTemplate="{StaticResource ProgramTemplate}"
-                                                  Margin="4,0" />
-                                </StackPanel>
-                            </ScrollViewer>
-
-                            <ScrollViewer x:Name="SearchScroll" VerticalScrollBarVisibility="Auto"
-                                          Visibility="Collapsed" Padding="0,4,0,4">
-                                <StackPanel Button.Click="OnItemClick"
-                                            MouseRightButtonUp="OnItemRightClick">
-                                    <ItemsControl x:Name="SearchResults"
-                                                  ItemTemplate="{StaticResource ProgramTemplate}"
-                                                  Margin="4,0" />
-                                    <TextBlock x:Name="NoResults" Margin="12,8"
-                                               Visibility="Collapsed" Opacity="0.7" />
-                                </StackPanel>
-                            </ScrollViewer>
-                        </Grid>
-                    </DockPanel>
+                        <!-- right column -->
+                        <Border Grid.Column="1" Padding="5,6,5,5"
+                                Background="{DynamicResource RightPaneBackground}"
+                                BorderThickness="1,0,0,0"
+                                BorderBrush="{DynamicResource ColumnDividerBrush}"
+                                TextElement.Foreground="{DynamicResource RightPaneForeground}"
+                                MouseMove="OnPlaceHover">
+                            <ItemsControl x:Name="PlaceItems"
+                                          ItemTemplateSelector="{StaticResource PlaceSelector}"
+                                          Button.Click="OnItemClick" />
+                        </Border>
+                    </Grid>
                 </Border>
 
-                <!-- right column -->
-                <Border Grid.Column="1" Background="{DynamicResource RightPaneBackground}"
-                        TextElement.Foreground="{DynamicResource RightPaneForeground}">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,6,0,6">
-                        <ItemsControl x:Name="PlaceItems" Margin="4,0"
-                                      ItemTemplateSelector="{StaticResource PlaceSelector}"
-                                      Button.Click="OnItemClick" />
-                    </ScrollViewer>
-                </Border>
+                <!-- Luna's orange hairline, sitting on top of both columns -->
+                <Rectangle Height="2" VerticalAlignment="Top" Margin="0,1,0,0"
+                           Fill="{DynamicResource OrangeLineBrush}" />
             </Grid>
 
             <!-- ============ footer ============ -->
@@ -191,35 +250,43 @@
                     Height="{DynamicResource FooterHeight}"
                     Background="{DynamicResource FooterBackground}"
                     TextElement.Foreground="{DynamicResource FooterForeground}">
-                <Grid>
-                    <Rectangle Height="1" VerticalAlignment="Top"
-                               Fill="{DynamicResource FooterLineBrush}" Opacity="0.7" />
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                                VerticalAlignment="Center" Margin="0,0,8,0">
-                        <Button x:Name="LogOffButton" Style="{StaticResource FlatButton}"
-                                Padding="8,4" Margin="0,0,6,0" Click="OnLogOffClick">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Width="16" Height="16" Stretch="None"
-                                      Stroke="{DynamicResource FooterForeground}" StrokeThickness="1.5"
-                                      Data="M 6,2 L 2,2 L 2,14 L 6,14 M 8,8 L 14,8 M 11,5 L 14,8 L 11,11" />
-                                <TextBlock x:Name="LogOffLabel" Margin="6,0,0,0"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource FooterForeground}" />
-                            </StackPanel>
-                        </Button>
-                        <Button x:Name="ShutDownButton" Style="{StaticResource FlatButton}"
-                                Padding="8,4" Click="OnShutDownClick">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Width="16" Height="16" Stretch="None"
-                                      Stroke="{DynamicResource FooterForeground}" StrokeThickness="1.5"
-                                      Data="M 8,2 L 8,8 M 4.3,4.4 A 5.2,5.2 0 1 0 11.7,4.4" />
-                                <TextBlock x:Name="ShutDownLabel" Margin="6,0,0,0"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource FooterForeground}" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </Grid>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                            VerticalAlignment="Center">
+                    <Button x:Name="LogOffButton" Style="{StaticResource FooterItemButton}"
+                            Margin="0,0,10,0" Click="OnLogOffClick">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="22" Height="22" CornerRadius="3" Margin="0,0,2,0"
+                                    Background="{StaticResource LogOffIconBackground}"
+                                    BorderBrush="{StaticResource IconEdgeBrush}" BorderThickness="1">
+                                <Canvas Width="22" Height="22">
+                                    <Ellipse Canvas.Left="4" Canvas.Top="11" Width="7" Height="7"
+                                             Stroke="{StaticResource IconGlyphBrush}" StrokeThickness="1.7" />
+                                    <Path Stroke="{StaticResource IconGlyphBrush}" StrokeThickness="1.7"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                          Data="M 9.7,12.3 L 16.4,5.6 M 13.9,8.1 L 15.6,9.8 M 16.4,5.6 L 18.0,7.2" />
+                                </Canvas>
+                            </Border>
+                            <TextBlock x:Name="LogOffLabel" VerticalAlignment="Center" Margin="2,0,0,0" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="ShutDownButton" Style="{StaticResource FooterItemButton}"
+                            Margin="0,0,10,0" Click="OnShutDownClick">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="22" Height="22" CornerRadius="3" Margin="0,0,2,0"
+                                    Background="{StaticResource PowerIconBackground}"
+                                    BorderBrush="{StaticResource IconEdgeBrush}" BorderThickness="1">
+                                <Canvas Width="22" Height="22">
+                                    <Ellipse Canvas.Left="5.5" Canvas.Top="5.5" Width="11" Height="11"
+                                             Stroke="{StaticResource IconGlyphBrush}" StrokeThickness="1.7" />
+                                    <Rectangle Canvas.Left="10.1" Canvas.Top="5.8" Width="1.8" Height="6.4"
+                                               Fill="{StaticResource IconGlyphBrush}" />
+                                </Canvas>
+                            </Border>
+                            <TextBlock x:Name="ShutDownLabel" VerticalAlignment="Center" Margin="2,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
             </Border>
         </Grid>
     </Border>

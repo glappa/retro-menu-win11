@@ -126,8 +126,8 @@ namespace RetroMenu.Services
 
         private static void AppendStoreApps(StartItem root)
         {
-            List<AppsFolderEntry> entries;
-            try { entries = AppsFolder.Enumerate(); }
+            List<ShellFolderEntry> entries;
+            try { entries = ShellFolder.Apps(); }
             catch { return; }
 
             var known = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -150,7 +150,7 @@ namespace RetroMenu.Services
                     Name = entry.Name,
                     Kind = StartItemKind.StoreApp,
                     ParsingName = entry.ParsingName,
-                    Target = entry.Aumid
+                    Target = entry.Relative
                 });
             }
 

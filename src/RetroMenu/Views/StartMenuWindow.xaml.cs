@@ -8,6 +8,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 using RetroMenu.Interop;
 using RetroMenu.Model;
 using RetroMenu.Services;
@@ -19,11 +20,20 @@ namespace RetroMenu.Views
         private bool _popupOpen;
         private IntPtr _handle;
 
+        private readonly DispatcherTimer _hoverTimer;
+        private readonly TaskbarPresence _taskbarPresence = new TaskbarPresence();
+        private StartItem _hoverItem;
+        private Button _hoverAnchor;
+
         public StartMenuWindow()
         {
             InitializeComponent();
             Deactivated += OnDeactivated;
             PreviewKeyDown += OnPreviewKeyDown;
+
+            // XP opened the "My Recent Documents" and "Connect To" flyouts on hover.
+            _hoverTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(320) };
+            _hoverTimer.Tick += (_, __) => { _hoverTimer.Stop(); OpenPlaceSubmenu(); };
         }
 
         public bool IsOpen => IsVisible;
@@ -37,13 +47,25 @@ namespace RetroMenu.Views
 
         public void ShowMenu()
         {
-            Rebuild();
-            Position();
+            var bar = TaskbarLocator.Locate();
+            double scale = DpiScale();
 
+            ApplyMenuScale();
+            MaxHeight = AvailableHeight(bar, scale);
+            Rebuild();
+
+            // Lay out at full size first, then place it: the menu grows with its
+            // content, so its height is only known after a measure pass.
+            Opacity = 0;
             Show();
+            UpdateLayout();
+            Position(bar, scale);
+            Opacity = 1;
+
             Activate();
             if (_handle == IntPtr.Zero) EnsureHandle();
             NativeMethods.ForceForeground(_handle);
+            AnnounceToTaskbar();
 
             if (SearchHost.Visibility == Visibility.Visible)
             {
@@ -54,11 +76,36 @@ namespace RetroMenu.Views
 
         public void HideMenu()
         {
+            _taskbarPresence.Hide();
             if (!IsVisible) return;
             _popupOpen = false;
+            _hoverTimer.Stop();
+            _hoverItem = null;
             SearchBox.Clear();
             ShowSearchResults(false);
             Hide();
+        }
+
+        /// <summary>
+        /// Lets RetroBar know a start menu is up so an auto-hidden bar comes back
+        /// out while the menu is showing.
+        /// </summary>
+        private void AnnounceToTaskbar()
+        {
+            if (!AppSettings.Instance.KeepTaskbarVisible)
+            {
+                _taskbarPresence.Hide();
+                return;
+            }
+
+            if (_handle != IntPtr.Zero && NativeMethods.GetWindowRect(_handle, out var rect))
+                _taskbarPresence.Show(rect);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _taskbarPresence.Dispose();
+            base.OnClosed(e);
         }
 
         private void OnDeactivated(object sender, EventArgs e)
@@ -70,24 +117,40 @@ namespace RetroMenu.Views
 
         private void OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Escape)
+            if (e.Key != Key.Escape) return;
+
+            if (!string.IsNullOrEmpty(SearchBox.Text))
             {
-                if (!string.IsNullOrEmpty(SearchBox.Text))
-                {
-                    SearchBox.Clear();
-                    e.Handled = true;
-                    return;
-                }
-                HideMenu();
+                SearchBox.Clear();
                 e.Handled = true;
+                return;
             }
+            HideMenu();
+            e.Handled = true;
         }
 
-        private void Position()
+        private void ApplyMenuScale()
         {
-            var info = TaskbarLocator.Locate();
-            double scale = DpiScale();
+            double scale = AppSettings.Instance.MenuScale;
+            if (double.IsNaN(scale) || double.IsInfinity(scale)) scale = 1.0;
+            scale = Math.Max(0.75, Math.Min(3.0, scale));
+            RootScale.ScaleX = scale;
+            RootScale.ScaleY = scale;
+        }
 
+        private static double AvailableHeight(TaskbarInfo bar, double scale)
+        {
+            double height = bar.Edge switch
+            {
+                TaskbarEdge.Bottom => bar.Bar.Top - bar.Monitor.Top,
+                TaskbarEdge.Top => bar.Monitor.Bottom - bar.Bar.Bottom,
+                _ => bar.Monitor.Bottom - bar.Monitor.Top
+            };
+            return Math.Max(240, height / scale);
+        }
+
+        private void Position(TaskbarInfo info, double scale)
+        {
             double barLeft = info.Bar.Left / scale;
             double barTop = info.Bar.Top / scale;
             double barRight = info.Bar.Right / scale;
@@ -96,6 +159,9 @@ namespace RetroMenu.Views
             double monTop = info.Monitor.Top / scale;
             double monRight = info.Monitor.Right / scale;
             double monBottom = info.Monitor.Bottom / scale;
+
+            double width = ActualWidth;
+            double height = ActualHeight;
 
             double left, top;
             switch (info.Edge)
@@ -106,20 +172,20 @@ namespace RetroMenu.Views
                     break;
                 case TaskbarEdge.Left:
                     left = barRight;
-                    top = monBottom - Height;
+                    top = monBottom - height;
                     break;
                 case TaskbarEdge.Right:
-                    left = barLeft - Width;
-                    top = monBottom - Height;
+                    left = barLeft - width;
+                    top = monBottom - height;
                     break;
                 default:
                     left = barLeft;
-                    top = barTop - Height;
+                    top = barTop - height;
                     break;
             }
 
-            Left = Math.Max(monLeft, Math.Min(left, monRight - Width));
-            Top = Math.Max(monTop, Math.Min(top, monBottom - Height));
+            Left = Math.Max(monLeft, Math.Min(left, monRight - width));
+            Top = Math.Max(monTop, Math.Min(top, monBottom - height));
         }
 
         private double DpiScale()
@@ -175,18 +241,27 @@ namespace RetroMenu.Views
             var settings = AppSettings.Instance;
             SeedPinsOnce();
 
-            var pinned = settings.Pinned.Select(Resolve).Where(i => i != null).ToList();
+            // XP's top group: the Internet and E-mail slots, then whatever is pinned.
+            var top = Launcher.BuildDefaultAppSlots();
+            var taken = new HashSet<string>(top.Select(i => i.Id), StringComparer.OrdinalIgnoreCase);
+
+            top.AddRange(settings.Pinned
+                .Where(id => !taken.Contains(id))
+                .Select(Resolve)
+                .Where(i => i != null));
+
+            foreach (var item in top) taken.Add(item.Id);
 
             var frequent = settings.MostUsed(settings.FrequentCount * 3)
-                .Where(id => !settings.IsPinned(id))
+                .Where(id => !taken.Contains(id))
                 .Select(Resolve)
                 .Where(i => i != null)
                 .Take(Math.Max(0, settings.FrequentCount))
                 .ToList();
 
-            PinnedItems.ItemsSource = pinned;
+            TopItems.ItemsSource = top;
             FrequentItems.ItemsSource = frequent;
-            PinnedSeparator.Visibility = pinned.Count > 0 && frequent.Count > 0
+            TopSeparator.Visibility = top.Count > 0 && frequent.Count > 0
                 ? Visibility.Visible : Visibility.Collapsed;
         }
 
@@ -198,7 +273,7 @@ namespace RetroMenu.Views
             settings.Seeded = true;
 
             var quick = App.Me.RetroBar?.QuickLaunchOrder ?? new List<string>();
-            foreach (var path in quick.Where(File.Exists).Take(6))
+            foreach (var path in quick.Where(File.Exists).Take(4))
             {
                 if (!settings.IsPinned(path)) settings.Pinned.Add(path);
             }
@@ -236,6 +311,8 @@ namespace RetroMenu.Views
         private void OnItemClick(object sender, RoutedEventArgs e)
         {
             if ((e.OriginalSource as FrameworkElement)?.DataContext is not StartItem item) return;
+            if (item.Command == Launcher.Separator) return;
+
             HideMenu();
             Launcher.Launch(item);
         }
@@ -301,9 +378,109 @@ namespace RetroMenu.Views
                     // take the focus back. Dismissed by a click elsewhere: close.
                     if (IsMouseOver) NativeMethods.ForceForeground(_handle);
                     else HideMenu();
-                }), System.Windows.Threading.DispatcherPriority.Input);
+                }), DispatcherPriority.Input);
             };
             menu.IsOpen = true;
+        }
+
+        // ---------------------------------------------------------------- right column flyouts
+
+        private void OnPlaceHover(object sender, MouseEventArgs e)
+        {
+            if (_popupOpen) return;
+
+            var item = (e.OriginalSource as FrameworkElement)?.DataContext as StartItem;
+            if (ReferenceEquals(item, _hoverItem)) return;
+
+            _hoverItem = item;
+            _hoverTimer.Stop();
+
+            if (item == null || string.IsNullOrEmpty(item.SubmenuSource)) return;
+
+            _hoverAnchor = FindButton(e.OriginalSource as DependencyObject);
+            if (_hoverAnchor != null) _hoverTimer.Start();
+        }
+
+        private static Button FindButton(DependencyObject node)
+        {
+            while (node != null && node is not Button)
+                node = VisualTreeHelper.GetParent(node);
+            return node as Button;
+        }
+
+        private void OpenPlaceSubmenu()
+        {
+            var item = _hoverItem;
+            var anchor = _hoverAnchor;
+            if (item == null || anchor == null || string.IsNullOrEmpty(item.SubmenuSource)) return;
+            if (!anchor.IsMouseOver) return;
+
+            var menu = new ContextMenu
+            {
+                PlacementTarget = anchor,
+                Placement = System.Windows.Controls.Primitives.PlacementMode.Right,
+                HorizontalOffset = -4,
+                VerticalOffset = -3
+            };
+
+            var entries = SubmenuEntries(item.SubmenuSource);
+            if (entries.Count == 0)
+                menu.Items.Add(new MenuItem { Header = Lang.T("Empty"), IsEnabled = false });
+            else
+                Populate(menu.Items, entries);
+
+            OpenPopup(menu);
+        }
+
+        private static List<StartItem> SubmenuEntries(string source)
+        {
+            var result = new List<StartItem>();
+
+            if (string.Equals(source, "shell:Recent", StringComparison.OrdinalIgnoreCase))
+            {
+                // The Recent folder is plain files, and only there do we get the
+                // "most recent first" order XP showed.
+                try
+                {
+                    string folder = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        @"Microsoft\Windows\Recent");
+
+                    if (Directory.Exists(folder))
+                    {
+                        result.AddRange(new DirectoryInfo(folder)
+                            .EnumerateFiles("*.lnk")
+                            .OrderByDescending(f => f.LastWriteTimeUtc)
+                            .Take(15)
+                            .Select(f => new StartItem
+                            {
+                                Name = Path.GetFileNameWithoutExtension(f.Name),
+                                ParsingName = f.FullName,
+                                Target = f.FullName,
+                                Kind = StartItemKind.Shortcut
+                            }));
+                    }
+                }
+                catch { }
+                return result;
+            }
+
+            try
+            {
+                foreach (var entry in ShellFolder.Enumerate(source, 40))
+                {
+                    result.Add(new StartItem
+                    {
+                        Name = entry.Name,
+                        ParsingName = entry.ParsingName,
+                        Kind = StartItemKind.Command,
+                        Command = "place:" + entry.ParsingName
+                    });
+                }
+            }
+            catch { }
+
+            return result;
         }
 
         // ---------------------------------------------------------------- all programs
@@ -400,13 +577,12 @@ namespace RetroMenu.Views
         {
             SearchScroll.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
             NormalScroll.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
-            if (!show)
-            {
-                SearchResults.ItemsSource = null;
-                NoResults.Visibility = Visibility.Collapsed;
-                SearchHint.Visibility = string.IsNullOrEmpty(SearchBox.Text)
-                    ? Visibility.Visible : Visibility.Collapsed;
-            }
+            if (show) return;
+
+            SearchResults.ItemsSource = null;
+            NoResults.Visibility = Visibility.Collapsed;
+            SearchHint.Visibility = string.IsNullOrEmpty(SearchBox.Text)
+                ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void OnSearchKeyDown(object sender, KeyEventArgs e)

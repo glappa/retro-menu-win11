@@ -12,6 +12,11 @@ namespace RetroMenu.Services
     {
         public const string Separator = "separator";
 
+        // The shell still exposes "Search" and "Run..." as namespace items, which is
+        // where their icons come from.
+        private const string SearchShellItem = "shell:::{2559a1f0-21d7-11d4-bdaf-00c04f60b9f0}";
+        private const string RunShellItem = "shell:::{2559a1f3-21d7-11d4-bdaf-00c04f60b9f0}";
+
         public static void Launch(StartItem item)
         {
             if (item == null) return;
@@ -89,6 +94,15 @@ namespace RetroMenu.Services
                 return;
             }
 
+            if (command.StartsWith("exec:", StringComparison.Ordinal))
+            {
+                string rest = command.Substring("exec:".Length);
+                int space = rest.IndexOf(' ');
+                if (space < 0) Shell(rest, null);
+                else Shell(rest.Substring(0, space), rest.Substring(space + 1));
+                return;
+            }
+
             switch (command)
             {
                 case "rundialog":
@@ -151,18 +165,25 @@ namespace RetroMenu.Services
                 System.Windows.MessageBoxImage.Warning);
         }
 
-        /// <summary>The right hand column of the classic menu.</summary>
+        /// <summary>
+        /// The right hand column, in the order Windows XP had it. The first five
+        /// entries are the bold group; "My Recent Documents" and "Connect To" carry
+        /// a submenu arrow.
+        /// </summary>
         public static List<StartItem> BuildPlaces()
         {
             var places = new List<StartItem>();
 
-            void Add(string key, string parsingName, string command) =>
+            void Add(string key, string parsingName, string command,
+                     bool bold = false, string submenu = null) =>
                 places.Add(new StartItem
                 {
                     Name = Lang.T(key),
                     Kind = StartItemKind.Place,
                     ParsingName = parsingName,
-                    Command = command
+                    Command = command,
+                    Bold = bold,
+                    SubmenuSource = submenu
                 });
 
             void Line() => places.Add(new StartItem
@@ -172,31 +193,65 @@ namespace RetroMenu.Services
                 Command = Separator
             });
 
-            // Shell names rather than file paths: Environment.GetFolderPath returns an
-            // empty string for Pictures/Music on some profiles, and the virtual folders
-            // have no path at all.
-            Add("Documents", "shell:Personal", "place:shell:Personal");
-            Add("Pictures", "shell:My Pictures", "place:shell:My Pictures");
-            Add("Music", "shell:My Music", "place:shell:My Music");
-            Add("Downloads", "shell:Downloads", "place:shell:Downloads");
-            Line();
-            // Windows 11 answers every icon API with a plain folder for these two,
-            // so take the real ones straight out of the shell resource library.
-            Add("Computer", "res:imageres.dll,109", "place:shell:MyComputerFolder");
-            Add("Network", "res:imageres.dll,25", "place:shell:NetworkPlacesFolder");
+            Add("Documents", "shell:Personal", "place:shell:Personal", bold: true);
+            Add("RecentDocuments", "shell:Recent", "place:shell:Recent", bold: true, submenu: "shell:Recent");
+            Add("Pictures", "shell:My Pictures", "place:shell:My Pictures", bold: true);
+            Add("Music", "shell:My Music", "place:shell:My Music", bold: true);
+            // Windows 11 answers every icon API with a plain folder for My Computer
+            // and Network, so take the real ones out of the shell resource library.
+            Add("Computer", "res:imageres.dll,109", "place:shell:MyComputerFolder", bold: true);
             Line();
             Add("ControlPanel", "shell:ControlPanelFolder", "place:shell:ControlPanelFolder");
-            Add("Settings", "shell:ControlPanelFolder", "url:ms-settings:");
+            Add("SetProgramAccess", "res:imageres.dll,27", "exec:computerdefaults.exe");
+            Add("ConnectTo", "res:imageres.dll,25", "place:shell:ConnectionsFolder",
+                submenu: "shell:ConnectionsFolder");
+            Add("PrintersAndFaxes", "shell:PrintersFolder", "place:shell:PrintersFolder");
             Line();
+            Add("Help", "res:imageres.dll,104", "help");
             Add("SearchPlace", SearchShellItem, "search");
             Add("Run", RunShellItem, "rundialog");
 
             return places;
         }
 
-        // The shell still exposes "Search" and "Run..." as namespace items, which is
-        // where their icons come from.
-        private const string SearchShellItem = "shell:::{2559a1f0-21d7-11d4-bdaf-00c04f60b9f0}";
-        private const string RunShellItem = "shell:::{2559a1f3-21d7-11d4-bdaf-00c04f60b9f0}";
+        /// <summary>
+        /// The two slots XP kept at the very top of the left column, filled from the
+        /// current default browser and mail client.
+        /// </summary>
+        public static List<StartItem> BuildDefaultAppSlots()
+        {
+            var slots = new List<StartItem>();
+
+            var browser = DefaultApps.Browser();
+            if (browser.IsUsable)
+            {
+                slots.Add(new StartItem
+                {
+                    Name = Lang.T("Internet"),
+                    Subtext = browser.FriendlyName,
+                    ParsingName = browser.ExecutablePath,
+                    Target = browser.ExecutablePath,
+                    Kind = StartItemKind.Shortcut,
+                    Bold = true
+                });
+            }
+
+            var mail = DefaultApps.Mail();
+            if (mail.IsUsable &&
+                !string.Equals(mail.ExecutablePath, browser.ExecutablePath, StringComparison.OrdinalIgnoreCase))
+            {
+                slots.Add(new StartItem
+                {
+                    Name = Lang.T("Email"),
+                    Subtext = mail.FriendlyName,
+                    ParsingName = mail.ExecutablePath,
+                    Target = mail.ExecutablePath,
+                    Kind = StartItemKind.Shortcut,
+                    Bold = true
+                });
+            }
+
+            return slots;
+        }
     }
 }

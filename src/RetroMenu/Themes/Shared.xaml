@@ -1,17 +1,47 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!--
         Control styles shared by every theme. All colours come in via DynamicResource
         so swapping the theme dictionary restyles a menu that is already on screen.
+
+        The three little pictures at the bottom of XP's panel — the green All
+        Programs arrow, the amber key on Log Off and the red power button — stayed
+        the same across all Luna colour schemes, so they live here rather than in
+        the themes.
     -->
 
-    <!-- A row in the left column or the right column. -->
+    <LinearGradientBrush x:Key="AllProgramsArrowFill" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF7BD84F" Offset="0" />
+        <GradientStop Color="#FF52BE2C" Offset="0.5" />
+        <GradientStop Color="#FF0E8206" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="AllProgramsArrowStroke" Color="#FF00520A" />
+
+    <LinearGradientBrush x:Key="LogOffIconBackground" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFEFCB96" Offset="0" />
+        <GradientStop Color="#FFDC9B37" Offset="0.5" />
+        <GradientStop Color="#FF8F5400" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="PowerIconBackground" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFF0A492" Offset="0" />
+        <GradientStop Color="#FFE45A35" Offset="0.5" />
+        <GradientStop Color="#FF951700" Offset="1" />
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="IconGlyphBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="IconEdgeBrush" Color="#59FFFFFF" />
+
+    <!--
+        A row in the left or the right column. XP drew the hover state as a flat
+        rectangle in one solid blue, with square corners.
+    -->
     <Style x:Key="MenuEntryButton" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Padding" Value="1" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
@@ -19,7 +49,6 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Bd"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="3"
                             Padding="{TemplateBinding Padding}"
                             SnapsToDevicePixels="True">
                         <ContentPresenter VerticalAlignment="Center" />
@@ -43,42 +72,23 @@
         </Setter>
     </Style>
 
-    <!-- "All Programs" and the two footer buttons. -->
-    <Style x:Key="FlatButton" TargetType="Button">
+    <!-- The two buttons on the blue bar at the bottom. -->
+    <Style x:Key="FooterItemButton" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="3" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            CornerRadius="3" Padding="{TemplateBinding Padding}">
-                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Stretch" />
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background"
-                                    Value="{DynamicResource FooterButtonHover}" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style x:Key="AllProgramsButton" TargetType="Button" BasedOn="{StaticResource FlatButton}">
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="Transparent" CornerRadius="3" Padding="8,4">
+                            Padding="{TemplateBinding Padding}">
                         <ContentPresenter VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Bd" Property="Background"
-                                    Value="{DynamicResource ItemHighlightBackground}" />
-                            <Setter TargetName="Bd" Property="TextElement.Foreground"
-                                    Value="{DynamicResource ItemHighlightForeground}" />
+                                    Value="{DynamicResource FooterButtonHover}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -96,10 +106,10 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <ContentPresenter Grid.Column="0" ContentSource="Icon"
-                                  Margin="3,2,3,2" VerticalAlignment="Center" />
+                                  Margin="2,1,2,1" VerticalAlignment="Center" />
                 <ContentPresenter Grid.Column="1" ContentSource="Header"
                                   RecognizesAccessKey="False"
-                                  Margin="3,3,16,3" VerticalAlignment="Center" />
+                                  Margin="3,2,16,2" VerticalAlignment="Center" />
             </Grid>
         </Border>
         <ControlTemplate.Triggers>
@@ -124,13 +134,13 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <ContentPresenter Grid.Column="0" ContentSource="Icon"
-                                      Margin="3,2,3,2" VerticalAlignment="Center" />
+                                      Margin="2,1,2,1" VerticalAlignment="Center" />
                     <ContentPresenter Grid.Column="1" ContentSource="Header"
                                       RecognizesAccessKey="False"
-                                      Margin="3,3,16,3" VerticalAlignment="Center" />
+                                      Margin="3,2,16,2" VerticalAlignment="Center" />
                     <Path x:Name="Arrow" Grid.Column="2" Margin="0,0,6,0"
                           VerticalAlignment="Center"
-                          Data="M 0,0 L 4,4 L 0,8 Z"
+                          Data="M 0,0 L 3.5,3.5 L 0,7 Z"
                           Fill="{DynamicResource CascadeForeground}" />
                 </Grid>
             </Border>
@@ -201,7 +211,6 @@
     <Style TargetType="Separator">
         <Setter Property="Height" Value="1" />
         <Setter Property="Margin" Value="24,3,2,3" />
-        <Setter Property="Background" Value="{DynamicResource CascadeSeparator}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Separator">

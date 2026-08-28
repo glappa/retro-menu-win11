@@ -51,6 +51,12 @@
                 <ComboBox x:Name="FrequentBox" SelectionChanged="OnFrequentChanged" />
             </DockPanel>
 
+            <DockPanel Margin="0,0,0,8">
+                <TextBlock x:Name="ScaleLabel" Width="150" VerticalAlignment="Center" />
+                <ComboBox x:Name="ScaleBox" SelectionChanged="OnScaleChanged" />
+            </DockPanel>
+
+            <CheckBox x:Name="KeepTaskbarToggle" Margin="0,0,0,5" Click="OnToggleChanged" />
             <CheckBox x:Name="SearchBoxToggle" Margin="0,0,0,5" Click="OnToggleChanged" />
             <CheckBox x:Name="StoreAppsToggle" Margin="0,0,0,5" Click="OnToggleChanged" />
             <CheckBox x:Name="AutoStartToggle" Margin="0,0,0,5" Click="OnAutoStartChanged" />

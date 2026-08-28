@@ -30,6 +30,8 @@ namespace RetroMenu.Views
             BehaviourLabel.Text = Lang.T("Behaviour");
             WinKeyLabel.Text = Lang.T("WinKey");
             FrequentLabel.Text = Lang.T("FrequentCount");
+            ScaleLabel.Text = Lang.T("MenuScale");
+            KeepTaskbarToggle.Content = Lang.T("KeepTaskbar");
             SearchBoxToggle.Content = Lang.T("ShowSearchBox");
             StoreAppsToggle.Content = Lang.T("ShowStoreApps");
             AutoStartToggle.Content = Lang.T("AutoStart");
@@ -69,6 +71,12 @@ namespace RetroMenu.Views
             FrequentBox.ItemsSource = Enumerable.Range(0, 13).ToList();
             FrequentBox.SelectedItem = Math.Max(0, Math.Min(12, settings.FrequentCount));
 
+            ScaleBox.ItemsSource = ScaleChoices;
+            ScaleBox.SelectedItem = ScaleChoices
+                .OrderBy(v => Math.Abs(v - settings.MenuScale * 100))
+                .First();
+
+            KeepTaskbarToggle.IsChecked = settings.KeepTaskbarVisible;
             SearchBoxToggle.IsChecked = settings.ShowSearchBox;
             StoreAppsToggle.IsChecked = settings.ShowStoreApps;
             AutoStartToggle.IsChecked = settings.AutoStart;
@@ -146,11 +154,22 @@ namespace RetroMenu.Views
             App.Me.ApplySettings();
         }
 
+        private static readonly int[] ScaleChoices = { 100, 125, 150, 175, 200, 250 };
+
+        private void OnScaleChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loading || ScaleBox.SelectedItem is not int percent) return;
+            AppSettings.Instance.MenuScale = percent / 100.0;
+            AppSettings.Instance.Save();
+            App.Me.ApplySettings();
+        }
+
         private void OnToggleChanged(object sender, RoutedEventArgs e)
         {
             if (_loading) return;
             var settings = AppSettings.Instance;
             settings.ShowSearchBox = SearchBoxToggle.IsChecked == true;
+            settings.KeepTaskbarVisible = KeepTaskbarToggle.IsChecked == true;
 
             bool storeApps = StoreAppsToggle.IsChecked == true;
             bool storeChanged = storeApps != settings.ShowStoreApps;

@@ -8,42 +8,52 @@
     -->
 
     <FontFamily x:Key="MenuFontFamily">Tahoma</FontFamily>
-    <sys:Double x:Key="MenuFontSize">12</sys:Double>
+    <sys:Double x:Key="MenuFontSize">11</sys:Double>
     <sys:Double x:Key="UserNameFontSize">14</sys:Double>
 
     <CornerRadius x:Key="MenuCornerRadius">0</CornerRadius>
-    <Thickness x:Key="MenuBorderThickness">1</Thickness>
     <sys:Double x:Key="HeaderHeight">44</sys:Double>
-    <sys:Double x:Key="FooterHeight">34</sys:Double>
+    <sys:Double x:Key="FooterHeight">32</sys:Double>
 
-    <SolidColorBrush x:Key="MenuBorderBrush" Color="#FF404040" />
+    <SolidColorBrush x:Key="FrameBrush" Color="#FFD4D0C8" />
 
     <LinearGradientBrush x:Key="HeaderBackground" StartPoint="0,0" EndPoint="1,0">
         <GradientStop Color="#FF0A246A" Offset="0" />
         <GradientStop Color="#FFA6CAF0" Offset="1" />
     </LinearGradientBrush>
-    <SolidColorBrush x:Key="HeaderLineBrush" Color="#FFFFFFFF" />
+
+    <LinearGradientBrush x:Key="HeaderTopHighlight" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#00FFFFFF" Offset="0" />
+        <GradientStop Color="#00FFFFFF" Offset="1" />
+    </LinearGradientBrush>
+
     <SolidColorBrush x:Key="HeaderForeground" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="UserTileBorder" Color="#FFFFFFFF" />
 
+    <LinearGradientBrush x:Key="OrangeLineBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#FF808080" Offset="0" />
+        <GradientStop Color="#FF808080" Offset="1" />
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="MenuTopLineBrush" Color="#FFFFFFFF" />
+
     <SolidColorBrush x:Key="LeftPaneBackground" Color="#FFD4D0C8" />
     <SolidColorBrush x:Key="RightPaneBackground" Color="#FFC3BFB7" />
+    <SolidColorBrush x:Key="ColumnDividerBrush" Color="#FF808080" />
 
     <SolidColorBrush x:Key="LeftPaneForeground" Color="#FF000000" />
     <SolidColorBrush x:Key="RightPaneForeground" Color="#FF000000" />
+    <SolidColorBrush x:Key="SubtextForeground" Color="#99000000" />
 
     <SolidColorBrush x:Key="ItemHighlightBackground" Color="#FF000080" />
     <SolidColorBrush x:Key="ItemHighlightForeground" Color="#FFFFFFFF" />
 
-    <SolidColorBrush x:Key="SeparatorBrush" Color="#FF808080" />
+    <SolidColorBrush x:Key="LeftSeparatorBrush" Color="#FF808080" />
     <SolidColorBrush x:Key="RightSeparatorBrush" Color="#FF808080" />
 
-    <SolidColorBrush x:Key="AllProgramsBackground" Color="#FFD4D0C8" />
-    <SolidColorBrush x:Key="AllProgramsForeground" Color="#FF000000" />
-    <SolidColorBrush x:Key="AllProgramsArrowBackground" Color="#FF000080" />
+    <SolidColorBrush x:Key="ArrowBrush" Color="#FF000000" />
 
     <SolidColorBrush x:Key="FooterBackground" Color="#FFD4D0C8" />
-    <SolidColorBrush x:Key="FooterLineBrush" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="FooterForeground" Color="#FF000000" />
     <SolidColorBrush x:Key="FooterButtonHover" Color="#30000080" />
 

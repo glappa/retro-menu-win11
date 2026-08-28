@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media.Imaging;
 using RetroMenu.Interop;
 
@@ -18,7 +18,7 @@ namespace RetroMenu.Model
 
     /// <summary>
     /// One entry in the menu: a program, a folder of programs, a shell place such
-    /// as "Documents", or an internal command such as "Run...".
+    /// as "My Documents", or an internal command such as "Run...".
     /// </summary>
     public sealed class StartItem : INotifyPropertyChanged
     {
@@ -28,6 +28,12 @@ namespace RetroMenu.Model
         private bool _largeRequested;
 
         public string Name { get; set; }
+
+        /// <summary>
+        /// The grey second line under the name. Windows XP used it for the two
+        /// special slots at the top of the left column: "Internet / Firefox".
+        /// </summary>
+        public string Subtext { get; set; }
 
         /// <summary>Something the shell can parse: a file path or shell:AppsFolder\{aumid}.</summary>
         public string ParsingName { get; set; }
@@ -40,6 +46,15 @@ namespace RetroMenu.Model
         /// <summary>Set for <see cref="StartItemKind.Command"/> entries.</summary>
         public string Command { get; set; }
 
+        /// <summary>XP printed the first two left entries and the top right group bold.</summary>
+        public bool Bold { get; set; }
+
+        /// <summary>
+        /// A shell folder to fill a cascading submenu from, e.g. the Recent
+        /// Documents folder behind "My Recent Documents".
+        /// </summary>
+        public string SubmenuSource { get; set; }
+
         public List<StartItem> Children { get; } = new List<StartItem>();
 
         public bool IsFolder => Kind == StartItemKind.Folder;
@@ -50,6 +65,14 @@ namespace RetroMenu.Model
         public string Tooltip => Kind == StartItemKind.Shortcut && !string.IsNullOrEmpty(Target)
             ? Name + "\n" + Target
             : Name;
+
+        public FontWeight TitleWeight => Bold ? FontWeights.Bold : FontWeights.Normal;
+
+        public Visibility SubtextVisibility =>
+            string.IsNullOrEmpty(Subtext) ? Visibility.Collapsed : Visibility.Visible;
+
+        public Visibility ArrowVisibility =>
+            string.IsNullOrEmpty(SubmenuSource) ? Visibility.Collapsed : Visibility.Visible;
 
         public BitmapSource SmallIcon
         {
