@@ -234,7 +234,7 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="5,0"
                                 Background="Transparent" Cursor="Hand"
                                 MouseLeftButtonUp="OnHeaderClick">
-                        <Border Width="42" Height="42" CornerRadius="3" Margin="0,0,5,0"
+                        <Border Width="48" Height="48" CornerRadius="3" Margin="0,0,6,0"
                                 BorderThickness="2"
                                 BorderBrush="{DynamicResource UserTileBorder}"
                                 Background="#20FFFFFF">

@@ -118,11 +118,15 @@ namespace RetroMenu.Services
                         loaded.LaunchTimes ??= new Dictionary<string, DateTime>();
                         loaded.Favourites ??= new List<FavouriteEntry>();
 
-                        // Carry a flat pinned list from an older version over once.
+                        // Carry a flat pinned list from an older version over once,
+                        // then let it go so the file does not keep two truths.
                         if (loaded.Favourites.Count == 0 && loaded.Pinned.Count > 0)
                         {
                             foreach (var id in loaded.Pinned)
                                 loaded.Favourites.Add(new FavouriteEntry { Id = id });
+
+                            loaded.Pinned.Clear();
+                            loaded.Save();
                         }
 
                         Instance = loaded;

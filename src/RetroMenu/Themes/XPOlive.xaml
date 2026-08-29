@@ -11,10 +11,10 @@
 
     <FontFamily x:Key="MenuFontFamily">Tahoma</FontFamily>
     <sys:Double x:Key="MenuFontSize">11</sys:Double>
-    <sys:Double x:Key="UserNameFontSize">14</sys:Double>
+    <sys:Double x:Key="UserNameFontSize">15</sys:Double>
 
     <CornerRadius x:Key="MenuCornerRadius">5,5,0,0</CornerRadius>
-    <sys:Double x:Key="HeaderHeight">54</sys:Double>
+    <sys:Double x:Key="HeaderHeight">66</sys:Double>
     <sys:Double x:Key="FooterHeight">36</sys:Double>
 
     <!-- the 2px frame left and right of the two columns -->
