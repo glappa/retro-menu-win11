@@ -81,13 +81,41 @@ namespace RetroMenu.Services
             catch (Exception ex) { Report(item.Name, ex); }
         }
 
+        /// <summary>
+        /// Shows a folder. The companion file window gets first refusal, so the menu
+        /// and what it opens look like they belong together; it hands anything it
+        /// cannot show - the Control Panel, say - straight back to the shell.
+        /// </summary>
+        private static void OpenPlace(string place)
+        {
+            if (XpExplorerBridge.Available)
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = XpExplorerBridge.Path,
+                        Arguments = "\"" + place + "\"",
+                        UseShellExecute = true
+                    });
+                    return;
+                }
+                catch
+                {
+                    // Not there any more, or refused to start. The shell still works.
+                }
+            }
+
+            Shell("explorer.exe", place);
+        }
+
         private static void RunCommand(string command)
         {
             if (string.IsNullOrEmpty(command) || command == Separator) return;
 
             if (command.StartsWith("place:", StringComparison.Ordinal))
             {
-                Shell("explorer.exe", command.Substring("place:".Length));
+                OpenPlace(command.Substring("place:".Length));
                 return;
             }
 

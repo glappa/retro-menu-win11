@@ -97,6 +97,11 @@ namespace RetroMenu.Services
             ["MenuScale"] = "Menügröße",
             ["KeepTaskbar"] = "Taskleiste beim Öffnen einblenden",
             ["ShowStoreApps"] = "Store-Apps mit auflisten",
+            ["UseXpExplorer"] = "Ordner im XP-Dateifenster öffnen",
+            ["UseXpExplorerHint"] = "windows-xp-explorer-win-11 ist da und zeigt Eigene Dateien, "
+                                    + "Arbeitsplatz und die anderen Orte im alten Anstrich.",
+            ["UseXpExplorerMissing"] = "Nicht gefunden. Ohne windows-xp-explorer-win-11 öffnet "
+                                       + "der Windows-Explorer die Ordner.",
             ["AutoStart"] = "Mit Windows starten",
             ["Language"] = "Sprache",
             ["Close"] = "Schließen",
@@ -189,6 +194,11 @@ namespace RetroMenu.Services
             ["MenuScale"] = "Menu size",
             ["KeepTaskbar"] = "Raise the taskbar while open",
             ["ShowStoreApps"] = "List Store apps",
+            ["UseXpExplorer"] = "Open folders in the XP file window",
+            ["UseXpExplorerHint"] = "windows-xp-explorer-win-11 is installed and will show "
+                                    + "My Documents, My Computer and the other places.",
+            ["UseXpExplorerMissing"] = "Not found. Without windows-xp-explorer-win-11 the "
+                                       + "Windows Explorer opens folders.",
             ["AutoStart"] = "Start with Windows",
             ["Language"] = "Language",
             ["Close"] = "Close",

@@ -63,6 +63,15 @@ namespace RetroMenu.Services
         /// </summary>
         public bool ShowTilePanel { get; set; } = false;
 
+        /// <summary>
+        /// Open folders in windows-xp-explorer-win-11 when it is installed, so the
+        /// file window matches the menu instead of being the Windows 11 one.
+        /// </summary>
+        public bool UseXpExplorer { get; set; } = true;
+
+        /// <summary>Where that file window is, if it sits somewhere unusual.</summary>
+        public string XpExplorerPath { get; set; } = "";
+
         public bool ShowRunAsAdmin { get; set; } = true;
         public bool ShowStoreApps { get; set; } = true;
         public string UserName { get; set; } = "";

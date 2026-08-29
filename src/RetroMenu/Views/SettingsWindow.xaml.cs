@@ -38,6 +38,11 @@ namespace RetroMenu.Views
             KeepTaskbarToggle.Content = Lang.T("KeepTaskbar");
             SearchBoxToggle.Content = Lang.T("ShowSearchBox");
             StoreAppsToggle.Content = Lang.T("ShowStoreApps");
+            XpExplorerToggle.Content = Lang.T("UseXpExplorer");
+            XpExplorerHint.Text = XpExplorerBridge.Path == null
+                ? Lang.T("UseXpExplorerMissing")
+                : Lang.T("UseXpExplorerHint");
+            XpExplorerToggle.IsEnabled = XpExplorerBridge.Path != null;
             AutoStartToggle.Content = Lang.T("AutoStart");
             CloseButton.Content = Lang.T("Close");
             VersionText.Text = "Retro Menu " +
@@ -85,6 +90,7 @@ namespace RetroMenu.Views
             KeepTaskbarToggle.IsChecked = settings.KeepTaskbarVisible;
             SearchBoxToggle.IsChecked = settings.ShowSearchBox;
             StoreAppsToggle.IsChecked = settings.ShowStoreApps;
+            XpExplorerToggle.IsChecked = settings.UseXpExplorer;
             AutoStartToggle.IsChecked = settings.AutoStart;
         }
 
@@ -178,6 +184,9 @@ namespace RetroMenu.Views
             settings.KeepTaskbarVisible = KeepTaskbarToggle.IsChecked == true;
             settings.ShowRecentPrograms = RecentToggle.IsChecked == true;
             settings.ShowTilePanel = TilesToggle.IsChecked == true;
+
+            settings.UseXpExplorer = XpExplorerToggle.IsChecked == true;
+            XpExplorerBridge.Recheck();
 
             bool storeApps = StoreAppsToggle.IsChecked == true;
             bool storeChanged = storeApps != settings.ShowStoreApps;

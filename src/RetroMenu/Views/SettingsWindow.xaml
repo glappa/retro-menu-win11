@@ -65,6 +65,8 @@
             <CheckBox x:Name="KeepTaskbarToggle" Margin="0,0,0,5" Click="OnToggleChanged" />
             <CheckBox x:Name="SearchBoxToggle" Margin="0,0,0,5" Click="OnToggleChanged" />
             <CheckBox x:Name="StoreAppsToggle" Margin="0,0,0,5" Click="OnToggleChanged" />
+            <CheckBox x:Name="XpExplorerToggle" Margin="0,0,0,2" Click="OnToggleChanged" />
+            <TextBlock x:Name="XpExplorerHint" Margin="20,0,0,8" Opacity="0.7" TextWrapping="Wrap" />
             <CheckBox x:Name="AutoStartToggle" Margin="0,0,0,5" Click="OnAutoStartChanged" />
         </StackPanel>
 

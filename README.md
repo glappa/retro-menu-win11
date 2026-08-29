@@ -151,6 +151,20 @@ auch fremde — unter anderem an der Fensterklasse `OpenShell.CMenuContainer`. S
 unser Menü offen ist, halten wir ein leeres, vollständig durchsichtiges und
 klickdurchlässiges Fenster dieser Klasse über der Menüfläche.
 
+## Und die Ordner dazu
+
+Ordner, die aus dem Menü heraus aufgehen – „Eigene Dateien", „Arbeitsplatz", „Zuletzt
+verwendete Dokumente" –, landen sonst im Windows-11-Explorer, und der passt zu nichts
+hier. Ist [windows-xp-explorer-win-11](https://github.com/glappa/windows-xp-explorer-win-11)
+installiert, öffnet das Menü sie stattdessen dort: Aufgabenbereich, grüne Pfeile,
+Statusleiste, alles im gleichen Anstrich wie Leiste und Menü.
+
+Gesucht wird neben dem Menü selbst, unter `%LocalAppData%\Programs\XpExplorer` und an
+den üblichen anderen Stellen; gefunden oder nicht, steht in den Einstellungen. Wer
+lieber beim gewohnten Explorer bleibt, nimmt dort **„Ordner im XP-Dateifenster
+öffnen"** heraus. Was das Dateifenster nicht zeigen kann – die Systemsteuerung etwa –,
+reicht es von sich aus an Windows weiter.
+
 ## Designs
 
 | Design | Aufbau | RetroBar-Designs, die darauf abgebildet werden |
@@ -178,6 +192,7 @@ Oberfläche (Rechtsklick aufs Tray-Symbol → Einstellungen):
 | Schlüssel | Bedeutung |
 | --- | --- |
 | `Theme`, `FollowRetroBarTheme` | Design, bzw. RetroBar folgen |
+| `UseXpExplorer`, `XpExplorerPath` | Ordner im XP-Dateifenster öffnen, und wo es liegt |
 | `Language` | `auto`, `de` oder `en` |
 | `WinKeyMode` | `Neutralize`, `Swallow` oder `Off` |
 | `MenuScale` | 1.0 ist Originalgröße; auf großen Bildschirmen darf es mehr sein |
