@@ -299,7 +299,7 @@
                                 </StackPanel>
 
 
-                                <Grid>
+                                <Grid x:Name="ListHost">
                                     <ScrollViewer x:Name="NormalScroll"
                                                   VerticalScrollBarVisibility="Auto"
                                                   HorizontalScrollBarVisibility="Disabled">

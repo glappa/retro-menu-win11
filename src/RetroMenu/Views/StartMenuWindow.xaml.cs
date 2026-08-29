@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Microsoft.Win32;
 using RetroMenu.Interop;
 using RetroMenu.Model;
 using RetroMenu.Services;
@@ -33,6 +34,9 @@ namespace RetroMenu.Views
         private List<StartItem> _programHits = new List<StartItem>();
         private List<StartItem> _settingHits = new List<StartItem>();
 
+        private TaskbarInfo _bar;
+        private double _scale = 1.0;
+
         public StartMenuWindow()
         {
             InitializeComponent();
@@ -54,6 +58,64 @@ namespace RetroMenu.Views
             // Programs appear as you type; the file index is asked once typing pauses.
             _fileSearchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(350) };
             _fileSearchTimer.Tick += (_, __) => { _fileSearchTimer.Stop(); SearchFiles(); };
+
+            // Whatever changes the picture underneath us: a second monitor arriving,
+            // the resolution changing, the taskbar moving, the screen locking. All of
+            // them either move the menu or mean it should not be on screen at all.
+            SizeChanged += (_, __) => Reposition();
+            DpiChanged += (_, __) => Reposition();
+            SystemEvents.DisplaySettingsChanged += OnDisplayChanged;
+            SystemEvents.SessionSwitch += OnSessionSwitch;
+            SystemEvents.PowerModeChanged += OnPowerModeChanged;
+            SystemParameters.StaticPropertyChanged += OnSystemParameterChanged;
+        }
+
+        private void OnDisplayChanged(object sender, EventArgs e) =>
+            Dispatcher.BeginInvoke(new Action(Relocate));
+
+        private void OnSystemParameterChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(SystemParameters.WorkArea) &&
+                e.PropertyName != nameof(SystemParameters.PrimaryScreenHeight)) return;
+            Dispatcher.BeginInvoke(new Action(Relocate));
+        }
+
+        private void OnSessionSwitch(object sender, SessionSwitchEventArgs e)
+        {
+            // A locked or handed over session must not keep a menu open behind it.
+            if (e.Reason is SessionSwitchReason.SessionLock
+                or SessionSwitchReason.ConsoleDisconnect
+                or SessionSwitchReason.RemoteDisconnect
+                or SessionSwitchReason.SessionLogoff)
+            {
+                Dispatcher.BeginInvoke(new Action(HideMenu));
+            }
+        }
+
+        private void OnPowerModeChanged(object sender, PowerModeChangedEventArgs e)
+        {
+            if (e.Mode == PowerModes.Suspend) Dispatcher.BeginInvoke(new Action(HideMenu));
+        }
+
+        /// <summary>Looks the taskbar up again and puts the menu back against it.</summary>
+        private void Relocate()
+        {
+            if (!IsVisible) return;
+            _bar = TaskbarLocator.Locate();
+            _scale = DpiScale();
+            MaxHeight = AvailableHeight(_bar, _scale);
+            Position(_bar, _scale);
+            AnnounceToTaskbar();
+        }
+
+        /// <summary>
+        /// Keeps the menu sitting on the taskbar when its own size changes — typing in
+        /// the search box used to make it grow and wander off the bottom of the screen.
+        /// </summary>
+        private void Reposition()
+        {
+            if (!IsVisible || _bar == null) return;
+            Position(_bar, _scale);
         }
 
         public bool IsOpen => IsVisible;
@@ -67,11 +129,12 @@ namespace RetroMenu.Views
 
         public void ShowMenu()
         {
-            var bar = TaskbarLocator.Locate();
-            double scale = DpiScale();
+            _bar = TaskbarLocator.Locate();
+            _scale = DpiScale();
 
             ApplyMenuScale();
-            MaxHeight = AvailableHeight(bar, scale);
+            MaxHeight = AvailableHeight(_bar, _scale);
+            ListHost.Height = double.NaN;
             Rebuild();
 
             // Lay out at full size first, then place it: the menu grows with its
@@ -79,7 +142,14 @@ namespace RetroMenu.Views
             Opacity = 0;
             Show();
             UpdateLayout();
-            Position(bar, scale);
+
+            // Hold that height for as long as the menu stays open. Search results are
+            // longer than the pinned list, and a menu that resizes under the pointer
+            // while you type is no fun to aim at.
+            if (!IsClassic && ListHost.ActualHeight > 0) ListHost.Height = ListHost.ActualHeight;
+
+            UpdateLayout();
+            Position(_bar, _scale);
             Opacity = 1;
 
             Activate();
@@ -105,6 +175,7 @@ namespace RetroMenu.Views
             _hoverItem = null;
             SearchBox.Clear();
             ShowSearchResults(false);
+            ListHost.Height = double.NaN;
             Hide();
         }
 
@@ -126,6 +197,10 @@ namespace RetroMenu.Views
 
         protected override void OnClosed(EventArgs e)
         {
+            SystemEvents.DisplaySettingsChanged -= OnDisplayChanged;
+            SystemEvents.SessionSwitch -= OnSessionSwitch;
+            SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+            SystemParameters.StaticPropertyChanged -= OnSystemParameterChanged;
             _taskbarPresence.Dispose();
             base.OnClosed(e);
         }
