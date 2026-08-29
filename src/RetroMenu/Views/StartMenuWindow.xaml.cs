@@ -514,18 +514,39 @@ namespace RetroMenu.Views
             var settings = AppSettings.Instance;
             SeedPinsOnce();
 
-            // XP's top group: the Internet and E-mail slots, then whatever is pinned.
+            // XP's top group: the Internet and E-mail slots, then the favourites.
+            // A favourite may be a folder, which opens as a cascade like everything
+            // else in this menu.
             var top = Launcher.BuildDefaultAppSlots();
             var taken = new HashSet<string>(top.Select(i => i.Id), StringComparer.OrdinalIgnoreCase);
 
-            top.AddRange(settings.Pinned
-                .Where(id => !taken.Contains(id))
-                .Select(Resolve)
-                .Where(i => i != null));
+            foreach (var favourite in settings.Favourites)
+            {
+                if (favourite.IsFolder)
+                {
+                    foreach (var id in favourite.Items) taken.Add(id);
+                    top.Add(new StartItem
+                    {
+                        Name = favourite.Folder,
+                        Kind = StartItemKind.Folder,
+                        ParsingName = "res:imageres.dll,18",
+                        SubmenuSource = Launcher.FavouriteFolderPrefix + favourite.Folder
+                    });
+                    continue;
+                }
 
-            foreach (var item in top) taken.Add(item.Id);
+                var resolved = Resolve(favourite.Id);
+                if (resolved == null || !taken.Add(resolved.Id)) continue;
+                top.Add(resolved);
+            }
 
-            var frequent = settings.MostUsed(settings.FrequentCount * 3)
+            // Either the ones started most often, as XP had it, or the ones started
+            // most recently.
+            var candidates = settings.ShowRecentPrograms
+                ? settings.MostRecent(settings.FrequentCount * 3)
+                : settings.MostUsed(settings.FrequentCount * 3);
+
+            var frequent = candidates
                 .Where(id => !taken.Contains(id))
                 .Select(Resolve)
                 .Where(i => i != null)
@@ -548,7 +569,8 @@ namespace RetroMenu.Views
             var quick = App.Me.RetroBar?.QuickLaunchOrder ?? new List<string>();
             foreach (var path in quick.Where(File.Exists).Take(4))
             {
-                if (!settings.IsPinned(path)) settings.Pinned.Add(path);
+                if (!settings.IsFavourite(path))
+                    settings.Favourites.Add(new FavouriteEntry { Id = path });
             }
             settings.Save();
         }
@@ -610,11 +632,47 @@ namespace RetroMenu.Views
             var settings = AppSettings.Instance;
             var menu = new ContextMenu();
 
-            // Our own two entries first, where XP kept its pinning commands.
-            if (settings.IsPinned(item.Id))
-                menu.Items.Add(Command(Lang.T("Unpin"), () => { settings.Unpin(item.Id); BuildLeftColumn(); }));
+            // A favourites folder is ours alone; the shell knows nothing about it.
+            if (item.IsFolder && item.SubmenuSource != null &&
+                item.SubmenuSource.StartsWith(Launcher.FavouriteFolderPrefix, StringComparison.Ordinal))
+            {
+                string folderName = item.SubmenuSource.Substring(Launcher.FavouriteFolderPrefix.Length);
+
+                menu.Items.Add(Command(Lang.T("RenameFolder"), () =>
+                {
+                    string name = InputDialog.Ask(this, Lang.T("FolderNamePrompt"), folderName);
+                    if (name != null) settings.RenameFolder(folderName, name);
+                    BuildLeftColumn();
+                }));
+                menu.Items.Add(Command(Lang.T("DissolveFolder"),
+                    () => { settings.DissolveFolder(folderName); BuildLeftColumn(); }));
+
+                menu.PlacementTarget = e.OriginalSource as UIElement;
+                OpenPopup(menu);
+                e.Handled = true;
+                return;
+            }
+
+            // Our own entries first, where XP kept its pinning commands.
+            bool favourite = settings.IsFavourite(item.Id);
+
+            if (favourite)
+                menu.Items.Add(Command(Lang.T("Unpin"),
+                    () => { settings.RemoveFavourite(item.Id); BuildLeftColumn(); }));
             else
-                menu.Items.Add(Command(Lang.T("Pin"), () => { settings.Pin(item.Id); BuildLeftColumn(); }));
+                menu.Items.Add(Command(Lang.T("Pin"),
+                    () => { settings.AddFavourite(item.Id); BuildLeftColumn(); }));
+
+            if (favourite)
+            {
+                menu.Items.Add(BuildFolderMenu(item, settings));
+
+                if (settings.FolderOf(item.Id) != null)
+                {
+                    menu.Items.Add(Command(Lang.T("OutOfFolder"),
+                        () => { settings.MoveOutOfFolder(item.Id); BuildLeftColumn(); }));
+                }
+            }
 
             menu.Items.Add(Command(Lang.T("RemoveFromList"),
                 () => { settings.ForgetLaunch(item.Id); BuildLeftColumn(); }));
@@ -704,6 +762,32 @@ namespace RetroMenu.Views
                 into.RemoveAt(into.Count - 1);
         }
 
+        /// <summary>"Move to folder" with the existing folders and a way to add one.</summary>
+        private MenuItem BuildFolderMenu(StartItem item, AppSettings settings)
+        {
+            var parent = new MenuItem { Header = Lang.T("MoveToFolder") };
+            string current = settings.FolderOf(item.Id);
+
+            foreach (var name in settings.FolderNames.ToList())
+            {
+                if (string.Equals(name, current, StringComparison.OrdinalIgnoreCase)) continue;
+                string target = name;
+                parent.Items.Add(Command(target,
+                    () => { settings.MoveToFolder(item.Id, target); BuildLeftColumn(); }));
+            }
+
+            if (parent.Items.Count > 0) parent.Items.Add(new Separator());
+
+            parent.Items.Add(Command(Lang.T("NewFolder"), () =>
+            {
+                string name = InputDialog.Ask(this, Lang.T("FolderNamePrompt"));
+                if (name != null) settings.MoveToFolder(item.Id, name);
+                BuildLeftColumn();
+            }));
+
+            return parent;
+        }
+
         private static MenuItem Command(string header, Action action)
         {
             var entry = new MenuItem { Header = header };
@@ -785,6 +869,16 @@ namespace RetroMenu.Views
                 if (menu.Items.Count == 0)
                     menu.Items.Add(new MenuItem { Header = Lang.T("Loading"), IsEnabled = false });
             }
+            else if (item.SubmenuSource.StartsWith(Launcher.FavouriteFolderPrefix, StringComparison.Ordinal))
+            {
+                var contents = FavouriteFolderContents(
+                    item.SubmenuSource.Substring(Launcher.FavouriteFolderPrefix.Length));
+
+                if (contents.Count == 0)
+                    menu.Items.Add(new MenuItem { Header = Lang.T("Empty"), IsEnabled = false });
+                else
+                    Populate(menu.Items, contents);
+            }
             else
             {
                 var entries = SubmenuEntries(item.SubmenuSource);
@@ -795,6 +889,18 @@ namespace RetroMenu.Views
             }
 
             OpenPopup(menu);
+        }
+
+        private static List<StartItem> FavouriteFolderContents(string name)
+        {
+            if (Demo.IsActive) return Demo.FolderContents();
+
+            var folder = AppSettings.Instance.Favourites.FirstOrDefault(
+                f => f.IsFolder && string.Equals(f.Folder, name, StringComparison.OrdinalIgnoreCase));
+
+            if (folder == null) return new List<StartItem>();
+
+            return folder.Items.Select(Resolve).Where(i => i != null).ToList();
         }
 
         private static List<StartItem> SubmenuEntries(string source)

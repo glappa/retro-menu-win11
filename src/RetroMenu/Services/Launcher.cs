@@ -269,6 +269,9 @@ namespace RetroMenu.Services
         /// <summary>Stands for "fill this submenu from the program catalogue".</summary>
         public const string CatalogSubmenu = "catalog";
 
+        /// <summary>Prefix for "fill this submenu from the favourites folder named ...".</summary>
+        public const string FavouriteFolderPrefix = "favourites:";
+
         /// <summary>
         /// The two slots XP kept at the very top of the left column, filled from the
         /// current default browser and mail client.

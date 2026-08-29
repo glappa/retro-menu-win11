@@ -68,11 +68,28 @@ namespace RetroMenu.Services
             },
         };
 
+        /// <summary>The name of the folder the demo favourites carry.</summary>
+        public const string FolderName = "Werkzeuge";
+
         public static List<StartItem> Pinned() => new List<StartItem>
         {
             Program("Editor", "notepad.exe"),
-            Program("Rechner", "calc.exe"),
+            new StartItem
+            {
+                Name = FolderName,
+                Kind = StartItemKind.Folder,
+                ParsingName = "res:imageres.dll,18",
+                SubmenuSource = Launcher.FavouriteFolderPrefix + FolderName
+            },
             Program("Windows-Explorer", "explorer.exe"),
+        };
+
+        /// <summary>What that folder holds.</summary>
+        public static List<StartItem> FolderContents() => new List<StartItem>
+        {
+            Program("Rechner", "calc.exe"),
+            Program("Zeichentabelle", "charmap.exe"),
+            Program("Bildschirmlupe", "magnify.exe"),
         };
 
         public static List<StartItem> Frequent() => new List<StartItem>

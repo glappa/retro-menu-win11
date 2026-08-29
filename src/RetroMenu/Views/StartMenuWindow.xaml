@@ -41,22 +41,33 @@
             </Style.Triggers>
         </Style>
 
-        <!-- left column: 34px row, 30px icon -->
+        <!-- left column: 34px row, 30px icon, arrow when it is a favourites folder -->
         <DataTemplate x:Key="LeftItemTemplate">
             <Button Style="{StaticResource MenuEntryButton}" Height="34" Margin="0,0,0,4"
                     ToolTip="{Binding Tooltip}">
-                <StackPanel Orientation="Horizontal">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
                     <Image Width="30" Height="30" Margin="0,0,3,0"
                            Source="{Binding LargeIcon}"
                            RenderOptions.BitmapScalingMode="HighQuality" />
-                    <StackPanel VerticalAlignment="Center">
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Name}" FontWeight="{Binding TitleWeight}"
-                                   MaxWidth="140" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Text="{Binding Subtext}" MaxWidth="140"
+                                   MaxWidth="135" TextTrimming="CharacterEllipsis"
+                                   HorizontalAlignment="Left" />
+                        <TextBlock Text="{Binding Subtext}" MaxWidth="135"
                                    Visibility="{Binding SubtextVisibility}"
+                                   HorizontalAlignment="Left"
                                    Style="{StaticResource SubtextStyle}" />
                     </StackPanel>
-                </StackPanel>
+                    <Path Grid.Column="2" Margin="3,0,2,0" VerticalAlignment="Center"
+                          Data="M 0,0 L 3.5,3.5 L 0,7 Z"
+                          Visibility="{Binding ArrowVisibility}"
+                          Style="{StaticResource PlaceArrowStyle}" />
+                </Grid>
             </Button>
         </DataTemplate>
 
@@ -304,7 +315,8 @@
                                                   VerticalScrollBarVisibility="Auto"
                                                   HorizontalScrollBarVisibility="Disabled">
                                         <StackPanel Button.Click="OnItemClick"
-                                                    MouseRightButtonUp="OnItemRightClick">
+                                                    MouseRightButtonUp="OnItemRightClick"
+                                                    MouseMove="OnPlaceHover">
                                             <ItemsControl x:Name="TopItems"
                                                           ItemTemplate="{StaticResource LeftItemTemplate}" />
                                             <Rectangle x:Name="TopSeparator" Height="1.5"

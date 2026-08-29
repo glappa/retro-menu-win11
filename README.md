@@ -78,9 +78,15 @@ häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
   was Shell-Erweiterungen beisteuern, nur eben im Retro-Anstrich.
 * **„Alle Programme"** als Kaskade aus den beiden Startmenü-Ordnern zusammengeführt,
   dazu Store-Apps, die keine Verknüpfung auf der Platte haben.
-* **Häufig verwendet nach XP-Regeln**: Installer, Deinstallationsprogramme und
-  Systemwerkzeuge bleiben draußen; ein Programm kann sich per `NoStartPage`
-  heraushalten. Neu installierte Programme werden hervorgehoben.
+* **Favoriten mit Ordnern.** Rechtsklick auf einen Eintrag legt ihn oben in die
+  Favoritenliste. Von dort lässt er sich in einen Ordner verschieben – wie die
+  Gruppen im Windows-11-Menü, nur klappt der Ordner hier als Kaskade auf statt als
+  Kachelraster. Ordner lassen sich umbenennen und wieder auflösen.
+* **Häufig oder zuletzt verwendet.** Die untere Liste zeigt wahlweise die am
+  häufigsten oder die zuletzt gestarteten Programme (Einstellungen →
+  „Zuletzt gestartete Programme zeigen"). Nach XP-Regeln bleiben Installer,
+  Deinstallationsprogramme und Systemwerkzeuge draußen; ein Programm kann sich per
+  `NoStartPage` heraushalten. Neu installierte Programme werden hervorgehoben.
 * **Auto-Hide-Taskleiste fährt mit hoch**, solange das Menü offen ist.
 * **Tastatur**: Pfeiltasten durch beide Spalten, Buchstaben springen, Eingabe startet.
 * **Einstellungen** über das Tray-Symbol: Design, Größe, Sprache, Verhalten der
@@ -96,7 +102,8 @@ häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
 | Rechtsklick aufs Tray-Symbol | Einstellungen, Programmliste neu einlesen, Beenden |
 | Esc | Menü zu |
 | Tippen | sucht in Programmen, Einstellungen und auf Wunsch Dateien |
-| Rechtsklick auf einen Eintrag | das volle Explorer-Menü |
+| Rechtsklick auf einen Eintrag | Favoriten, Ordner und das volle Explorer-Menü |
+| Zeigen auf einen Favoritenordner | klappt ihn auf |
 | Umschalt + Rechtsklick | dazu die erweiterten Befehle |
 | Zeigen auf ▸-Einträge | klappt das Untermenü auf |
 | Pfeiltasten / Buchstaben / Eingabe | Bedienung ohne Maus |
@@ -170,7 +177,9 @@ Oberfläche (Rechtsklick aufs Tray-Symbol → Einstellungen):
 | `KeepTaskbarVisible` | Auto-Hide-Taskleiste einblenden, solange das Menü offen ist |
 | `ShowSearchBox`, `SearchFiles` | Suchfeld, und ob es Dateien mitsucht |
 | `ShowStoreApps`, `ShowRunAsAdmin`, `PlaySounds` | Ein/aus |
-| `Pinned`, `LaunchCounts`, `KnownPrograms` | Angeheftetes, Startzähler, bekannte Programme |
+| `ShowRecentPrograms` | Untere Liste nach Zeit statt nach Häufigkeit |
+| `Favourites` | Favoriten, samt Ordnern und deren Inhalt |
+| `LaunchCounts`, `LaunchTimes`, `KnownPrograms` | Startzähler, Startzeiten, bekannte Programme |
 | `UserName` | Überschreibt den angezeigten Namen |
 
 Daneben liegt `retromenu.log`. Mit `RETROMENU_DEBUG=1` kommt jedes Ereignis der
