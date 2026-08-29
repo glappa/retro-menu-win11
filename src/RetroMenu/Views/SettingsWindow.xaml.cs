@@ -31,6 +31,8 @@ namespace RetroMenu.Views
             WinKeyLabel.Text = Lang.T("WinKey");
             FrequentLabel.Text = Lang.T("FrequentCount");
             ScaleLabel.Text = Lang.T("MenuScale");
+            TilesToggle.Content = Lang.T("ShowTiles");
+            TilesHint.Text = Lang.T("ShowTilesHint");
             RecentToggle.Content = Lang.T("ShowRecent");
             RecentHint.Text = Lang.T("ShowRecentHint");
             KeepTaskbarToggle.Content = Lang.T("KeepTaskbar");
@@ -78,6 +80,7 @@ namespace RetroMenu.Views
                 .OrderBy(v => Math.Abs(v - settings.MenuScale * 100))
                 .First();
 
+            TilesToggle.IsChecked = settings.ShowTilePanel;
             RecentToggle.IsChecked = settings.ShowRecentPrograms;
             KeepTaskbarToggle.IsChecked = settings.KeepTaskbarVisible;
             SearchBoxToggle.IsChecked = settings.ShowSearchBox;
@@ -174,6 +177,7 @@ namespace RetroMenu.Views
             settings.ShowSearchBox = SearchBoxToggle.IsChecked == true;
             settings.KeepTaskbarVisible = KeepTaskbarToggle.IsChecked == true;
             settings.ShowRecentPrograms = RecentToggle.IsChecked == true;
+            settings.ShowTilePanel = TilesToggle.IsChecked == true;
 
             bool storeApps = StoreAppsToggle.IsChecked == true;
             bool storeChanged = storeApps != settings.ShowStoreApps;

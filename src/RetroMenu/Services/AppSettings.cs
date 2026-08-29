@@ -57,6 +57,12 @@ namespace RetroMenu.Services
         /// </summary>
         public bool ShowRecentPrograms { get; set; } = false;
 
+        /// <summary>
+        /// Show the favourites a second time as a panel of tiles on the right, the
+        /// way Windows 11 lays its pinned apps out. Off keeps the classic width.
+        /// </summary>
+        public bool ShowTilePanel { get; set; } = false;
+
         public bool ShowRunAsAdmin { get; set; } = true;
         public bool ShowStoreApps { get; set; } = true;
         public string UserName { get; set; } = "";

@@ -52,6 +52,10 @@ richtige Aufbau.
 | --- | --- |
 | ![Windows 98](docs/windows98.png) | ![Windows 2000](docs/windows2000.png) |
 
+Und auf Wunsch mit dem Kachelbereich für die Favoriten:
+
+![Mit Kachelbereich](docs/tiles.png)
+
 **Eine Spalte mit senkrechtem Banner** (Windows 95, 98, Me, 2000): Windows Update,
 Programme ▸, Favoriten ▸, Zuletzt verwendete Dokumente ▸, Einstellungen ▸, Suchen,
 Hilfe, Ausführen…, dann Abmelden… und Beenden… Der Streifen am linken Rand trägt den
@@ -79,9 +83,13 @@ häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
 * **„Alle Programme"** als Kaskade aus den beiden Startmenü-Ordnern zusammengeführt,
   dazu Store-Apps, die keine Verknüpfung auf der Platte haben.
 * **Favoriten mit Ordnern.** Rechtsklick auf einen Eintrag legt ihn oben in die
-  Favoritenliste. Von dort lässt er sich in einen Ordner verschieben – wie die
-  Gruppen im Windows-11-Menü, nur klappt der Ordner hier als Kaskade auf statt als
-  Kachelraster. Ordner lassen sich umbenennen und wieder auflösen.
+  Favoritenliste. Von dort lässt er sich in einen Ordner verschieben – die
+  Gruppierung des Windows-11-Menüs. Ordner lassen sich umbenennen und auflösen, und
+  ein Ordner klappt beim Draufzeigen als Kaskade auf.
+* **Wahlweise als Kachelbereich.** Ein Häkchen setzt die Favoriten stattdessen in
+  einen dritten Bereich rechts neben das Menü: Programme und Ordner als Raster, wie
+  das Angeheftet-Feld von Windows 11, nur im Anstrich der jeweiligen Epoche. Ordner
+  tragen dort einen Pfeil und klappen genauso auf.
 * **Häufig oder zuletzt verwendet.** Die untere Liste zeigt wahlweise die am
   häufigsten oder die zuletzt gestarteten Programme (Einstellungen →
   „Zuletzt gestartete Programme zeigen"). Nach XP-Regeln bleiben Installer,
@@ -178,6 +186,7 @@ Oberfläche (Rechtsklick aufs Tray-Symbol → Einstellungen):
 | `ShowSearchBox`, `SearchFiles` | Suchfeld, und ob es Dateien mitsucht |
 | `ShowStoreApps`, `ShowRunAsAdmin`, `PlaySounds` | Ein/aus |
 | `ShowRecentPrograms` | Untere Liste nach Zeit statt nach Häufigkeit |
+| `ShowTilePanel` | Favoriten als Kachelbereich rechts statt als Liste links |
 | `Favourites` | Favoriten, samt Ordnern und deren Inhalt |
 | `LaunchCounts`, `LaunchTimes`, `KnownPrograms` | Startzähler, Startzeiten, bekannte Programme |
 | `UserName` | Überschreibt den angezeigten Namen |

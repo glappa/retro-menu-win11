@@ -316,7 +316,14 @@ namespace RetroMenu.Views
             return list;
         }
 
-        private List<Button> RightButtons() => IsClassic ? new List<Button>() : ButtonsIn(PlaceItems);
+        private List<Button> RightButtons()
+        {
+            if (IsClassic) return new List<Button>();
+
+            var list = ButtonsIn(PlaceItems);
+            if (TilePanel.Visibility == Visibility.Visible) list.AddRange(ButtonsIn(TileItems));
+            return list;
+        }
 
         private bool Step(int direction)
         {
@@ -470,6 +477,7 @@ namespace RetroMenu.Views
 
             if (classic)
             {
+                TilePanel.Visibility = Visibility.Collapsed;
                 ClassicItems.ItemsSource = Launcher.BuildClassicRows();
                 return;
             }
@@ -503,11 +511,18 @@ namespace RetroMenu.Views
         {
             if (Demo.IsActive)
             {
+                bool demoTiles = AppSettings.Instance.ShowTilePanel;
                 var demoTop = Launcher.BuildDefaultAppSlots();
-                demoTop.AddRange(Demo.Pinned());
+                var demoFavourites = Demo.Pinned();
+                if (!demoTiles) demoTop.AddRange(demoFavourites);
+
                 TopItems.ItemsSource = demoTop;
                 FrequentItems.ItemsSource = Demo.Frequent();
                 TopSeparator.Visibility = Visibility.Visible;
+
+                TilePanel.Visibility = demoTiles ? Visibility.Visible : Visibility.Collapsed;
+                TileHeader.Text = Lang.T("TilesHeader");
+                TileItems.ItemsSource = demoTiles ? demoFavourites : null;
                 return;
             }
 
@@ -520,25 +535,16 @@ namespace RetroMenu.Views
             var top = Launcher.BuildDefaultAppSlots();
             var taken = new HashSet<string>(top.Select(i => i.Id), StringComparer.OrdinalIgnoreCase);
 
-            foreach (var favourite in settings.Favourites)
-            {
-                if (favourite.IsFolder)
-                {
-                    foreach (var id in favourite.Items) taken.Add(id);
-                    top.Add(new StartItem
-                    {
-                        Name = favourite.Folder,
-                        Kind = StartItemKind.Folder,
-                        ParsingName = "res:imageres.dll,18",
-                        SubmenuSource = Launcher.FavouriteFolderPrefix + favourite.Folder
-                    });
-                    continue;
-                }
+            var favourites = BuildFavourites(settings, taken);
 
-                var resolved = Resolve(favourite.Id);
-                if (resolved == null || !taken.Add(resolved.Id)) continue;
-                top.Add(resolved);
-            }
+            // With the tile panel showing them, listing the favourites in the column
+            // as well would just say everything twice.
+            bool tiles = settings.ShowTilePanel;
+            if (!tiles) top.AddRange(favourites);
+
+            TilePanel.Visibility = tiles ? Visibility.Visible : Visibility.Collapsed;
+            TileHeader.Text = Lang.T("TilesHeader");
+            TileItems.ItemsSource = tiles ? favourites : null;
 
             // Either the ones started most often, as XP had it, or the ones started
             // most recently.
@@ -557,6 +563,38 @@ namespace RetroMenu.Views
             FrequentItems.ItemsSource = frequent;
             TopSeparator.Visibility = top.Count > 0 && frequent.Count > 0
                 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        /// <summary>
+        /// The favourites as menu entries. A folder becomes one entry that opens as
+        /// a cascade; everything it holds is marked as spoken for so the list below
+        /// does not repeat it.
+        /// </summary>
+        private static List<StartItem> BuildFavourites(AppSettings settings, HashSet<string> taken)
+        {
+            var built = new List<StartItem>();
+
+            foreach (var favourite in settings.Favourites)
+            {
+                if (favourite.IsFolder)
+                {
+                    foreach (var id in favourite.Items) taken.Add(id);
+                    built.Add(new StartItem
+                    {
+                        Name = favourite.Folder,
+                        Kind = StartItemKind.Folder,
+                        ParsingName = "res:imageres.dll,18",
+                        SubmenuSource = Launcher.FavouriteFolderPrefix + favourite.Folder
+                    });
+                    continue;
+                }
+
+                var resolved = Resolve(favourite.Id);
+                if (resolved == null || !taken.Add(resolved.Id)) continue;
+                built.Add(resolved);
+            }
+
+            return built;
         }
 
         private void SeedPinsOnce()

@@ -112,6 +112,30 @@
                                          ItemTemplate="{StaticResource PlaceTemplate}"
                                          SeparatorTemplate="{StaticResource RightSeparatorTemplate}" />
 
+        <!-- a tile in the panel on the right: icon over a wrapped caption -->
+        <DataTemplate x:Key="TileTemplate">
+            <Button Style="{StaticResource MenuEntryButton}" Width="72" Height="72"
+                    Margin="2" Padding="2" ToolTip="{Binding Tooltip}">
+                <StackPanel VerticalAlignment="Center">
+                    <Grid Width="38" Height="34" HorizontalAlignment="Center">
+                        <Image Width="32" Height="32" HorizontalAlignment="Left"
+                               Source="{Binding LargeIcon}"
+                               RenderOptions.BitmapScalingMode="HighQuality" />
+                        <!-- a folder tile opens rather than starts, so it says so -->
+                        <Path Data="M 0,0 L 4.5,4.5 L 0,9 Z" Stretch="Fill"
+                              Width="5" Height="10" Margin="0,0,1,0"
+                              HorizontalAlignment="Right" VerticalAlignment="Center"
+                              Visibility="{Binding ArrowVisibility}"
+                              Style="{StaticResource PlaceArrowStyle}" />
+                    </Grid>
+                    <TextBlock Text="{Binding Name}" TextAlignment="Center"
+                               TextWrapping="Wrap" MaxHeight="27"
+                               LineHeight="13" LineStackingStrategy="BlockLineHeight"
+                               TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
+                </StackPanel>
+            </Button>
+        </DataTemplate>
+
         <views:StartItemTemplateSelector x:Key="ResultSelector"
                                          ItemTemplate="{StaticResource LeftItemTemplate}"
                                          SeparatorTemplate="{StaticResource RightSeparatorTemplate}"
@@ -261,6 +285,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="190" />
                             <ColumnDefinition Width="190" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
                         <!-- left column -->
@@ -355,6 +380,33 @@
                             <ItemsControl x:Name="PlaceItems"
                                           ItemTemplateSelector="{StaticResource PlaceSelector}"
                                           Button.Click="OnItemClick" />
+                        </Border>
+
+                        <!-- third panel: the favourites as tiles, folders included -->
+                        <Border Grid.Column="2" x:Name="TilePanel" Width="240"
+                                Visibility="Collapsed" Padding="4,6,4,5"
+                                Background="{DynamicResource RightPaneBackground}"
+                                BorderThickness="1,0,0,0"
+                                BorderBrush="{DynamicResource ColumnDividerBrush}"
+                                TextElement.Foreground="{DynamicResource RightPaneForeground}"
+                                MouseMove="OnPlaceHover">
+                            <DockPanel>
+                                <TextBlock x:Name="TileHeader" DockPanel.Dock="Top"
+                                           FontWeight="Bold" Margin="4,1,0,5" />
+                                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled">
+                                    <ItemsControl x:Name="TileItems"
+                                                  ItemTemplate="{StaticResource TileTemplate}"
+                                                  Button.Click="OnItemClick"
+                                                  MouseRightButtonUp="OnItemRightClick">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" Width="228" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </DockPanel>
                         </Border>
                     </Grid>
                 </Border>
