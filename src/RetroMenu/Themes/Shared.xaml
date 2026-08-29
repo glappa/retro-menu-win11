@@ -34,6 +34,90 @@
     <SolidColorBrush x:Key="IconEdgeBrush" Color="#59FFFFFF" />
 
     <!--
+        Both footer icons are drawn on a 32 unit square and shown through an Image,
+        so they sit exactly centred at any size and stay sharp when the menu is
+        scaled up. The earlier version put a 22 unit canvas inside a 20 unit box,
+        which pushed the glyph a pixel down and to the right.
+    -->
+    <LinearGradientBrush x:Key="IconGlossBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#70FFFFFF" Offset="0" />
+        <GradientStop Color="#20FFFFFF" Offset="0.75" />
+        <GradientStop Color="#00FFFFFF" Offset="1" />
+    </LinearGradientBrush>
+
+    <DrawingImage x:Key="LogOffIconImage">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="{StaticResource LogOffIconBackground}">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{StaticResource IconEdgeBrush}" Thickness="1" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0.5,0.5,31,31" RadiusX="4.5" RadiusY="4.5" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+
+                <GeometryDrawing Brush="{StaticResource IconGlossBrush}">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="2,2,28,13" RadiusX="3.5" RadiusY="3.5" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+
+                <!-- a key: bow at the lower left, shaft up to the right, two teeth -->
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{StaticResource IconGlyphBrush}" Thickness="2.6"
+                             StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <EllipseGeometry Center="11,21" RadiusX="4.2" RadiusY="4.2" />
+                            <LineGeometry StartPoint="14,18" EndPoint="23.5,8.5" />
+                            <LineGeometry StartPoint="19.4,12.6" EndPoint="22,15.2" />
+                            <LineGeometry StartPoint="21.6,10.4" EndPoint="23.8,12.6" />
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="PowerIconImage">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="{StaticResource PowerIconBackground}">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{StaticResource IconEdgeBrush}" Thickness="1" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0.5,0.5,31,31" RadiusX="4.5" RadiusY="4.5" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+
+                <GeometryDrawing Brush="{StaticResource IconGlossBrush}">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="2,2,28,13" RadiusX="3.5" RadiusY="3.5" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+
+                <!-- ring and bar, both centred on the same point -->
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{StaticResource IconGlyphBrush}" Thickness="2.6"
+                             StartLineCap="Round" EndLineCap="Round" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <EllipseGeometry Center="16,17.5" RadiusX="7.4" RadiusY="7.4" />
+                            <LineGeometry StartPoint="16,10.6" EndPoint="16,17.6" />
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!--
         A row in the left or the right column. XP drew the hover state as a flat
         rectangle in one solid blue, with square corners.
     -->

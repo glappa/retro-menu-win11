@@ -179,19 +179,8 @@
             <Button Style="{StaticResource MenuEntryButton}"
                     Height="{DynamicResource ClassicItemHeight}" Padding="2,0">
                 <StackPanel Orientation="Horizontal">
-                    <Viewbox Width="32" Height="32" Margin="2,0,6,0">
-                        <Border Width="22" Height="22" CornerRadius="3"
-                                Background="{StaticResource LogOffIconBackground}"
-                                BorderBrush="{StaticResource IconEdgeBrush}" BorderThickness="1">
-                            <Canvas Width="22" Height="22">
-                                <Ellipse Canvas.Left="4" Canvas.Top="11" Width="7" Height="7"
-                                         Stroke="{StaticResource IconGlyphBrush}" StrokeThickness="1.7" />
-                                <Path Stroke="{StaticResource IconGlyphBrush}" StrokeThickness="1.7"
-                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                      Data="M 9.7,12.3 L 16.4,5.6 M 13.9,8.1 L 15.6,9.8 M 16.4,5.6 L 18.0,7.2" />
-                            </Canvas>
-                        </Border>
-                    </Viewbox>
+                    <Image Source="{StaticResource LogOffIconImage}" Width="32" Height="32"
+                           Margin="2,0,6,0" />
                     <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
@@ -201,18 +190,8 @@
             <Button Style="{StaticResource MenuEntryButton}"
                     Height="{DynamicResource ClassicItemHeight}" Padding="2,0">
                 <StackPanel Orientation="Horizontal">
-                    <Viewbox Width="32" Height="32" Margin="2,0,6,0">
-                        <Border Width="22" Height="22" CornerRadius="3"
-                                Background="{StaticResource PowerIconBackground}"
-                                BorderBrush="{StaticResource IconEdgeBrush}" BorderThickness="1">
-                            <Canvas Width="22" Height="22">
-                                <Ellipse Canvas.Left="5.5" Canvas.Top="5.5" Width="11" Height="11"
-                                         Stroke="{StaticResource IconGlyphBrush}" StrokeThickness="1.7" />
-                                <Rectangle Canvas.Left="10.1" Canvas.Top="5.8" Width="1.8" Height="6.4"
-                                           Fill="{StaticResource IconGlyphBrush}" />
-                            </Canvas>
-                        </Border>
-                    </Viewbox>
+                    <Image Source="{StaticResource PowerIconImage}" Width="32" Height="32"
+                           Margin="2,0,6,0" />
                     <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
@@ -426,17 +405,8 @@
                     <Button x:Name="LogOffButton" Style="{StaticResource FooterItemButton}"
                             Margin="0,0,10,0" Click="OnLogOffClick">
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="22" Height="22" CornerRadius="3" Margin="0,0,2,0"
-                                    Background="{StaticResource LogOffIconBackground}"
-                                    BorderBrush="{StaticResource IconEdgeBrush}" BorderThickness="1">
-                                <Canvas Width="22" Height="22">
-                                    <Ellipse Canvas.Left="4" Canvas.Top="11" Width="7" Height="7"
-                                             Stroke="{StaticResource IconGlyphBrush}" StrokeThickness="1.7" />
-                                    <Path Stroke="{StaticResource IconGlyphBrush}" StrokeThickness="1.7"
-                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                          Data="M 9.7,12.3 L 16.4,5.6 M 13.9,8.1 L 15.6,9.8 M 16.4,5.6 L 18.0,7.2" />
-                                </Canvas>
-                            </Border>
+                            <Image Source="{StaticResource LogOffIconImage}" Width="22" Height="22"
+                                   Margin="0,0,3,0" />
                             <TextBlock x:Name="LogOffLabel" VerticalAlignment="Center" Margin="2,0,0,0" />
                         </StackPanel>
                     </Button>
@@ -444,16 +414,8 @@
                     <Button x:Name="ShutDownButton" Style="{StaticResource FooterItemButton}"
                             Margin="0,0,10,0" Click="OnShutDownClick">
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="22" Height="22" CornerRadius="3" Margin="0,0,2,0"
-                                    Background="{StaticResource PowerIconBackground}"
-                                    BorderBrush="{StaticResource IconEdgeBrush}" BorderThickness="1">
-                                <Canvas Width="22" Height="22">
-                                    <Ellipse Canvas.Left="5.5" Canvas.Top="5.5" Width="11" Height="11"
-                                             Stroke="{StaticResource IconGlyphBrush}" StrokeThickness="1.7" />
-                                    <Rectangle Canvas.Left="10.1" Canvas.Top="5.8" Width="1.8" Height="6.4"
-                                               Fill="{StaticResource IconGlyphBrush}" />
-                                </Canvas>
-                            </Border>
+                            <Image Source="{StaticResource PowerIconImage}" Width="22" Height="22"
+                                   Margin="0,0,3,0" />
                             <TextBlock x:Name="ShutDownLabel" VerticalAlignment="Center" Margin="2,0,0,0" />
                         </StackPanel>
                     </Button>
