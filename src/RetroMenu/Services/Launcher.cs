@@ -222,6 +222,54 @@ namespace RetroMenu.Services
         }
 
         /// <summary>
+        /// The single column Windows 95 through 2000 showed, in their order. The
+        /// entries with an arrow open a cascading submenu; "Programme" is fed from
+        /// the program catalogue, the others from a shell folder.
+        /// </summary>
+        public static List<StartItem> BuildClassicRows()
+        {
+            var rows = new List<StartItem>();
+
+            void Add(string key, string parsingName, string command,
+                     string submenu = null, string templateKey = null) =>
+                rows.Add(new StartItem
+                {
+                    Name = Lang.T(key),
+                    Kind = StartItemKind.Place,
+                    ParsingName = parsingName,
+                    Command = command,
+                    SubmenuSource = submenu,
+                    TemplateKey = templateKey
+                });
+
+            void Line() => rows.Add(new StartItem
+            {
+                Name = "-",
+                Kind = StartItemKind.Command,
+                Command = Separator
+            });
+
+            Add("WindowsUpdate", "res:imageres.dll,106", "url:ms-settings:windowsupdate");
+            Line();
+            Add("Programs", "res:imageres.dll,18", null, submenu: CatalogSubmenu);
+            Add("Favorites", "shell:Favorites", "place:shell:Favorites", submenu: "shell:Favorites");
+            Add("RecentDocuments", "shell:Recent", "place:shell:Recent", submenu: "shell:Recent");
+            Add("SettingsGroup", "shell:ControlPanelFolder", "place:shell:ControlPanelFolder",
+                submenu: "shell:ControlPanelFolder");
+            Add("SearchPlace", SearchShellItem, "search");
+            Add("Help", "res:imageres.dll,104", "help");
+            Add("Run", RunShellItem, "rundialog");
+            Line();
+            Add("LogOffClassic", null, "logoffmenu", templateKey: "logoff");
+            Add("ShutDownClassic", null, "powermenu", templateKey: "shutdown");
+
+            return rows;
+        }
+
+        /// <summary>Stands for "fill this submenu from the program catalogue".</summary>
+        public const string CatalogSubmenu = "catalog";
+
+        /// <summary>
         /// The two slots XP kept at the very top of the left column, filled from the
         /// current default browser and mail client.
         /// </summary>

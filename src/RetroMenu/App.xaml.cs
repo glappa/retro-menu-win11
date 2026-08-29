@@ -65,6 +65,19 @@ namespace RetroMenu
                 return;
             }
 
+            // The very same executable is the installer. Started under its Setup
+            // name, or with --setup, it offers to install itself instead of
+            // opening a menu.
+            bool wantsSetup = e.Args.Any(a => string.Equals(a, "--setup", StringComparison.OrdinalIgnoreCase))
+                              || LooksLikeSetupDownload();
+            bool wantsUninstall = e.Args.Any(a => string.Equals(a, "--uninstall", StringComparison.OrdinalIgnoreCase));
+
+            if (wantsSetup || wantsUninstall)
+            {
+                ShowSetup(wantsUninstall);
+                return;
+            }
+
             _singleInstance = new Mutex(true, "RetroMenuWin11.SingleInstance", out bool created);
             if (!created)
             {
@@ -138,6 +151,35 @@ namespace RetroMenu
             {
                 Dispatcher.BeginInvoke(new Action(() => ToggleMenu(true)), DispatcherPriority.ApplicationIdle);
             }
+        }
+
+        /// <summary>
+        /// A freshly downloaded release asset carries "setup" in its file name and
+        /// sits wherever the browser put it. That combination means the user just
+        /// double-clicked the installer.
+        /// </summary>
+        private static bool LooksLikeSetupDownload()
+        {
+            try
+            {
+                string exe = Environment.ProcessPath;
+                if (string.IsNullOrEmpty(exe)) return false;
+                if (Installer.RunningFromInstallDirectory) return false;
+
+                string name = System.IO.Path.GetFileNameWithoutExtension(exe);
+                return name.IndexOf("setup", StringComparison.OrdinalIgnoreCase) >= 0;
+            }
+            catch { return false; }
+        }
+
+        private void ShowSetup(bool uninstall)
+        {
+            ThemeManager.Apply("Windows XP Blue");
+            Lang.Apply("auto", null);
+
+            var window = new SetupWindow(uninstall);
+            window.Closed += (_, __) => Shutdown();
+            window.Show();
         }
 
         private const string QuitSignalName = @"Local\RetroMenuWin11.Quit";

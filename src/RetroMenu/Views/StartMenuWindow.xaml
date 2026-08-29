@@ -105,7 +105,92 @@
                                          ItemTemplate="{StaticResource LeftItemTemplate}"
                                          SeparatorTemplate="{StaticResource RightSeparatorTemplate}"
                                          HeaderTemplate="{StaticResource SearchHeaderTemplate}" />
+
+        <!-- ============ the single column layout of Windows 95 to 2000 ============ -->
+
+        <DataTemplate x:Key="ClassicItemTemplate">
+            <Button Style="{StaticResource MenuEntryButton}"
+                    Height="{DynamicResource ClassicItemHeight}" Padding="2,0"
+                    ToolTip="{Binding Name}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Image Width="32" Height="32" Margin="2,0,6,0"
+                           Source="{Binding LargeIcon}"
+                           RenderOptions.BitmapScalingMode="HighQuality" />
+                    <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center"
+                               Margin="0,0,20,0" />
+                    <Path Grid.Column="2" Margin="0,0,4,0" VerticalAlignment="Center"
+                          Data="M 0,0 L 4,4 L 0,8 Z"
+                          Visibility="{Binding ArrowVisibility}"
+                          Style="{StaticResource PlaceArrowStyle}" />
+                </Grid>
+            </Button>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ClassicSeparatorTemplate">
+            <Grid Height="2" Margin="4,3,4,3">
+                <Rectangle Height="1" VerticalAlignment="Top"
+                           Fill="{DynamicResource Shadow3DBrush}" />
+                <Rectangle Height="1" VerticalAlignment="Bottom"
+                           Fill="{DynamicResource Light3DBrush}" />
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ClassicLogOffTemplate">
+            <Button Style="{StaticResource MenuEntryButton}"
+                    Height="{DynamicResource ClassicItemHeight}" Padding="2,0">
+                <StackPanel Orientation="Horizontal">
+                    <Viewbox Width="32" Height="32" Margin="2,0,6,0">
+                        <Border Width="22" Height="22" CornerRadius="3"
+                                Background="{StaticResource LogOffIconBackground}"
+                                BorderBrush="{StaticResource IconEdgeBrush}" BorderThickness="1">
+                            <Canvas Width="22" Height="22">
+                                <Ellipse Canvas.Left="4" Canvas.Top="11" Width="7" Height="7"
+                                         Stroke="{StaticResource IconGlyphBrush}" StrokeThickness="1.7" />
+                                <Path Stroke="{StaticResource IconGlyphBrush}" StrokeThickness="1.7"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      Data="M 9.7,12.3 L 16.4,5.6 M 13.9,8.1 L 15.6,9.8 M 16.4,5.6 L 18.0,7.2" />
+                            </Canvas>
+                        </Border>
+                    </Viewbox>
+                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ClassicShutDownTemplate">
+            <Button Style="{StaticResource MenuEntryButton}"
+                    Height="{DynamicResource ClassicItemHeight}" Padding="2,0">
+                <StackPanel Orientation="Horizontal">
+                    <Viewbox Width="32" Height="32" Margin="2,0,6,0">
+                        <Border Width="22" Height="22" CornerRadius="3"
+                                Background="{StaticResource PowerIconBackground}"
+                                BorderBrush="{StaticResource IconEdgeBrush}" BorderThickness="1">
+                            <Canvas Width="22" Height="22">
+                                <Ellipse Canvas.Left="5.5" Canvas.Top="5.5" Width="11" Height="11"
+                                         Stroke="{StaticResource IconGlyphBrush}" StrokeThickness="1.7" />
+                                <Rectangle Canvas.Left="10.1" Canvas.Top="5.8" Width="1.8" Height="6.4"
+                                           Fill="{StaticResource IconGlyphBrush}" />
+                            </Canvas>
+                        </Border>
+                    </Viewbox>
+                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </DataTemplate>
+
+        <views:StartItemTemplateSelector x:Key="ClassicSelector"
+                                         ItemTemplate="{StaticResource ClassicItemTemplate}"
+                                         SeparatorTemplate="{StaticResource ClassicSeparatorTemplate}"
+                                         LogOffTemplate="{StaticResource ClassicLogOffTemplate}"
+                                         ShutDownTemplate="{StaticResource ClassicShutDownTemplate}" />
     </Window.Resources>
+
+    <Grid>
 
     <!-- the margin leaves room for the drop shadow on the right -->
     <Border x:Name="Root"
@@ -312,4 +397,45 @@
             </Border>
         </Grid>
     </Border>
+
+    <!-- ============ Windows 95 to 2000: one column, strip on the left ============ -->
+    <Border x:Name="ClassicRoot" Visibility="Collapsed"
+            Margin="0,0,7,0" MinWidth="196"
+            Background="{DynamicResource MenuFaceBrush}"
+            BorderBrush="{DynamicResource DarkShadow3DBrush}"
+            BorderThickness="1"
+            SnapsToDevicePixels="True">
+        <Border.LayoutTransform>
+            <ScaleTransform x:Name="ClassicScale" ScaleX="1" ScaleY="1" />
+        </Border.LayoutTransform>
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="6" ShadowDepth="2" Direction="315" Opacity="0.45" />
+        </Border.Effect>
+
+        <Border BorderThickness="1,1,0,0" BorderBrush="{DynamicResource Light3DBrush}">
+            <DockPanel>
+                <Border DockPanel.Dock="Left"
+                        Width="{DynamicResource BannerWidth}"
+                        Background="{DynamicResource BannerBrush}">
+                    <TextBlock Text="{DynamicResource BannerText}"
+                               Foreground="{DynamicResource BannerForeground}"
+                               FontWeight="Bold"
+                               FontSize="{DynamicResource BannerFontSize}"
+                               VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                               Margin="0,0,0,7">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="-90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+                </Border>
+
+                <ItemsControl x:Name="ClassicItems" Margin="1,2,2,2"
+                              ItemTemplateSelector="{StaticResource ClassicSelector}"
+                              Button.Click="OnItemClick"
+                              MouseMove="OnPlaceHover" />
+            </DockPanel>
+        </Border>
+    </Border>
+
+    </Grid>
 </Window>

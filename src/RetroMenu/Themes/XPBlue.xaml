@@ -7,6 +7,8 @@
         start panel, so every stop below is deliberate.
     -->
 
+    <sys:String x:Key="MenuLayout">Panel</sys:String>
+
     <FontFamily x:Key="MenuFontFamily">Tahoma</FontFamily>
     <sys:Double x:Key="MenuFontSize">11</sys:Double>
     <sys:Double x:Key="UserNameFontSize">14</sys:Double>

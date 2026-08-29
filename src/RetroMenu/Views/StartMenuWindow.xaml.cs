@@ -88,7 +88,7 @@ namespace RetroMenu.Views
             AnnounceToTaskbar();
             Sounds.MenuPopup();
 
-            if (SearchHost.Visibility == Visibility.Visible)
+            if (!IsClassic && SearchHost.Visibility == Visibility.Visible)
             {
                 SearchBox.Clear();
                 SearchBox.Focus();
@@ -234,12 +234,14 @@ namespace RetroMenu.Views
         /// <summary>Left column top to bottom, with All Programs last where it sits.</summary>
         private List<Button> LeftButtons()
         {
+            if (IsClassic) return ButtonsIn(ClassicItems);
+
             var list = ButtonsIn(SearchScroll.Visibility == Visibility.Visible ? SearchScroll : NormalScroll);
             list.Add(AllProgramsButton);
             return list;
         }
 
-        private List<Button> RightButtons() => ButtonsIn(PlaceItems);
+        private List<Button> RightButtons() => IsClassic ? new List<Button>() : ButtonsIn(PlaceItems);
 
         private bool Step(int direction)
         {
@@ -304,7 +306,12 @@ namespace RetroMenu.Views
             scale = Math.Max(0.75, Math.Min(3.0, scale));
             RootScale.ScaleX = scale;
             RootScale.ScaleY = scale;
+            ClassicScale.ScaleX = scale;
+            ClassicScale.ScaleY = scale;
         }
+
+        /// <summary>True while a 9x era theme is showing its single column.</summary>
+        private bool IsClassic => ThemeManager.Layout == MenuLayout.Classic;
 
         private static double AvailableHeight(TaskbarInfo bar, double scale)
         {
@@ -379,12 +386,24 @@ namespace RetroMenu.Views
 
         public void Rebuild()
         {
+            bool classic = IsClassic;
+            Root.Visibility = classic ? Visibility.Collapsed : Visibility.Visible;
+            ClassicRoot.Visibility = classic ? Visibility.Visible : Visibility.Collapsed;
+
+            UserName.Text = UserInfo.DisplayName();
+            ApplyFontSmoothing();
+
+            if (classic)
+            {
+                ClassicItems.ItemsSource = Launcher.BuildClassicRows();
+                return;
+            }
+
             AllProgramsLabel.Text = Lang.T("AllPrograms");
             LogOffLabel.Text = Lang.T("LogOff");
             ShutDownLabel.Text = Lang.T("ShutDown");
             SearchHint.Text = Lang.T("SearchHint");
             NoResults.Text = Lang.T("NoResults");
-            UserName.Text = UserInfo.DisplayName();
 
             if (UserPicture.Source == null)
                 UserPicture.Source = UserInfo.Picture();
@@ -394,7 +413,6 @@ namespace RetroMenu.Views
             FilesToggle.Content = Lang.T("SearchFiles");
             FilesToggle.IsChecked = AppSettings.Instance.SearchFiles;
 
-            ApplyFontSmoothing();
             BuildLeftColumn();
             PlaceItems.ItemsSource = Launcher.BuildPlaces();
         }
@@ -491,7 +509,19 @@ namespace RetroMenu.Views
         private void OnItemClick(object sender, RoutedEventArgs e)
         {
             if ((e.OriginalSource as FrameworkElement)?.DataContext is not StartItem item) return;
-            if (item.Command == Launcher.Separator) return;
+            if (item.Command == Launcher.Separator || item.Command == Launcher.GroupHeader) return;
+
+            // The two entries at the foot of the classic menu open the same dialogs
+            // the buttons in the XP footer do.
+            if (item.Command == "logoffmenu") { OnLogOffClick(sender, e); return; }
+            if (item.Command == "powermenu") { OnShutDownClick(sender, e); return; }
+
+            // An entry that only carries a submenu does nothing on its own.
+            if (string.IsNullOrEmpty(item.Command) && !string.IsNullOrEmpty(item.SubmenuSource))
+            {
+                OpenSubmenuFor(item, FindButton(e.OriginalSource as DependencyObject));
+                return;
+            }
 
             HideMenu();
             Launcher.Launch(item);
@@ -657,10 +687,14 @@ namespace RetroMenu.Views
 
         private void OpenPlaceSubmenu()
         {
-            var item = _hoverItem;
-            var anchor = _hoverAnchor;
+            if (!(_hoverAnchor?.IsMouseOver ?? false)) return;
+            OpenSubmenuFor(_hoverItem, _hoverAnchor);
+        }
+
+        private void OpenSubmenuFor(StartItem item, Button anchor)
+        {
             if (item == null || anchor == null || string.IsNullOrEmpty(item.SubmenuSource)) return;
-            if (!anchor.IsMouseOver) return;
+            if (_popupOpen) return;
 
             var menu = new ContextMenu
             {
@@ -670,11 +704,20 @@ namespace RetroMenu.Views
                 VerticalOffset = -3
             };
 
-            var entries = SubmenuEntries(item.SubmenuSource);
-            if (entries.Count == 0)
-                menu.Items.Add(new MenuItem { Header = Lang.T("Empty"), IsEnabled = false });
+            if (item.SubmenuSource == Launcher.CatalogSubmenu)
+            {
+                Populate(menu.Items, App.Me.Catalog.Root.Children);
+                if (menu.Items.Count == 0)
+                    menu.Items.Add(new MenuItem { Header = Lang.T("Loading"), IsEnabled = false });
+            }
             else
-                Populate(menu.Items, entries);
+            {
+                var entries = SubmenuEntries(item.SubmenuSource);
+                if (entries.Count == 0)
+                    menu.Items.Add(new MenuItem { Header = Lang.T("Empty"), IsEnabled = false });
+                else
+                    Populate(menu.Items, entries);
+            }
 
             OpenPopup(menu);
         }

@@ -50,6 +50,12 @@ namespace RetroMenu.Model
         public bool Bold { get; set; }
 
         /// <summary>
+        /// Picks a special row template, for the two entries at the foot of the
+        /// classic menu that carry a drawn icon rather than a shell one.
+        /// </summary>
+        public string TemplateKey { get; set; }
+
+        /// <summary>
         /// Installed since the last time the menu looked. XP highlighted such entries
         /// in All Programs until they had been opened once.
         /// </summary>

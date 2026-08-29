@@ -3,49 +3,58 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!--
-        Grey 9x/2000 palette: square corners, 3D face grey, navy highlight.
-        Used for RetroBar's Windows 95-98, Windows 2000, Me and Classic themes.
+        Windows 2000. Warm grey face, the darker navy selection of the era.
+
+        The 9x family drew a single column with a coloured strip down the left
+        edge carrying the version name. Colours are the system 3D palette of the
+        era; the strip is solid navy with white lettering, measured off the
+        original bitmap rather than guessed.
     -->
 
-    <FontFamily x:Key="MenuFontFamily">Tahoma</FontFamily>
+    <sys:String x:Key="MenuLayout">Classic</sys:String>
+    <sys:String x:Key="BannerText">Windows 2000</sys:String>
+
+    <FontFamily x:Key="MenuFontFamily">Tahoma, Microsoft Sans Serif</FontFamily>
     <sys:Double x:Key="MenuFontSize">11</sys:Double>
     <sys:Double x:Key="UserNameFontSize">14</sys:Double>
+    <sys:Double x:Key="BannerWidth">22</sys:Double>
+    <sys:Double x:Key="BannerFontSize">15</sys:Double>
+    <sys:Double x:Key="ClassicItemHeight">36</sys:Double>
 
     <CornerRadius x:Key="MenuCornerRadius">0</CornerRadius>
-    <sys:Double x:Key="HeaderHeight">44</sys:Double>
-    <sys:Double x:Key="FooterHeight">32</sys:Double>
+    <sys:Double x:Key="HeaderHeight">0</sys:Double>
+    <sys:Double x:Key="FooterHeight">0</sys:Double>
 
-    <SolidColorBrush x:Key="FrameBrush" Color="#FFD4D0C8" />
+    <!-- 3D system colours -->
+    <SolidColorBrush x:Key="MenuFaceBrush" Color="#FFD4D0C8" />
+    <SolidColorBrush x:Key="Light3DBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="Shadow3DBrush" Color="#FF808080" />
+    <SolidColorBrush x:Key="DarkShadow3DBrush" Color="#FF404040" />
 
-    <LinearGradientBrush x:Key="HeaderBackground" StartPoint="0,0" EndPoint="1,0">
+    <LinearGradientBrush x:Key="BannerBrush" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Color="#FF0A246A" Offset="0" />
-        <GradientStop Color="#FFA6CAF0" Offset="1" />
+        <GradientStop Color="#FF1B4A87" Offset="1" />
     </LinearGradientBrush>
+    <SolidColorBrush x:Key="BannerForeground" Color="#FFFFFFFF" />
 
-    <LinearGradientBrush x:Key="HeaderTopHighlight" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Color="#00FFFFFF" Offset="0" />
-        <GradientStop Color="#00FFFFFF" Offset="1" />
-    </LinearGradientBrush>
-
+    <!-- shared keys, so the panel layout stays loadable under a classic theme -->
+    <SolidColorBrush x:Key="FrameBrush" Color="#FFD4D0C8" />
+    <SolidColorBrush x:Key="HeaderBackground" Color="#FF0A246A" />
+    <SolidColorBrush x:Key="HeaderTopHighlight" Color="#00FFFFFF" />
     <SolidColorBrush x:Key="HeaderForeground" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="UserTileBorder" Color="#FFFFFFFF" />
-
-    <LinearGradientBrush x:Key="OrangeLineBrush" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Color="#FF808080" Offset="0" />
-        <GradientStop Color="#FF808080" Offset="1" />
-    </LinearGradientBrush>
-
+    <SolidColorBrush x:Key="OrangeLineBrush" Color="#FF808080" />
     <SolidColorBrush x:Key="MenuTopLineBrush" Color="#FFFFFFFF" />
 
     <SolidColorBrush x:Key="LeftPaneBackground" Color="#FFD4D0C8" />
-    <SolidColorBrush x:Key="RightPaneBackground" Color="#FFC3BFB7" />
+    <SolidColorBrush x:Key="RightPaneBackground" Color="#FFD4D0C8" />
     <SolidColorBrush x:Key="ColumnDividerBrush" Color="#FF808080" />
 
     <SolidColorBrush x:Key="LeftPaneForeground" Color="#FF000000" />
     <SolidColorBrush x:Key="RightPaneForeground" Color="#FF000000" />
     <SolidColorBrush x:Key="SubtextForeground" Color="#99000000" />
 
-    <SolidColorBrush x:Key="ItemHighlightBackground" Color="#FF000080" />
+    <SolidColorBrush x:Key="ItemHighlightBackground" Color="#FF0A246A" />
     <SolidColorBrush x:Key="ItemHighlightForeground" Color="#FFFFFFFF" />
 
     <SolidColorBrush x:Key="LeftSeparatorBrush" Color="#FF808080" />
@@ -55,14 +64,13 @@
 
     <SolidColorBrush x:Key="FooterBackground" Color="#FFD4D0C8" />
     <SolidColorBrush x:Key="FooterForeground" Color="#FF000000" />
-    <SolidColorBrush x:Key="FooterButtonHover" Color="#30000080" />
+    <SolidColorBrush x:Key="FooterButtonHover" Color="#30000000" />
 
     <SolidColorBrush x:Key="CascadeBackground" Color="#FFD4D0C8" />
     <SolidColorBrush x:Key="CascadeBorder" Color="#FF808080" />
     <SolidColorBrush x:Key="CascadeForeground" Color="#FF000000" />
-    <SolidColorBrush x:Key="CascadeHighlight" Color="#FF000080" />
+    <SolidColorBrush x:Key="CascadeHighlight" Color="#FF0A246A" />
     <SolidColorBrush x:Key="CascadeHighlightForeground" Color="#FFFFFFFF" />
-    <!-- background behind a program installed since the menu last looked -->
     <SolidColorBrush x:Key="NewItemHighlight" Color="#FFE8E4DC" />
     <SolidColorBrush x:Key="CascadeSeparator" Color="#FF808080" />
 
