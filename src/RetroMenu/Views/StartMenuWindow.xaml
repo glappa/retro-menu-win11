@@ -175,6 +175,17 @@
             </Grid>
         </DataTemplate>
 
+        <DataTemplate x:Key="ClassicSleepTemplate">
+            <Button Style="{StaticResource MenuEntryButton}"
+                    Height="{DynamicResource ClassicItemHeight}" Padding="2,0">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="{StaticResource SleepIconImage}" Width="32" Height="32"
+                           Margin="2,0,6,0" />
+                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </DataTemplate>
+
         <DataTemplate x:Key="ClassicLogOffTemplate">
             <Button Style="{StaticResource MenuEntryButton}"
                     Height="{DynamicResource ClassicItemHeight}" Padding="2,0">
@@ -200,6 +211,7 @@
         <views:StartItemTemplateSelector x:Key="ClassicSelector"
                                          ItemTemplate="{StaticResource ClassicItemTemplate}"
                                          SeparatorTemplate="{StaticResource ClassicSeparatorTemplate}"
+                                         SleepTemplate="{StaticResource ClassicSleepTemplate}"
                                          LogOffTemplate="{StaticResource ClassicLogOffTemplate}"
                                          ShutDownTemplate="{StaticResource ClassicShutDownTemplate}" />
     </Window.Resources>
@@ -402,6 +414,15 @@
                     TextElement.Foreground="{DynamicResource FooterForeground}">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                             VerticalAlignment="Center">
+                    <Button x:Name="SleepButton" Style="{StaticResource FooterItemButton}"
+                            Margin="0,0,10,0" Click="OnSleepClick">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{StaticResource SleepIconImage}" Width="22" Height="22"
+                                   Margin="0,0,3,0" />
+                            <TextBlock x:Name="SleepLabel" VerticalAlignment="Center" Margin="2,0,0,0" />
+                        </StackPanel>
+                    </Button>
+
                     <Button x:Name="LogOffButton" Style="{StaticResource FooterItemButton}"
                             Margin="0,0,10,0" Click="OnLogOffClick">
                         <StackPanel Orientation="Horizontal">

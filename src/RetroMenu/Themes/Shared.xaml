@@ -30,6 +30,12 @@
         <GradientStop Color="#FF951700" Offset="1" />
     </LinearGradientBrush>
 
+    <LinearGradientBrush x:Key="SleepIconBackground" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFB9DDF5" Offset="0" />
+        <GradientStop Color="#FF4E9BD8" Offset="0.5" />
+        <GradientStop Color="#FF0B4E8E" Offset="1" />
+    </LinearGradientBrush>
+
     <SolidColorBrush x:Key="IconGlyphBrush" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="IconEdgeBrush" Color="#59FFFFFF" />
 
@@ -111,6 +117,42 @@
                             <EllipseGeometry Center="16,17.5" RadiusX="7.4" RadiusY="7.4" />
                             <LineGeometry StartPoint="16,10.6" EndPoint="16,17.6" />
                         </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="SleepIconImage">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="{StaticResource SleepIconBackground}">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{StaticResource IconEdgeBrush}" Thickness="1" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0.5,0.5,31,31" RadiusX="4.5" RadiusY="4.5" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+
+                <GeometryDrawing Brush="{StaticResource IconGlossBrush}">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="2,2,28,13" RadiusX="3.5" RadiusY="3.5" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+
+                <!-- a crescent: one disc with a second, slightly larger one bitten
+                     out of its upper right, which is how XP drew Stand By -->
+                <GeometryDrawing Brush="{StaticResource IconGlyphBrush}">
+                    <GeometryDrawing.Geometry>
+                        <CombinedGeometry GeometryCombineMode="Exclude">
+                            <CombinedGeometry.Geometry1>
+                                <EllipseGeometry Center="15.5,17.5" RadiusX="7.6" RadiusY="7.6" />
+                            </CombinedGeometry.Geometry1>
+                            <CombinedGeometry.Geometry2>
+                                <EllipseGeometry Center="18.2,13.9" RadiusX="7.9" RadiusY="7.9" />
+                            </CombinedGeometry.Geometry2>
+                        </CombinedGeometry>
                     </GeometryDrawing.Geometry>
                 </GeometryDrawing>
             </DrawingGroup>

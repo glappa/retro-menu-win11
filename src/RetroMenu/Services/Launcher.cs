@@ -288,6 +288,7 @@ namespace RetroMenu.Services
             Add("Help", "res:imageres.dll,104", "help");
             Add("Run", RunShellItem, "rundialog");
             Line();
+            Add("Standby", null, "sleepmenu", templateKey: "sleep");
             Add("LogOffClassic", null, "logoffmenu", templateKey: "logoff");
             Add("ShutDownClassic", null, "powermenu", templateKey: "shutdown");
 

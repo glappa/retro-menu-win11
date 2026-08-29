@@ -485,6 +485,7 @@ namespace RetroMenu.Views
             }
 
             AllProgramsLabel.Text = Lang.T("AllPrograms");
+            SleepLabel.Text = Lang.T("Standby");
             LogOffLabel.Text = Lang.T("LogOff");
             ShutDownLabel.Text = Lang.T("ShutDown");
             SearchHint.Text = Lang.T("SearchHint");
@@ -650,6 +651,7 @@ namespace RetroMenu.Views
 
             // The two entries at the foot of the classic menu open the same dialogs
             // the buttons in the XP footer do.
+            if (item.Command == "sleepmenu") { OnSleepClick(sender, e); return; }
             if (item.Command == "logoffmenu") { OnLogOffClick(sender, e); return; }
             if (item.Command == "powermenu") { OnShutDownClick(sender, e); return; }
 
@@ -1288,6 +1290,16 @@ namespace RetroMenu.Views
                 ("TurnOff", "shutdown"),
                 ("Restart", "restart")
             });
+        }
+
+        /// <summary>
+        /// Standby is one unambiguous thing, so it acts straight away rather than
+        /// opening the three-orb dialog for a single choice.
+        /// </summary>
+        private void OnSleepClick(object sender, RoutedEventArgs e)
+        {
+            HideMenu();
+            Launcher.Power("standby");
         }
 
         private void ShowPowerDialog((string Key, string Command)[] choices)
