@@ -20,6 +20,7 @@ namespace RetroMenu.Views
     public partial class StartMenuWindow : Window
     {
         private bool _popupOpen;
+        private int _popupGeneration;
         private IntPtr _handle;
 
         private readonly DispatcherTimer _hoverTimer;
@@ -170,6 +171,7 @@ namespace RetroMenu.Views
             _taskbarPresence.Hide();
             if (!IsVisible) return;
             _popupOpen = false;
+            _popupGeneration++; // let any flyout still winding down keep its hands off
             _hoverTimer.Stop();
             _allProgramsTimer.Stop();
             _hoverItem = null;
@@ -841,12 +843,22 @@ namespace RetroMenu.Views
         private void OpenPopup(ContextMenu menu)
         {
             _popupOpen = true;
+
+            // Right-clicking a second entry is a single gesture that both dismisses
+            // the open flyout and asks for a new one, and the two arrive in either
+            // order. Only the newest flyout may decide what happens when one closes;
+            // without that the old one's farewell finds the new one covering the
+            // pointer, concludes the user has clicked away, and shuts the menu.
+            int generation = ++_popupGeneration;
+
             menu.Closed += (_, __) =>
             {
+                if (generation != _popupGeneration) return;
                 _popupOpen = false;
+
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    if (!IsVisible) return;
+                    if (generation != _popupGeneration || !IsVisible) return;
 
                     // Dismissed with the pointer still on the menu: keep it open and
                     // take the focus back. Dismissed by a click elsewhere: close.
@@ -854,6 +866,7 @@ namespace RetroMenu.Views
                     else HideMenu();
                 }), DispatcherPriority.Input);
             };
+
             menu.IsOpen = true;
         }
 
