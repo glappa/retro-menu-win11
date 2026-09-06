@@ -56,6 +56,10 @@ Und auf Wunsch mit dem Kachelbereich für die Favoriten:
 
 ![Mit Kachelbereich](docs/tiles.png)
 
+Und „Alle Programme", das sich das ganze Menü nimmt statt danebenzuklappen:
+
+![Alle Programme](docs/alle-programme.png)
+
 **Eine Spalte mit senkrechtem Banner** (Windows 95, 98, Me, 2000): Windows Update,
 Programme ▸, Favoriten ▸, Zuletzt verwendete Dokumente ▸, Einstellungen ▸, Suchen,
 Hilfe, Ausführen…, dann Abmelden… und Beenden… Der Streifen am linken Rand trägt den
@@ -77,19 +81,90 @@ häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
   Rechners (App-Paths-Registry, Uninstall-Einträge, Installationsordner), die
   Windows-Einstellungen und – per Häkchen – Dateien über den Windows-Suchindex.
   Anfangsbuchstaben zählen mit, „vsc" findet also Visual Studio Code.
+* **Die Lupe öffnet eine eigene Suchansicht**, statt die Explorer-Suche zu starten:
+  die Spalten treten beiseite und das ganze Menü wird zur Suche – links die
+  Kriterien, rechts die Treffer mit vollem Pfad, so wie XP seine Suche aufteilte.
+  Einschränken lässt sich nach Kategorie (Apps, Einstellungen, Dateien), Art
+  (Dokumente, Bilder, Musik, Videos, Ordner), Ort und Änderungsdatum. Die Ortsliste
+  holt ihre Namen von Windows selbst, ist also immer in der richtigen Sprache.
+  Escape oder „Zurück" führt ins normale Menü, das Menü bleibt dabei gleich hoch
+  und wird nur breiter. Die einspaltigen 9x/2000-Auslagen haben dafür keinen Platz
+  und reichen weiter an die Windows-Suche.
+* **Scrollleisten im Stil der jeweiligen Epoche.** Eine Vorlage, vom Design
+  eingekleidet: XP bekommt den Luna-Verlauf mit abgerundeten Ecken und Haarlinie,
+  die 9x-Familie den eckigen 3D-Rahmen über dem gerasterten Schacht — beide
+  17 Pixel breit wie damals. Das Mausrad rollt drei ganze Zeilen weiter, statt drei
+  Textzeilen, sodass keine Zeile halb angeschnitten stehen bleibt.
+* **Die Suchansicht durchsucht wirklich den Rechner.** Der Windows-Index kennt nur,
+  was Windows indizieren soll – im Wesentlichen das Benutzerprofil. Deshalb läuft
+  zusätzlich eine eigene Suche über die Platte, die dort anfängt, wo Programme
+  wohnen: Steam-Bibliotheken (aus `libraryfolders.vdf` gelesen, auch auf anderen
+  Laufwerken), Programme, Programme (x86), das Profil, dann die übrigen Festplatten.
+  Sie geht in die Breite, überspringt Systeminnereien und Verknüpfungspunkte, meldet
+  Treffer im Sekundentakt und gibt nach zehn Sekunden auf, statt zum Vollscan zu
+  werden. So findet die Suche auch `cs2.exe` in einer Steam-Bibliothek, die im Index
+  nicht auftaucht.
+* **Verbindungen ▸** wie in XP, nur mit dem, was heute dazugehört. Oben die
+  Wege nach draußen, für die Windows den Client selbst mitbringt:
+  Remotedesktop, **SSH** und **SFTP** (das OpenSSH aus dem System32-Ordner),
+  **Telnet** — nur wenn das optionale Feature eingeschaltet ist, sonst fehlt der
+  Eintrag —, **FTP** und **Netzwerkordner öffnen**, beide als Ordner im
+  Explorer, dazu **Linux (WSL)** mit den installierten Systemen als Kaskade
+  und das Netzlaufwerk-Fenster der Shell. Ein kleiner Dialog im Luna-Anstrich
+  fragt vorher nach Ziel, Port und — bei SSH und SFTP — nach dem Schlüssel aus
+  dem eigenen .ssh-Ordner.
+
+  Darunter stehen die Netzwerkverbindungen des Rechners selbst. Ein Klick auf
+  eine Verbindung zeigt ihren Status, wie der Doppelklick im Ordner. Die
+  Einträge tragen alle dieselbe Kennung, darum wird die PIDL im Ordner gesucht
+  und gezielt der kanonische Verb `status` ausgeführt – nicht der sichtbare
+  Text, den es in 24 Sprachen zu raten gäbe, und nicht der Standardbefehl, der
+  auch „Deaktivieren" heißen kann.
+* **Das Verbindungsfenster im Luna-Anstrich.** Keiner dieser Clients hat eine
+  Oberfläche, also haben sie hier eine: blaue Titelleiste mit rotem Schließknopf,
+  der sandfarbene Dialoghintergrund `#ECE9D8`, XP-Knöpfe und ein XP-Auswahlfeld.
+  Darin stehen Ziel und Port, bei SSH und SFTP dazu die **Schlüsselauswahl** — die
+  Schlüssel aus `~/.ssh` stehen zur Wahl, dazu ein Dateiauswahl-Knopf; ohne
+  Schlüssel fragt ssh wie gewohnt nach dem Kennwort. Die Konsolenclients starten in
+  einem Fenster, das offen bleibt, damit auch eine abgelehnte Verbindung lesbar
+  ist; FTP und Netzwerkordner gehen an den Explorer, und zwar an ihn selbst statt
+  an die Zuordnung, weil `ftp://` sonst beim Browser landet, der damit nichts mehr
+  anfängt.
+* **Der XP-Explorer wird geprüft, bevor er drankommt.** Ist
+  windows-xp-explorer-win-11 vorhanden *und* vollständig, öffnen sich Ordner darin;
+  sonst immer im Windows-Explorer. Geprüft wird, ob neben der EXE die Programmdatei
+  und ihre `runtimeconfig.json` liegen — eine halb gelöschte Installation antwortet
+  sonst mit einem Absturzfenster statt mit einem Ordner. Startet eine Fassung doch
+  noch weg, wird sie abgeschrieben und der Ordner nachträglich im Windows-Explorer
+  geöffnet. Und Orte ohne Pfad — Systemsteuerung, Drucker, Netzwerkverbindungen —
+  gehen grundsätzlich an den Windows-Explorer, denn ein Dateifenster kann sie nicht
+  zeigen.
 * **Das echte Explorer-Kontextmenü** auf jedem Eintrag – Öffnen, Als Administrator
   ausführen, Senden an ▸, Ausschneiden, Kopieren, Löschen, Eigenschaften und alles,
   was Shell-Erweiterungen beisteuern, nur eben im Retro-Anstrich.
-* **„Alle Programme"** als Kaskade aus den beiden Startmenü-Ordnern zusammengeführt,
-  dazu Store-Apps, die keine Verknüpfung auf der Platte haben.
+* **„Alle Programme" übernimmt das Menü**, statt als Kaskade danebenzuklappen:
+  links die Gruppen – die Ordner beider Startmenü-Bäume und die Store-Apps – und
+  ein Feld zum Filtern, rechts die Programme in so vielen Spalten, wie der
+  Bildschirm hergibt. Sie laufen eine Spalte hinunter und in der nächsten weiter,
+  wie der Satz einer Zeitung, damit eine alphabetische Liste alphabetisch bleibt.
+  Eine Kaskade ist einen Eintrag breit, gleich wie viele Programme darin stehen;
+  bei ein paar hundert war das eine Wand aus Untermenüs. Esc räumt erst den
+  Filter weg, dann die Ansicht, dann das Menü. Als Kaskade gibt es die Programme
+  weiterhin unter „Programme ▸" in der rechten Spalte.
 * **Favoriten mit Ordnern.** Rechtsklick auf einen Eintrag legt ihn oben in die
   Favoritenliste. Von dort lässt er sich in einen Ordner verschieben – die
   Gruppierung des Windows-11-Menüs. Ordner lassen sich umbenennen und auflösen, und
   ein Ordner klappt beim Draufzeigen als Kaskade auf.
+* **Angeheftetes per Ziehen ordnen.** Ein angehefteter Eintrag auf einen anderen
+  gezogen macht aus beiden einen Ordner – die Geste des Windows-11-Menüs, ohne
+  Nachfrage; umbenennen lässt er sich danach. Auf einen Ordner gezogen wandert er
+  hinein, an den Rand eines Nachbarn gezogen schiebt er sich dazwischen. Eine Linie
+  oder ein Rahmen zeigt vorher, wo er landet.
 * **Wahlweise als Kachelbereich.** Ein Häkchen setzt die Favoriten stattdessen in
   einen dritten Bereich rechts neben das Menü: Programme und Ordner als Raster, wie
   das Angeheftet-Feld von Windows 11, nur im Anstrich der jeweiligen Epoche. Ordner
-  tragen dort einen Pfeil und klappen genauso auf.
+  tragen dort einen Pfeil, zeigen die ersten vier Symbole ihres Inhalts und klappen
+  genauso auf.
 * **Häufig oder zuletzt verwendet.** Die untere Liste zeigt wahlweise die am
   häufigsten oder die zuletzt gestarteten Programme (Einstellungen →
   „Zuletzt gestartete Programme zeigen"). Nach XP-Regeln bleiben Installer,
@@ -99,6 +174,11 @@ häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
 * **Tastatur**: Pfeiltasten durch beide Spalten, Buchstaben springen, Eingabe startet.
 * **Einstellungen** über das Tray-Symbol: Design, Größe, Sprache, Verhalten der
   Windows-Taste, Suchfeld, Autostart.
+* **Spricht die Sprache des Windows, auf dem es landet.** Gefragt wird die
+  Anzeigesprache selbst (`GetUserPreferredUILanguages`, also die Liste aus
+  „Zeit und Sprache" in der Reihenfolge des Benutzers) — 24 Sprachen sind
+  übersetzt, der Rest bekommt Englisch. Der Einrichtungs-Assistent spricht sie
+  ebenfalls schon.
 
 ## Bedienung
 
@@ -112,6 +192,8 @@ häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
 | Tippen | sucht in Programmen, Einstellungen und auf Wunsch Dateien |
 | Rechtsklick auf einen Eintrag | Favoriten, Ordner und das volle Explorer-Menü |
 | Zeigen auf einen Favoritenordner | klappt ihn auf |
+| Angeheftetes ziehen | umsortieren, in einen Ordner legen, zu einem Ordner zusammenlegen |
+| „Alle Programme" | öffnet die Programme im ganzen Menü, Esc führt zurück |
 | Umschalt + Rechtsklick | dazu die erweiterten Befehle |
 | Zeigen auf ▸-Einträge | klappt das Untermenü auf |
 | Pfeiltasten / Buchstaben / Eingabe | Bedienung ohne Maus |
@@ -180,9 +262,37 @@ reicht es von sich aus an Windows weiter.
 
 Ist **„Design von RetroBar übernehmen"** aktiv (Standard), liest das Menü RetroBars
 `settings.json` mit und wechselt das Design automatisch mit. Geschrieben wird in
-RetroBars Dateien nie. Übernommen wird von dort außerdem die Sprache, die
-Kantenglättung der Schrift und – einmalig beim ersten Start – die
-Quick-Launch-Reihenfolge als Startbelegung der angehefteten Programme.
+RetroBars Dateien nie. Übernommen wird von dort außerdem die Kantenglättung der
+Schrift und – einmalig beim ersten Start – die Quick-Launch-Reihenfolge als
+Startbelegung der angehefteten Programme. Die Sprache kommt normalerweise von
+Windows; wer lieber RetroBar folgen möchte, stellt in den Einstellungen
+**Automatisch (RetroBar)** ein.
+
+## Sprachen
+
+Standardmäßig richtet sich das Menü nach der **Anzeigesprache von Windows**. Gefragt
+wird `GetUserPreferredUILanguages` — die Liste aus „Zeit und Sprache" in der
+Reihenfolge, die der Benutzer selbst gesetzt hat; erst wenn die nichts hergibt,
+kommen `GetUserDefaultUILanguage` und die Kultur des Prozesses als Notnagel.
+Regionen fallen auf ihre Sprache zurück (`de-CH` → Deutsch, `fr-CA` → Französisch),
+Chinesisch wird nach Schrift getrennt (`zh-CN`/`zh-SG` → vereinfacht,
+`zh-TW`/`zh-HK`/`zh-MO` → traditionell), und brasilianisches Portugiesisch hat eine
+eigene Tabelle.
+
+In der Sprachliste der Einstellungen stehen oben zwei Automatiken —
+**Automatisch (Windows-Sprache)** und **Automatisch (RetroBar)** — darunter jede
+Sprache unter ihrem eigenen Namen. Die Zeile darunter sagt, was Windows gemeldet
+hat und was daraus geworden ist.
+
+Übersetzt sind: Deutsch, English, Čeština, Dansk, Español, Français, Italiano,
+Magyar, Nederlands, Norsk bokmål, Polski, Português, Português (Brasil), Română,
+Suomi, Svenska, Türkçe, Ελληνικά, Русский, Українська, 日本語, 한국어, 简体中文,
+繁體中文. Alles andere — darunter die von rechts nach links geschriebenen Sprachen,
+für die das Layout noch nicht gespiegelt wird — bekommt Englisch.
+
+Eine Sprache dazuzunehmen ist eine Datei: `src/RetroMenu/Services/Strings/Xx.cs`
+nach dem Vorbild von `En.cs` anlegen und eine Zeile in `Lang.Languages` ergänzen.
+Fehlt darin ein Schlüssel, springt automatisch Englisch ein.
 
 ## Einstellungen
 
@@ -193,7 +303,7 @@ Oberfläche (Rechtsklick aufs Tray-Symbol → Einstellungen):
 | --- | --- |
 | `Theme`, `FollowRetroBarTheme` | Design, bzw. RetroBar folgen |
 | `UseXpExplorer`, `XpExplorerPath` | Ordner im XP-Dateifenster öffnen, und wo es liegt |
-| `Language` | `auto`, `de` oder `en` |
+| `Language` | `auto` (folgt Windows), `auto-retrobar` (folgt RetroBar) oder ein fester Code wie `de`, `pt-BR`, `zh-Hant` |
 | `WinKeyMode` | `Neutralize`, `Swallow` oder `Off` |
 | `MenuScale` | 1.0 ist Originalgröße; auf großen Bildschirmen darf es mehr sein |
 | `FrequentCount` | Wie viele „häufig verwendet"-Einträge |
@@ -246,10 +356,9 @@ der Schlüssel und der Ausschalter – sind als Vektor nachgezeichnet.
 ## Fahrplan
 
 * Vista und Windows 7 – die brauchen wieder einen eigenen Aufbau (Benutzerbild oben
-  rechts, „Alle Programme" an Ort und Stelle statt als Kaskade)
-* Scrollleisten im Stil der jeweiligen Epoche statt der WPF-Standardleisten
-* Angeheftetes per Ziehen umsortieren
-* Weitere Sprachen
+  rechts, „Alle Programme" als Baum in der linken Spalte selbst)
+* Sprachen von rechts nach links (Arabisch, Hebräisch) — dafür muss das Layout
+  gespiegelt werden, nicht nur die Wörter getauscht
 
 ## Danke
 

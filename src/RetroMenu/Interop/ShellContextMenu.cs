@@ -50,7 +50,17 @@ namespace RetroMenu.Interop
         private const uint IdLast = 0x7FFF;
 
         private const uint CMF_NORMAL = 0x00000000;
+        private const uint CMF_DEFAULTONLY = 0x00000001;
+        private const uint GCS_VERBW = 0x00000004;
+        private const int VerbBufferBytes = 512;
         private const uint CMF_EXTENDEDVERBS = 0x00000100;
+
+        private const int SHCONTF_FOLDERS = 0x0020;
+        private const int SHCONTF_NONFOLDERS = 0x0040;
+        private const uint SHGDN_NORMAL = 0x0000;
+
+        /// <summary>STRRET is a union big enough for a 260 character name.</summary>
+        private const int StrRetSize = 4 + 2 * 260 + 8;
 
         private const uint MIIM_STATE = 0x00000001;
         private const uint MIIM_ID = 0x00000002;
@@ -116,6 +126,166 @@ namespace RetroMenu.Interop
             {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Reads the menu of one item inside a virtual folder, found by the name it
+        /// shows. The network connections need this: the shell hands them all the
+        /// same parsing name, so they cannot be reached through a path.
+        ///
+        /// CMF_DEFAULTONLY is only a hint, and netshell ignores it — the connections
+        /// hand back their whole menu, Disable and Delete included, and mark no
+        /// default item at all. So nothing here is invoked blindly; the caller names
+        /// the canonical verb it wants through <see cref="InvokePreferred"/>.
+        /// </summary>
+        public bool OpenChild(string folderParsingName, string displayName, IntPtr owner,
+                              bool defaultOnly = true)
+        {
+            _owner = owner;
+            IntPtr folderPidl = IntPtr.Zero;
+            IntPtr childPidl = IntPtr.Zero;
+
+            try
+            {
+                if (SHParseDisplayName(folderParsingName, IntPtr.Zero, out folderPidl, 0, out _) != 0
+                    || folderPidl == IntPtr.Zero)
+                    return false;
+
+                if (SHGetDesktopFolder(out IntPtr desktopPtr) != 0 || desktopPtr == IntPtr.Zero)
+                    return false;
+
+                var desktop = (IShellFolder)Marshal.GetObjectForIUnknown(desktopPtr);
+                Marshal.Release(desktopPtr);
+
+                Guid folderIid = ShellGuids.IShellFolder;
+                int bound = desktop.BindToObject(folderPidl, IntPtr.Zero, ref folderIid, out IntPtr folderPtr);
+                Marshal.ReleaseComObject(desktop);
+
+                if (bound != 0 || folderPtr == IntPtr.Zero) return false;
+
+                _parent = (IShellFolder)Marshal.GetObjectForIUnknown(folderPtr);
+                Marshal.Release(folderPtr);
+
+                childPidl = FindChild(_parent, displayName);
+                if (childPidl == IntPtr.Zero) return false;
+
+                Guid menuIid = ShellGuids.IContextMenu;
+                if (_parent.GetUIObjectOf(owner, 1, new[] { childPidl }, ref menuIid, IntPtr.Zero,
+                        out IntPtr menuPtr) != 0 || menuPtr == IntPtr.Zero)
+                    return false;
+
+                _contextMenu = (IContextMenu)Marshal.GetObjectForIUnknown(menuPtr);
+                Marshal.Release(menuPtr);
+
+                _menu = CreatePopupMenu();
+                if (_menu == IntPtr.Zero) return false;
+
+                if (_contextMenu.QueryContextMenu(_menu, 0, IdFirst, IdLast,
+                        defaultOnly ? CMF_DEFAULTONLY : CMF_NORMAL) < 0)
+                    return false;
+
+                Read(_menu, Entries, 0);
+                return GetMenuItemCount(_menu) > 0;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                if (childPidl != IntPtr.Zero) CoTaskMemFree(childPidl);
+                if (folderPidl != IntPtr.Zero) CoTaskMemFree(folderPidl);
+            }
+        }
+
+        /// <summary>
+        /// The canonical verb behind a menu id — "status", "properties" and so on.
+        /// Unlike the visible text these do not change with the Windows language,
+        /// which is what makes it safe to pick one entry out of a shell menu.
+        /// Empty when the extension does not name its commands.
+        /// </summary>
+        public string VerbOf(uint id)
+        {
+            if (_contextMenu == null || id < IdFirst) return string.Empty;
+
+            IntPtr buffer = Marshal.AllocHGlobal(VerbBufferBytes);
+            try
+            {
+                for (int i = 0; i < VerbBufferBytes; i++) Marshal.WriteByte(buffer, i, 0);
+
+                if (_contextMenu.GetCommandString((UIntPtr)(id - IdFirst), GCS_VERBW, IntPtr.Zero,
+                        buffer, VerbBufferBytes / 2 - 1) != 0)
+                    return string.Empty;
+
+                return Marshal.PtrToStringUni(buffer) ?? string.Empty;
+            }
+            catch { return string.Empty; }
+            finally { Marshal.FreeHGlobal(buffer); }
+        }
+
+        /// <summary>
+        /// Runs the first of the named canonical verbs the menu actually offers, and
+        /// falls back to whatever the shell marks as its default. Returns false when
+        /// none of them is there, so the caller can do something else rather than
+        /// firing off a command nobody asked for.
+        /// </summary>
+        public bool InvokePreferred(params string[] canonicalVerbs)
+        {
+            if (_contextMenu == null || _menu == IntPtr.Zero) return false;
+
+            foreach (string wanted in canonicalVerbs ?? Array.Empty<string>())
+            {
+                foreach (var entry in Entries)
+                {
+                    if (entry.IsSeparator || !entry.IsEnabled) continue;
+                    if (!string.Equals(VerbOf(entry.Id), wanted, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    Invoke(entry.Id);
+                    return true;
+                }
+            }
+
+            int id = GetMenuDefaultItem(_menu, false, 0);
+            if (id < IdFirst || id > IdLast) return false;
+
+            Invoke((uint)id);
+            return true;
+        }
+
+        /// <summary>The child of a folder that shows this name, or IntPtr.Zero.</summary>
+        private static IntPtr FindChild(IShellFolder folder, string displayName)
+        {
+            if (folder.EnumObjects(IntPtr.Zero, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS,
+                    out IntPtr enumPtr) != 0 || enumPtr == IntPtr.Zero)
+                return IntPtr.Zero;
+
+            var list = (IEnumIDList)Marshal.GetObjectForIUnknown(enumPtr);
+            Marshal.Release(enumPtr);
+
+            IntPtr strRet = Marshal.AllocCoTaskMem(StrRetSize);
+
+            try
+            {
+                while (list.Next(1, out IntPtr child, out uint fetched) == 0 && fetched == 1)
+                {
+                    string name = null;
+                    if (folder.GetDisplayNameOf(child, SHGDN_NORMAL, strRet) == 0)
+                        StrRetToBSTR(strRet, child, out name);
+
+                    if (string.Equals(name, displayName, StringComparison.Ordinal)) return child;
+
+                    CoTaskMemFree(child);
+                }
+            }
+            catch { }
+            finally
+            {
+                Marshal.FreeCoTaskMem(strRet);
+                Marshal.ReleaseComObject(list);
+            }
+
+            return IntPtr.Zero;
         }
 
         private void Read(IntPtr menu, List<ShellMenuEntry> into, int depth)
@@ -250,6 +420,20 @@ namespace RetroMenu.Interop
         [DllImport("shell32.dll")]
         private static extern int SHBindToParent(IntPtr pidl, ref Guid riid, out IntPtr ppv, out IntPtr ppidlLast);
 
+        [DllImport("shell32.dll")]
+        private static extern int SHGetDesktopFolder(out IntPtr ppshf);
+
+        [DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
+        private static extern int StrRetToBSTR(IntPtr pstr, IntPtr pidl,
+            [MarshalAs(UnmanagedType.BStr)] out string pbstr);
+
+        [DllImport("user32.dll")]
+        private static extern int GetMenuDefaultItem(IntPtr hMenu,
+            [MarshalAs(UnmanagedType.Bool)] bool fByPos, uint gmdiFlags);
+
+        [DllImport("user32.dll")]
+        private static extern uint GetMenuItemID(IntPtr hMenu, int nPos);
+
         [DllImport("ole32.dll")]
         private static extern void CoTaskMemFree(IntPtr pv);
 
@@ -271,6 +455,16 @@ namespace RetroMenu.Interop
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetMenuItemInfo(IntPtr hMenu, uint item,
             [MarshalAs(UnmanagedType.Bool)] bool fByPosition, ref MENUITEMINFO lpmii);
+    }
+
+    [ComImport, Guid("000214F2-0000-0000-C000-000000000046"),
+     InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IEnumIDList
+    {
+        [PreserveSig] int Next(uint celt, out IntPtr rgelt, out uint pceltFetched);
+        [PreserveSig] int Skip(uint celt);
+        [PreserveSig] int Reset();
+        [PreserveSig] int Clone(out IEnumIDList ppenum);
     }
 
     [ComImport, Guid("000214E6-0000-0000-C000-000000000046"),

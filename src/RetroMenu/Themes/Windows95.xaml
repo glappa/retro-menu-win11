@@ -79,4 +79,34 @@
     <SolidColorBrush x:Key="SearchBoxForeground" Color="#FF000000" />
     <SolidColorBrush x:Key="SearchHintForeground" Color="#FF808080" />
 
+
+    <!-- scrollbar: raised 3D face over the dithered trough of the era -->
+    <DrawingBrush x:Key="ScrollTrackBrush" TileMode="Tile" Stretch="None"
+                  Viewport="0,0,2,2" ViewportUnits="Absolute">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#FFC0C0C0">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0,0,2,2" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#FFFFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <RectangleGeometry Rect="0,0,1,1" />
+                            <RectangleGeometry Rect="1,1,1,1" />
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="ScrollFaceBrush" Color="#FFC0C0C0" />
+    <SolidColorBrush x:Key="ScrollEdgeBrush" Color="#FF000000" />
+    <SolidColorBrush x:Key="ScrollLightBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="ScrollShadeBrush" Color="#FF808080" />
+    <SolidColorBrush x:Key="ScrollPressedBrush" Color="#FFC0C0C0" />
+    <SolidColorBrush x:Key="ScrollArrowBrush" Color="#FF000000" />
+    <CornerRadius x:Key="ScrollCornerRadius">0</CornerRadius>
+
 </ResourceDictionary>

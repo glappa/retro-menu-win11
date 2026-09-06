@@ -29,7 +29,11 @@ namespace RetroMenu.Services
         // ---- persisted state ----
         public string Theme { get; set; } = "Windows XP Blue";
         public bool FollowRetroBarTheme { get; set; } = true;
-        public string Language { get; set; } = "auto";     // auto | de | en
+        /// <summary>
+        /// "auto" follows the Windows display language, "auto-retrobar" follows
+        /// RetroBar, anything else is a fixed tag from <see cref="Lang.Languages"/>.
+        /// </summary>
+        public string Language { get; set; } = "auto";
         public string WinKeyMode { get; set; } = "Neutralize"; // Neutralize | Swallow | Off
         public int FrequentCount { get; set; } = 6;
         public bool ShowSearchBox { get; set; } = true;
@@ -262,6 +266,84 @@ namespace RetroMenu.Services
                 Favourites.Insert(at + i, new FavouriteEntry { Id = folder.Items[i] });
 
             Save();
+        }
+
+        /// <summary>
+        /// Where a top level entry sits, so a drop can be put before or after it.
+        /// Entries inside a folder have no place of their own and answer -1.
+        /// </summary>
+        public int IndexOfFavourite(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return -1;
+            return Favourites.FindIndex(f => !f.IsFolder && Same(f.Id, id));
+        }
+
+        public int IndexOfFolder(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return -1;
+            return Favourites.FindIndex(f => f.IsFolder && Same(f.Folder, name));
+        }
+
+        /// <summary>Carries a pinned program to another place in the row.</summary>
+        public void ReorderFavourite(string id, int to) => Move(IndexOfFavourite(id), to);
+
+        public void ReorderFolder(string name, int to) => Move(IndexOfFolder(name), to);
+
+        private void Move(int from, int to)
+        {
+            if (from < 0 || to < 0) return;
+
+            var entry = Favourites[from];
+            Favourites.RemoveAt(from);
+
+            // Everything behind the entry has just moved up one place.
+            if (to > from) to--;
+
+            Favourites.Insert(Math.Max(0, Math.Min(to, Favourites.Count)), entry);
+            Save();
+        }
+
+        /// <summary>
+        /// Dropping one pinned program on another makes a folder of the two, where
+        /// the one that was dropped on stood. That is the grouping gesture of the
+        /// Windows 11 menu, and it needs no dialog: the folder can be renamed
+        /// afterwards from its own right-click menu.
+        /// </summary>
+        public string GroupInto(string targetId, string droppedId, string folderName)
+        {
+            if (string.IsNullOrEmpty(targetId) || string.IsNullOrEmpty(droppedId)) return null;
+            if (Same(targetId, droppedId)) return null;
+
+            var folder = new FavouriteEntry { Folder = UnusedFolderName(folderName) };
+            folder.Items.Add(targetId);
+            folder.Items.Add(droppedId);
+
+            // Take the dropped one out first: it may have been sitting in front of
+            // the target, and the place to put the folder is only settled after.
+            Detach(droppedId);
+
+            int at = IndexOfFavourite(targetId);
+            if (at < 0) at = Favourites.Count;
+            else Favourites.RemoveAt(at);
+
+            Favourites.Insert(Math.Min(at, Favourites.Count), folder);
+            PruneEmptyFolders();
+            Save();
+            return folder.Folder;
+        }
+
+        /// <summary>"Folder", "Folder 2", "Folder 3" — the first one still free.</summary>
+        public string UnusedFolderName(string wanted)
+        {
+            string name = string.IsNullOrWhiteSpace(wanted) ? "Folder" : wanted.Trim();
+            if (IndexOfFolder(name) < 0) return name;
+
+            for (int number = 2; number < 1000; number++)
+            {
+                string candidate = name + " " + number;
+                if (IndexOfFolder(candidate) < 0) return candidate;
+            }
+            return name;
         }
 
         public void RegisterLaunch(string id)

@@ -237,6 +237,9 @@ namespace RetroMenu
 
         public void ApplySettings()
         {
+            // Someone may have changed the Windows display language since we last
+            // looked; ask again rather than repeating a stale answer.
+            SystemLanguage.Forget();
             Lang.Apply(AppSettings.Instance.Language, RetroBar?.Language);
             ThemeManager.Apply(ActiveThemeName());
             if (_hook != null) _hook.Mode = ParseWinKeyMode(AppSettings.Instance.WinKeyMode);
@@ -250,9 +253,11 @@ namespace RetroMenu
             {
                 if (AppSettings.Instance.FollowRetroBarTheme)
                     ThemeManager.Apply(ActiveThemeName());
-                if (AppSettings.Instance.Language == "auto")
+                // Only the two automatic settings care what RetroBar just became.
+                string language = AppSettings.Instance.Language;
+                if (language == Lang.AutoWindows || language == Lang.AutoRetroBar)
                 {
-                    Lang.Apply("auto", RetroBar.Language);
+                    Lang.Apply(language, RetroBar.Language);
                     _tray?.Localize();
                     _menu?.Rebuild();
                 }

@@ -69,6 +69,13 @@ namespace RetroMenu.Model
 
         public List<StartItem> Children { get; } = new List<StartItem>();
 
+        /// <summary>
+        /// Up to four of the entries a pinned folder holds. Its tile draws their
+        /// icons in a small grid, so a folder can be told apart from its
+        /// neighbours without opening it, the way Windows 11 draws its groups.
+        /// </summary>
+        public List<StartItem> Preview { get; } = new List<StartItem>();
+
         public bool IsFolder => Kind == StartItemKind.Folder;
 
         /// <summary>Stable key for pin lists and launch counters.</summary>
@@ -85,6 +92,13 @@ namespace RetroMenu.Model
 
         public Visibility ArrowVisibility =>
             string.IsNullOrEmpty(SubmenuSource) ? Visibility.Collapsed : Visibility.Visible;
+
+        /// <summary>A folder with a preview shows that grid instead of one icon.</summary>
+        public Visibility PreviewVisibility =>
+            Preview.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+
+        public Visibility IconVisibility =>
+            Preview.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
         public BitmapSource SmallIcon
         {

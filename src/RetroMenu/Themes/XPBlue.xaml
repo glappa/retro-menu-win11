@@ -119,4 +119,19 @@
     <SolidColorBrush x:Key="SearchBoxForeground" Color="#FF000000" />
     <SolidColorBrush x:Key="SearchHintForeground" Color="#FF808080" />
 
+
+    <!-- scrollbar: the Luna gradient, rounded, hairline border -->
+    <SolidColorBrush x:Key="ScrollTrackBrush" Color="#FFEDF3FE" />
+    <LinearGradientBrush x:Key="ScrollFaceBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#FFFFFFFF" Offset="0" />
+        <GradientStop Color="#FFD9E6FA" Offset="0.35" />
+        <GradientStop Color="#FF9FC0EF" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="ScrollEdgeBrush" Color="#FF3E6CB0" />
+    <SolidColorBrush x:Key="ScrollLightBrush" Color="#66FFFFFF" />
+    <SolidColorBrush x:Key="ScrollShadeBrush" Color="#00000000" />
+    <SolidColorBrush x:Key="ScrollPressedBrush" Color="#FF8FB0E6" />
+    <SolidColorBrush x:Key="ScrollArrowBrush" Color="#FF1B3E7C" />
+    <CornerRadius x:Key="ScrollCornerRadius">2</CornerRadius>
+
 </ResourceDictionary>

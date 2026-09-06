@@ -120,7 +120,30 @@
                     <Grid Width="38" Height="34" HorizontalAlignment="Center">
                         <Image Width="32" Height="32" HorizontalAlignment="Left"
                                Source="{Binding LargeIcon}"
+                               Visibility="{Binding IconVisibility}"
                                RenderOptions.BitmapScalingMode="HighQuality" />
+                        <!-- a folder shows what it holds, four icons at a time -->
+                        <Border Width="32" Height="32" HorizontalAlignment="Left"
+                                CornerRadius="3" Padding="1"
+                                Background="{DynamicResource LeftPaneBackground}"
+                                BorderThickness="1"
+                                BorderBrush="{DynamicResource ColumnDividerBrush}"
+                                Visibility="{Binding PreviewVisibility}">
+                            <ItemsControl ItemsSource="{Binding Preview}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Rows="2" Columns="2" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Image Width="13" Height="13" Margin="0,0,1,1"
+                                               Source="{Binding SmallIcon}"
+                                               RenderOptions.BitmapScalingMode="HighQuality" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
                         <!-- a folder tile opens rather than starts, so it says so -->
                         <Path Data="M 0,0 L 4.5,4.5 L 0,9 Z" Stretch="Fill"
                               Width="5" Height="10" Margin="0,0,1,0"
@@ -138,6 +161,75 @@
 
         <views:StartItemTemplateSelector x:Key="ResultSelector"
                                          ItemTemplate="{StaticResource LeftItemTemplate}"
+                                         SeparatorTemplate="{StaticResource RightSeparatorTemplate}"
+                                         HeaderTemplate="{StaticResource SearchHeaderTemplate}" />
+
+        <!-- the same row in the search layout, where there is room for whole paths -->
+        <DataTemplate x:Key="WideResultTemplate">
+            <Button Style="{StaticResource MenuEntryButton}" Height="34" Margin="0,0,0,4"
+                    ToolTip="{Binding Tooltip}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Image Width="30" Height="30" Margin="0,0,3,0"
+                           Source="{Binding LargeIcon}"
+                           RenderOptions.BitmapScalingMode="HighQuality" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontWeight="{Binding TitleWeight}"
+                                   TextTrimming="CharacterEllipsis"
+                                   HorizontalAlignment="Left" />
+                        <TextBlock Text="{Binding Subtext}"
+                                   Visibility="{Binding SubtextVisibility}"
+                                   HorizontalAlignment="Left"
+                                   Style="{StaticResource SubtextStyle}" />
+                    </StackPanel>
+                </Grid>
+            </Button>
+        </DataTemplate>
+
+        <!-- one program in the All Programs view: 26px row, room for a long name -->
+        <DataTemplate x:Key="ProgramRowTemplate">
+            <Button Style="{StaticResource MenuEntryButton}" Height="26" Margin="0,0,6,2"
+                    ToolTip="{Binding Tooltip}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Image Width="22" Height="22" Margin="0,0,4,0"
+                           Source="{Binding LargeIcon}"
+                           RenderOptions.BitmapScalingMode="HighQuality" />
+                    <TextBlock Grid.Column="1" Text="{Binding Name}"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                </Grid>
+            </Button>
+        </DataTemplate>
+
+        <!-- one group in the list on the left of that view -->
+        <DataTemplate x:Key="ProgramGroupTemplate">
+            <Button Style="{StaticResource MenuEntryButton}" Height="22" Margin="0,0,0,2"
+                    ToolTip="{Binding Name}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Image Width="16" Height="16" Margin="0,0,5,0"
+                           Source="{Binding SmallIcon}"
+                           RenderOptions.BitmapScalingMode="HighQuality" />
+                    <TextBlock Grid.Column="1" Text="{Binding Name}"
+                               FontWeight="{Binding TitleWeight}"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                </Grid>
+            </Button>
+        </DataTemplate>
+
+        <views:StartItemTemplateSelector x:Key="WideResultSelector"
+                                         ItemTemplate="{StaticResource WideResultTemplate}"
                                          SeparatorTemplate="{StaticResource RightSeparatorTemplate}"
                                          HeaderTemplate="{StaticResource SearchHeaderTemplate}" />
 
@@ -271,7 +363,8 @@
 
             <!-- ============ the two columns ============ -->
             <Grid Grid.Row="1" Margin="2,0,2,0">
-                <Border BorderThickness="0,1,0,1" BorderBrush="{DynamicResource MenuTopLineBrush}">
+                <Border x:Name="ColumnsHost" BorderThickness="0,1,0,1"
+                        BorderBrush="{DynamicResource MenuTopLineBrush}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="190" />
@@ -309,9 +402,7 @@
                                                Fill="{DynamicResource LeftSeparatorBrush}" />
                                     <Button x:Name="AllProgramsButton" Height="24" Margin="0,0,0,4"
                                             Style="{StaticResource MenuEntryButton}"
-                                            Click="OnAllProgramsClick"
-                                            MouseEnter="OnAllProgramsEnter"
-                                            MouseLeave="OnAllProgramsLeave">
+                                            Click="OnAllProgramsClick">
                                         <StackPanel Orientation="Horizontal" Margin="33,0,0,0">
                                             <TextBlock x:Name="AllProgramsLabel" FontWeight="Bold"
                                                        VerticalAlignment="Center" />
@@ -329,10 +420,18 @@
                                 <Grid x:Name="ListHost">
                                     <ScrollViewer x:Name="NormalScroll"
                                                   VerticalScrollBarVisibility="Auto"
-                                                  HorizontalScrollBarVisibility="Disabled">
+                                                  HorizontalScrollBarVisibility="Disabled"
+                                                  PreviewMouseWheel="OnResultsWheel">
                                         <StackPanel Button.Click="OnItemClick"
                                                     MouseRightButtonUp="OnItemRightClick"
-                                                    MouseMove="OnPlaceHover">
+                                                    MouseMove="OnPlaceHover"
+                                                    Background="Transparent"
+                                                    AllowDrop="True"
+                                                    PreviewMouseLeftButtonDown="OnPinDragStart"
+                                                    PreviewMouseMove="OnPinDragMove"
+                                                    DragOver="OnPinDragOver"
+                                                    DragLeave="OnPinDragLeave"
+                                                    Drop="OnPinDrop">
                                             <ItemsControl x:Name="TopItems"
                                                           ItemTemplate="{StaticResource LeftItemTemplate}" />
                                             <Rectangle x:Name="TopSeparator" Height="1.5"
@@ -345,7 +444,8 @@
 
                                     <ScrollViewer x:Name="SearchScroll" Visibility="Collapsed"
                                                   VerticalScrollBarVisibility="Auto"
-                                                  HorizontalScrollBarVisibility="Disabled">
+                                                  HorizontalScrollBarVisibility="Disabled"
+                                                  PreviewMouseWheel="OnResultsWheel">
                                         <StackPanel Button.Click="OnItemClick"
                                                     MouseRightButtonUp="OnItemRightClick">
                                             <ItemsControl x:Name="SearchResults"
@@ -380,7 +480,13 @@
                                 BorderThickness="1,0,0,0"
                                 BorderBrush="{DynamicResource ColumnDividerBrush}"
                                 TextElement.Foreground="{DynamicResource RightPaneForeground}"
-                                MouseMove="OnPlaceHover">
+                                MouseMove="OnPlaceHover"
+                                AllowDrop="True"
+                                PreviewMouseLeftButtonDown="OnPinDragStart"
+                                PreviewMouseMove="OnPinDragMove"
+                                DragOver="OnPinDragOver"
+                                DragLeave="OnPinDragLeave"
+                                Drop="OnPinDrop">
                             <DockPanel>
                                 <TextBlock x:Name="TileHeader" DockPanel.Dock="Top"
                                            FontWeight="Bold" Margin="4,1,0,5" />
@@ -397,6 +503,186 @@
                                         </ItemsControl.ItemsPanel>
                                     </ItemsControl>
                                 </ScrollViewer>
+                            </DockPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- ============ the search takes over the whole menu ============ -->
+                <Border x:Name="SearchViewHost" Visibility="Collapsed"
+                        BorderThickness="0,1,0,1" BorderBrush="{DynamicResource MenuTopLineBrush}">
+                    <!-- The height is taken from the columns as the search opens, so
+                         the menu only grows sideways and the hits scroll. -->
+                    <Grid x:Name="SearchViewGrid" Width="600" Height="376">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="208" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- what to look for: the criteria side, as XP had it -->
+                        <Border Grid.Column="0" Padding="8,7,8,6"
+                                Background="{DynamicResource LeftPaneBackground}"
+                                TextElement.Foreground="{DynamicResource LeftPaneForeground}">
+                            <DockPanel>
+                                <Button x:Name="BackButton" DockPanel.Dock="Bottom" Height="24"
+                                        Style="{StaticResource MenuEntryButton}"
+                                        HorizontalContentAlignment="Left"
+                                        Click="OnLeaveSearchView">
+                                    <StackPanel Orientation="Horizontal" Margin="4,0,0,0">
+                                        <Path Width="9" Height="11" Stretch="Fill"
+                                              VerticalAlignment="Center" Margin="0,0,6,0"
+                                              Data="M 9,0 L 0,5.5 L 9,11 Z"
+                                              Style="{StaticResource PlaceArrowStyle}" />
+                                        <TextBlock x:Name="BackLabel" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <StackPanel>
+                                    <TextBlock x:Name="AdvancedTitle" FontWeight="Bold"
+                                               Margin="0,0,0,7" />
+
+                                    <TextBlock x:Name="SearchForLabel" Margin="0,0,0,3" />
+                                    <Border Background="{DynamicResource SearchBoxBackground}"
+                                            BorderBrush="{DynamicResource SearchBoxBorder}"
+                                            BorderThickness="1" Padding="3,3" Margin="0,0,0,9">
+                                        <TextBox x:Name="AdvancedBox" BorderThickness="0"
+                                                 Background="Transparent" Padding="0"
+                                                 Foreground="{DynamicResource SearchBoxForeground}"
+                                                 TextChanged="OnAdvancedTextChanged"
+                                                 KeyDown="OnAdvancedKeyDown" />
+                                    </Border>
+
+                                    <TextBlock x:Name="CategoriesLabel" FontWeight="Bold"
+                                               Margin="0,0,0,4" />
+                                    <CheckBox x:Name="AppsFilter" Margin="1,0,0,3"
+                                              Style="{StaticResource RetroCheckBox}"
+                                              Checked="OnAdvancedFilterChanged"
+                                              Unchecked="OnAdvancedFilterChanged" />
+                                    <CheckBox x:Name="SettingsFilter" Margin="1,0,0,3"
+                                              Style="{StaticResource RetroCheckBox}"
+                                              Checked="OnAdvancedFilterChanged"
+                                              Unchecked="OnAdvancedFilterChanged" />
+                                    <CheckBox x:Name="FilesFilter" Margin="1,0,0,8"
+                                              Style="{StaticResource RetroCheckBox}"
+                                              Checked="OnAdvancedFilterChanged"
+                                              Unchecked="OnAdvancedFilterChanged" />
+
+                                    <TextBlock x:Name="FileTypeLabel" Margin="0,0,0,3" />
+                                    <ComboBox x:Name="FileTypeBox" Margin="0,0,0,8"
+                                              SelectionChanged="OnAdvancedFilterChanged" />
+
+                                    <TextBlock x:Name="LocationLabel" Margin="0,0,0,3" />
+                                    <ComboBox x:Name="LocationBox" Margin="0,0,0,8"
+                                              SelectionChanged="OnAdvancedFilterChanged" />
+
+                                    <TextBlock x:Name="ModifiedLabel" Margin="0,0,0,3" />
+                                    <ComboBox x:Name="ModifiedBox" Margin="0,0,0,4"
+                                              SelectionChanged="OnAdvancedFilterChanged" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- what came back -->
+                        <Border Grid.Column="1" Padding="5,6,4,5"
+                                Background="{DynamicResource RightPaneBackground}"
+                                BorderThickness="1,0,0,0"
+                                BorderBrush="{DynamicResource ColumnDividerBrush}"
+                                TextElement.Foreground="{DynamicResource RightPaneForeground}">
+                            <DockPanel>
+                                <TextBlock x:Name="AdvancedNote" DockPanel.Dock="Top"
+                                           Margin="5,0,0,4" Opacity="0.7" TextWrapping="Wrap" />
+                                <ScrollViewer x:Name="AdvancedScroll"
+                                              VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              PreviewMouseWheel="OnResultsWheel">
+                                    <StackPanel Button.Click="OnItemClick"
+                                                MouseRightButtonUp="OnItemRightClick">
+                                        <ItemsControl x:Name="AdvancedResults"
+                                                      ItemTemplateSelector="{StaticResource WideResultSelector}" />
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </DockPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- ============ All Programs takes over the whole menu ============ -->
+                <Border x:Name="ProgramsViewHost" Visibility="Collapsed"
+                        BorderThickness="0,1,0,1" BorderBrush="{DynamicResource MenuTopLineBrush}">
+                    <!-- Both measurements are set as the view opens: the height the
+                         columns had, and as much width as the screen spares, so the
+                         programs stand in real columns instead of one long cascade. -->
+                    <Grid x:Name="ProgramsViewGrid" Width="640" Height="376">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="208" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- the groups: the folders both Start Menu trees hold -->
+                        <Border Grid.Column="0" Padding="8,7,8,6"
+                                Background="{DynamicResource LeftPaneBackground}"
+                                TextElement.Foreground="{DynamicResource LeftPaneForeground}">
+                            <DockPanel>
+                                <Button x:Name="ProgramsBackButton" DockPanel.Dock="Bottom" Height="24"
+                                        Style="{StaticResource MenuEntryButton}"
+                                        HorizontalContentAlignment="Left"
+                                        Click="OnLeaveProgramsView">
+                                    <StackPanel Orientation="Horizontal" Margin="4,0,0,0">
+                                        <Path Width="9" Height="11" Stretch="Fill"
+                                              VerticalAlignment="Center" Margin="0,0,6,0"
+                                              Data="M 9,0 L 0,5.5 L 9,11 Z"
+                                              Style="{StaticResource PlaceArrowStyle}" />
+                                        <TextBlock x:Name="ProgramsBackLabel" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <StackPanel DockPanel.Dock="Top">
+                                    <TextBlock x:Name="ProgramsTitle" FontWeight="Bold"
+                                               Margin="0,0,0,7" />
+                                    <TextBlock x:Name="ProgramsFilterLabel" Margin="0,0,0,3" />
+                                    <Border Background="{DynamicResource SearchBoxBackground}"
+                                            BorderBrush="{DynamicResource SearchBoxBorder}"
+                                            BorderThickness="1" Padding="3,3" Margin="0,0,0,9">
+                                        <TextBox x:Name="ProgramsFilterBox" BorderThickness="0"
+                                                 Background="Transparent" Padding="0"
+                                                 Foreground="{DynamicResource SearchBoxForeground}"
+                                                 TextChanged="OnProgramsFilterChanged"
+                                                 KeyDown="OnProgramsFilterKeyDown" />
+                                    </Border>
+                                    <TextBlock x:Name="ProgramsGroupsLabel" FontWeight="Bold"
+                                               Margin="0,0,0,4" />
+                                </StackPanel>
+
+                                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled">
+                                    <ItemsControl x:Name="ProgramGroups"
+                                                  ItemTemplate="{StaticResource ProgramGroupTemplate}"
+                                                  Button.Click="OnProgramGroupClick" />
+                                </ScrollViewer>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- the programs themselves, in as many columns as there is room for -->
+                        <Border Grid.Column="1" Padding="5,6,4,5"
+                                Background="{DynamicResource RightPaneBackground}"
+                                BorderThickness="1,0,0,0"
+                                BorderBrush="{DynamicResource ColumnDividerBrush}"
+                                TextElement.Foreground="{DynamicResource RightPaneForeground}">
+                            <DockPanel>
+                                <Grid DockPanel.Dock="Top" Margin="2,0,2,5">
+                                    <TextBlock x:Name="ProgramsHeader" FontWeight="Bold"
+                                               Margin="0,0,60,0"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock x:Name="ProgramsCount" Opacity="0.7"
+                                               HorizontalAlignment="Right" />
+                                </Grid>
+                                <ScrollViewer x:Name="ProgramsScroll"
+                                              HorizontalScrollBarVisibility="Auto"
+                                              VerticalScrollBarVisibility="Disabled"
+                                              PreviewMouseWheel="OnProgramsWheel"
+                                              SizeChanged="OnProgramsResized"
+                                              Button.Click="OnItemClick"
+                                              MouseRightButtonUp="OnItemRightClick" />
                             </DockPanel>
                         </Border>
                     </Grid>

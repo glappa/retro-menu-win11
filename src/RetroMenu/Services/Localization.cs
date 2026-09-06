@@ -1,231 +1,246 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
+using System.Linq;
+using RetroMenu.Services.Strings;
 
 namespace RetroMenu.Services
 {
+    /// <summary>One language: its tag, the name it calls itself, and its strings.</summary>
+    public sealed class LanguageInfo
+    {
+        public LanguageInfo(string code, string native, Dictionary<string, string> table)
+        {
+            Code = code;
+            Native = native;
+            Table = table;
+        }
+
+        /// <summary>BCP-47-ish tag, e.g. "de", "pt-BR", "zh-Hans".</summary>
+        public string Code { get; }
+
+        /// <summary>What the language calls itself, for the settings list.</summary>
+        public string Native { get; }
+
+        public Dictionary<string, string> Table { get; }
+    }
+
     /// <summary>
-    /// Two hand-kept string tables. RetroBar ships dozens of languages; this menu
-    /// starts with the two its author actually uses and keeps the lookup trivial so
-    /// adding another is one dictionary entry per string.
+    /// Hand-kept string tables, one file per language under Services/Strings.
+    /// English is the backstop: any key a table forgets is answered from it, so a
+    /// half-finished translation shows English words rather than raw key names.
+    ///
+    /// The menu picks its language from the display language Windows itself is set
+    /// to (see <see cref="SystemLanguage"/>), or from RetroBar, or from a fixed
+    /// choice in the settings window.
     /// </summary>
     public static class Lang
     {
-        private static readonly Dictionary<string, string> De = new()
+        /// <summary>Settings value: follow the Windows display language.</summary>
+        public const string AutoWindows = "auto";
+
+        /// <summary>Settings value: follow whatever RetroBar is set to.</summary>
+        public const string AutoRetroBar = "auto-retrobar";
+
+        /// <summary>
+        /// The order the settings list shows: the two the menu grew up with, then
+        /// the rest by the name each language gives itself.
+        /// </summary>
+        public static readonly IReadOnlyList<LanguageInfo> Languages = new List<LanguageInfo>
         {
-            ["AllPrograms"] = "Alle Programme",
-            ["Search"] = "Suchen",
-            ["SearchHint"] = "Programme durchsuchen",
-            ["SearchFiles"] = "Dateien mitsuchen",
-            ["BestMatch"] = "Beste Übereinstimmung",
-            ["AppsGroup"] = "Apps",
-            ["SettingsGroup"] = "Einstellungen",
-            ["FilesGroup"] = "Dateien",
-            ["Searching"] = "Sucht in den Dateien…",
-            ["NoIndex"] = "Windows-Suche ist nicht verfügbar",
-            ["NoResults"] = "Keine Treffer",
-            ["Loading"] = "Wird geladen…",
-
-            ["Documents"] = "Eigene Dateien",
-            ["RecentDocuments"] = "Zuletzt verwendete Dokumente",
-            ["Pictures"] = "Eigene Bilder",
-            ["Music"] = "Eigene Musik",
-            ["Computer"] = "Arbeitsplatz",
-            ["ControlPanel"] = "Systemsteuerung",
-            ["SetProgramAccess"] = "Programmzugriff und -standards festlegen",
-            ["ConnectTo"] = "Verbindung herstellen",
-            ["PrintersAndFaxes"] = "Drucker und Faxgeräte",
-            ["Help"] = "Hilfe und Support",
-            ["SearchPlace"] = "Suchen",
-            ["Run"] = "Ausführen...",
-            ["WindowsUpdate"] = "Windows Update",
-            ["Programs"] = "Programme",
-            ["Favorites"] = "Favoriten",
-            ["Internet"] = "Internet",
-            ["Email"] = "E-Mail",
-            ["Empty"] = "(Leer)",
-
-            ["LogOff"] = "Abmelden",
-            ["LogOffClassic"] = "Abmelden…",
-            ["ShutDownClassic"] = "Beenden…",
-            ["ShutDown"] = "Computer ausschalten",
-            ["PowerTitle"] = "Computer ausschalten",
-            ["Standby"] = "Standby",
-            ["Hibernate"] = "Ruhezustand",
-            ["TurnOff"] = "Ausschalten",
-            ["Restart"] = "Neu starten",
-            ["Lock"] = "Sperren",
-            ["Cancel"] = "Abbrechen",
-            ["PowerQuestion"] = "Was soll der Computer tun?",
-
-            ["Open"] = "Öffnen",
-            ["RunAsAdmin"] = "Als Administrator ausführen",
-            ["Pin"] = "Zu Favoriten hinzufügen",
-            ["Unpin"] = "Aus Favoriten entfernen",
-            ["MoveToFolder"] = "In Ordner verschieben",
-            ["NewFolder"] = "Neuer Ordner…",
-            ["OutOfFolder"] = "Aus dem Ordner heraus",
-            ["RenameFolder"] = "Ordner umbenennen…",
-            ["DissolveFolder"] = "Ordner auflösen",
-            ["FolderNamePrompt"] = "Name des Ordners:",
-            ["Ok"] = "OK",
-            ["RemoveFromList"] = "Aus dieser Liste entfernen",
-            ["OpenFileLocation"] = "Dateipfad öffnen",
-
-            ["TrayOpen"] = "Startmenü öffnen",
-            ["TraySettings"] = "Einstellungen…",
-            ["TrayRefresh"] = "Programmliste neu einlesen",
-            ["TrayExit"] = "Beenden",
-
-            ["SettingsTitle"] = "Retro-Menü – Einstellungen",
-            ["Appearance"] = "Darstellung",
-            ["Theme"] = "Design",
-            ["FollowRetroBar"] = "Design von RetroBar übernehmen",
-            ["Behaviour"] = "Verhalten",
-            ["WinKey"] = "Windows-Taste",
-            ["WinKeyNeutralize"] = "Abfangen (empfohlen)",
-            ["WinKeySwallow"] = "Vollständig schlucken",
-            ["WinKeyOff"] = "Nicht anfassen",
-            ["FrequentCount"] = "Häufig verwendet: Anzahl",
-            ["ShowRecent"] = "Zuletzt gestartete Programme zeigen",
-            ["ShowTiles"] = "Favoriten als Kachelbereich rechts",
-            ["ShowTilesHint"] = "Ein dritter Bereich zeigt die Favoriten und ihre Ordner als Kacheln, wie das Angeheftet-Raster von Windows 11.",
-            ["TilesHeader"] = "Angeheftet",
-            ["ShowRecentHint"] = "Statt der am häufigsten gestarteten steht dann in der linken Spalte, was zuletzt an der Reihe war.",
-            ["ShowSearchBox"] = "Suchfeld anzeigen (hatte XP nicht)",
-            ["SearchFilesSetting"] = "Suche schließt Dateien ein",
-            ["MenuScale"] = "Menügröße",
-            ["KeepTaskbar"] = "Taskleiste beim Öffnen einblenden",
-            ["ShowStoreApps"] = "Store-Apps mit auflisten",
-            ["UseXpExplorer"] = "Ordner im XP-Dateifenster öffnen",
-            ["UseXpExplorerHint"] = "windows-xp-explorer-win-11 ist da und zeigt Eigene Dateien, "
-                                    + "Arbeitsplatz und die anderen Orte im alten Anstrich.",
-            ["UseXpExplorerMissing"] = "Nicht gefunden. Ohne windows-xp-explorer-win-11 öffnet "
-                                       + "der Windows-Explorer die Ordner.",
-            ["AutoStart"] = "Mit Windows starten",
-            ["Language"] = "Sprache",
-            ["Close"] = "Schließen",
-            ["StoreApps"] = "Store-Apps",
+            new LanguageInfo("en",      "English",            En.Table),
+            new LanguageInfo("de",      "Deutsch",            De.Table),
+            new LanguageInfo("cs",      "Čeština",            Cs.Table),
+            new LanguageInfo("da",      "Dansk",              Da.Table),
+            new LanguageInfo("es",      "Español",            Es.Table),
+            new LanguageInfo("fr",      "Français",           Fr.Table),
+            new LanguageInfo("it",      "Italiano",           It.Table),
+            new LanguageInfo("hu",      "Magyar",             Hu.Table),
+            new LanguageInfo("nl",      "Nederlands",         Nl.Table),
+            new LanguageInfo("nb",      "Norsk bokmål",       Nb.Table),
+            new LanguageInfo("pl",      "Polski",             Pl.Table),
+            new LanguageInfo("pt",      "Português",          Pt.Table),
+            new LanguageInfo("pt-BR",   "Português (Brasil)", PtBr.Table),
+            new LanguageInfo("ro",      "Română",             Ro.Table),
+            new LanguageInfo("fi",      "Suomi",              Fi.Table),
+            new LanguageInfo("sv",      "Svenska",            Sv.Table),
+            new LanguageInfo("tr",      "Türkçe",             Tr.Table),
+            new LanguageInfo("el",      "Ελληνικά",           El.Table),
+            new LanguageInfo("ru",      "Русский",            Ru.Table),
+            new LanguageInfo("uk",      "Українська",         Uk.Table),
+            new LanguageInfo("ja",      "日本語",              Ja.Table),
+            new LanguageInfo("ko",      "한국어",              Ko.Table),
+            new LanguageInfo("zh-Hans", "简体中文",            ZhHans.Table),
+            new LanguageInfo("zh-Hant", "繁體中文",            ZhHant.Table),
         };
 
-        private static readonly Dictionary<string, string> En = new()
-        {
-            ["AllPrograms"] = "All Programs",
-            ["Search"] = "Search",
-            ["SearchHint"] = "Search programs",
-            ["SearchFiles"] = "Search files too",
-            ["BestMatch"] = "Best match",
-            ["AppsGroup"] = "Apps",
-            ["SettingsGroup"] = "Settings",
-            ["FilesGroup"] = "Files",
-            ["Searching"] = "Searching files…",
-            ["NoIndex"] = "Windows Search is unavailable",
-            ["NoResults"] = "No matches",
-            ["Loading"] = "Loading…",
+        /// <summary>
+        /// Tags Windows may report that mean one of ours under another name.
+        /// </summary>
+        private static readonly Dictionary<string, string> Aliases =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["no"] = "nb",      // Norwegian with no written form named
+                ["nn"] = "nb",      // Nynorsk: bokmål is far closer than English
+                ["mo"] = "ro",      // Moldovan, retired in favour of Romanian
+            };
 
-            ["Documents"] = "My Documents",
-            ["RecentDocuments"] = "My Recent Documents",
-            ["Pictures"] = "My Pictures",
-            ["Music"] = "My Music",
-            ["Computer"] = "My Computer",
-            ["ControlPanel"] = "Control Panel",
-            ["SetProgramAccess"] = "Set Program Access and Defaults",
-            ["ConnectTo"] = "Connect To",
-            ["PrintersAndFaxes"] = "Printers and Faxes",
-            ["Help"] = "Help and Support",
-            ["SearchPlace"] = "Search",
-            ["Run"] = "Run...",
-            ["WindowsUpdate"] = "Windows Update",
-            ["Programs"] = "Programs",
-            ["Favorites"] = "Favorites",
-            ["Internet"] = "Internet",
-            ["Email"] = "E-mail",
-            ["Empty"] = "(Empty)",
+        /// <summary>The native names RetroBar writes into its own settings file.</summary>
+        private static readonly Dictionary<string, string> RetroBarNames =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["english"] = "en",
+                ["deutsch"] = "de",
+                ["čeština"] = "cs",
+                ["cestina"] = "cs",
+                ["dansk"] = "da",
+                ["español"] = "es",
+                ["espanol"] = "es",
+                ["français"] = "fr",
+                ["francais"] = "fr",
+                ["italiano"] = "it",
+                ["magyar"] = "hu",
+                ["nederlands"] = "nl",
+                ["norsk"] = "nb",
+                ["norsk bokmål"] = "nb",
+                ["polski"] = "pl",
+                ["português"] = "pt",
+                ["portugues"] = "pt",
+                ["português (brasil)"] = "pt-BR",
+                ["portugues (brasil)"] = "pt-BR",
+                ["português (brasileiro)"] = "pt-BR",
+                ["română"] = "ro",
+                ["romana"] = "ro",
+                ["suomi"] = "fi",
+                ["svenska"] = "sv",
+                ["türkçe"] = "tr",
+                ["turkce"] = "tr",
+                ["ελληνικά"] = "el",
+                ["русский"] = "ru",
+                ["українська"] = "uk",
+                ["日本語"] = "ja",
+                ["한국어"] = "ko",
+                ["简体中文"] = "zh-Hans",
+                ["中文(简体)"] = "zh-Hans",
+                ["繁體中文"] = "zh-Hant",
+                ["中文(繁體)"] = "zh-Hant",
+            };
 
-            ["LogOff"] = "Log Off",
-            ["LogOffClassic"] = "Log Off…",
-            ["ShutDownClassic"] = "Shut Down…",
-            ["ShutDown"] = "Turn Off Computer",
-            ["PowerTitle"] = "Turn off computer",
-            ["Standby"] = "Stand By",
-            ["Hibernate"] = "Hibernate",
-            ["TurnOff"] = "Turn Off",
-            ["Restart"] = "Restart",
-            ["Lock"] = "Lock",
-            ["Cancel"] = "Cancel",
-            ["PowerQuestion"] = "What should the computer do?",
+        private static LanguageInfo _active = Languages[0];
 
-            ["Open"] = "Open",
-            ["RunAsAdmin"] = "Run as administrator",
-            ["Pin"] = "Add to favourites",
-            ["Unpin"] = "Remove from favourites",
-            ["MoveToFolder"] = "Move to folder",
-            ["NewFolder"] = "New folder…",
-            ["OutOfFolder"] = "Move out of the folder",
-            ["RenameFolder"] = "Rename folder…",
-            ["DissolveFolder"] = "Dissolve folder",
-            ["FolderNamePrompt"] = "Folder name:",
-            ["Ok"] = "OK",
-            ["RemoveFromList"] = "Remove from this list",
-            ["OpenFileLocation"] = "Open file location",
+        /// <summary>The tag actually in use, e.g. "de" or "pt-BR".</summary>
+        public static string Current => _active.Code;
 
-            ["TrayOpen"] = "Open start menu",
-            ["TraySettings"] = "Settings…",
-            ["TrayRefresh"] = "Rescan programs",
-            ["TrayExit"] = "Exit",
+        /// <summary>What that language calls itself.</summary>
+        public static string CurrentNative => _active.Native;
 
-            ["SettingsTitle"] = "Retro Menu – Settings",
-            ["Appearance"] = "Appearance",
-            ["Theme"] = "Theme",
-            ["FollowRetroBar"] = "Follow RetroBar's theme",
-            ["Behaviour"] = "Behaviour",
-            ["WinKey"] = "Windows key",
-            ["WinKeyNeutralize"] = "Intercept (recommended)",
-            ["WinKeySwallow"] = "Swallow completely",
-            ["WinKeyOff"] = "Leave alone",
-            ["FrequentCount"] = "Frequently used: count",
-            ["ShowRecent"] = "Show recently started programs",
-            ["ShowTiles"] = "Favourites as a tile panel on the right",
-            ["ShowTilesHint"] = "A third panel shows the favourites and their folders as tiles, the way Windows 11 lays out its pinned apps.",
-            ["TilesHeader"] = "Pinned",
-            ["ShowRecentHint"] = "The left column then lists what was started last rather than what was started most.",
-            ["ShowSearchBox"] = "Show search box (XP had none)",
-            ["SearchFilesSetting"] = "Search includes files",
-            ["MenuScale"] = "Menu size",
-            ["KeepTaskbar"] = "Raise the taskbar while open",
-            ["ShowStoreApps"] = "List Store apps",
-            ["UseXpExplorer"] = "Open folders in the XP file window",
-            ["UseXpExplorerHint"] = "windows-xp-explorer-win-11 is installed and will show "
-                                    + "My Documents, My Computer and the other places.",
-            ["UseXpExplorerMissing"] = "Not found. Without windows-xp-explorer-win-11 the "
-                                       + "Windows Explorer opens folders.",
-            ["AutoStart"] = "Start with Windows",
-            ["Language"] = "Language",
-            ["Close"] = "Close",
-            ["StoreApps"] = "Store apps",
-        };
+        /// <summary>How the language was arrived at, for the settings window.</summary>
+        public static string Source { get; private set; } = "windows";
 
-        private static Dictionary<string, string> _active = En;
-
-        public static string Current { get; private set; } = "en";
-
+        /// <summary>
+        /// Settles on a language. <paramref name="setting"/> is the saved choice:
+        /// "auto" (Windows), "auto-retrobar", or a fixed tag. Anything unknown is
+        /// treated as "auto", and English catches whatever is left.
+        /// </summary>
         public static void Apply(string setting, string retroBarLanguage)
         {
-            string choice = setting;
+            string choice = string.IsNullOrWhiteSpace(setting) ? AutoWindows : setting.Trim();
+            string fromRetroBar = FromRetroBar(retroBarLanguage);
 
-            if (string.IsNullOrWhiteSpace(choice) || choice == "auto")
+            LanguageInfo found = null;
+            string source = null;
+
+            if (string.Equals(choice, AutoRetroBar, StringComparison.OrdinalIgnoreCase))
             {
-                if (!string.IsNullOrWhiteSpace(retroBarLanguage))
-                    choice = retroBarLanguage.StartsWith("Deutsch", StringComparison.OrdinalIgnoreCase) ? "de" : "en";
-                else
-                    choice = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+                found = Find(fromRetroBar);
+                if (found != null) source = "retrobar";
+            }
+            else if (!string.Equals(choice, AutoWindows, StringComparison.OrdinalIgnoreCase))
+            {
+                found = Find(choice);
+                if (found != null) source = "fixed";
             }
 
-            Current = string.Equals(choice, "de", StringComparison.OrdinalIgnoreCase) ? "de" : "en";
-            _active = Current == "de" ? De : En;
+            if (found == null)
+            {
+                // The Windows display languages, in the user's own order.
+                foreach (string tag in SystemLanguage.Preferred)
+                {
+                    found = Find(tag);
+                    if (found != null) { source = "windows"; break; }
+                }
+            }
+
+            // Last resort before English: whatever the rest of the desktop speaks.
+            if (found == null)
+            {
+                found = Find(fromRetroBar);
+                if (found != null) source = "retrobar";
+            }
+
+            _active = found ?? Languages[0];
+            Source = source ?? "fallback";
         }
 
-        public static string T(string key) =>
-            _active.TryGetValue(key, out var value) ? value : key;
+        /// <summary>The table entry, falling back to English and then to the key itself.</summary>
+        public static string T(string key)
+        {
+            if (key == null) return string.Empty;
+            if (_active.Table.TryGetValue(key, out var value)) return value;
+            if (En.Table.TryGetValue(key, out var english)) return english;
+            return key;
+        }
+
+        /// <summary>A table entry with {0}, {1}… filled in.</summary>
+        public static string F(string key, params object[] args)
+        {
+            string text = T(key);
+            try { return string.Format(text, args); }
+            catch (FormatException) { return text; }
+        }
+
+        /// <summary>Matches a tag against the tables: exact, then script, then language.</summary>
+        public static LanguageInfo Find(string tag)
+        {
+            if (string.IsNullOrWhiteSpace(tag)) return null;
+            tag = tag.Trim().Replace('_', '-');
+
+            var exact = Languages.FirstOrDefault(
+                l => string.Equals(l.Code, tag, StringComparison.OrdinalIgnoreCase));
+            if (exact != null) return exact;
+
+            string primary = tag.Split('-')[0];
+            if (Aliases.TryGetValue(primary, out var alias)) primary = alias;
+
+            // Chinese splits by script rather than by country: zh-CN and zh-SG are
+            // written simplified, zh-TW, zh-HK and zh-MO traditional.
+            if (string.Equals(primary, "zh", StringComparison.OrdinalIgnoreCase))
+            {
+                bool traditional =
+                    tag.IndexOf("Hant", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    tag.EndsWith("-TW", StringComparison.OrdinalIgnoreCase) ||
+                    tag.EndsWith("-HK", StringComparison.OrdinalIgnoreCase) ||
+                    tag.EndsWith("-MO", StringComparison.OrdinalIgnoreCase);
+                return ByCode(traditional ? "zh-Hant" : "zh-Hans");
+            }
+
+            // pt-BR has its own table; every other Portuguese is the European one.
+            if (string.Equals(primary, "pt", StringComparison.OrdinalIgnoreCase))
+                return ByCode(tag.EndsWith("-BR", StringComparison.OrdinalIgnoreCase) ? "pt-BR" : "pt");
+
+            return Languages.FirstOrDefault(
+                l => string.Equals(l.Code, primary, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static LanguageInfo ByCode(string code) =>
+            Languages.FirstOrDefault(l => l.Code == code);
+
+        /// <summary>Turns RetroBar's "Deutsch" (or a bare tag) into one of our codes.</summary>
+        public static string FromRetroBar(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return null;
+            string name = value.Trim();
+            if (RetroBarNames.TryGetValue(name, out var code)) return code;
+            return Find(name)?.Code;   // in case a build starts writing tags
+        }
     }
 }

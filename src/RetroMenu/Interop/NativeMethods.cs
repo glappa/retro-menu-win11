@@ -260,6 +260,15 @@ namespace RetroMenu.Interop
         public const uint SHGFI_ICON = 0x00000100;
         public const uint SHGFI_LARGEICON = 0x00000000;
         public const uint SHGFI_SMALLICON = 0x00000001;
+        public const uint SHGFI_DISPLAYNAME = 0x00000200;
+
+        /// <summary>Downloads has no SpecialFolder entry, only a known folder id.</summary>
+        public static readonly Guid FolderIdDownloads =
+            new Guid("374DE290-123F-4565-9164-39C4925E467B");
+
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        public static extern int SHGetKnownFolderPath(ref Guid rfid, uint dwFlags, IntPtr hToken,
+            out IntPtr ppszPath);
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         public struct SHFILEINFO

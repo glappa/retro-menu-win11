@@ -25,30 +25,45 @@ namespace RetroMenu.Views
             VersionText.Text = "Retro Menu " +
                 (System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "0.1.0");
 
+            // The wizard speaks the same language as the menu it is about to install,
+            // which App has already settled from the Windows display language.
+            Title = Lang.T("SetupTitle");
+            HeaderTitle.Text = Lang.T("SetupTitle");
+            Subtitle.Text = Lang.T("SetupSubtitle");
+            IntroText.Text = Lang.T("SetupIntro");
+            TargetLabel.Text = Lang.T("SetupTarget");
+            DuringLabel.Text = Lang.T("SetupDuring");
+            StartMenuBox.Content = Lang.T("SetupStartMenu");
+            DesktopBox.Content = Lang.T("SetupDesktop");
+            AutoStartBox.Content = Lang.T("AutoStart");
+            RetroBarBox.Content = Lang.T("SetupRetroBar");
+            RetroBarNote.Text = Lang.T("SetupRetroBarNote");
+            CancelButton.Content = Lang.T("Cancel");
+            InstallButton.Content = Lang.T("SetupInstall");
+
             if (uninstall)
             {
-                Title = "Retro Menu entfernen";
-                Subtitle.Text = "Das Programm wird aus Ihrem Benutzerordner entfernt.";
-                InstallButton.Content = "Entfernen";
+                Title = Lang.T("SetupRemoveTitle");
+                HeaderTitle.Text = Lang.T("SetupRemoveTitle");
+                Subtitle.Text = Lang.T("SetupRemoveSubtitle");
+                InstallButton.Content = Lang.T("SetupRemoveButton");
                 OptionsPanel.Children.Clear();
                 OptionsPanel.Children.Add(new System.Windows.Controls.TextBlock
                 {
-                    Text = "Retro Menu wird beendet und aus " + Installer.InstallDirectory +
-                           " entfernt. Ihre Einstellungen bleiben erhalten, damit eine spätere " +
-                           "Installation sie wiederfindet.",
+                    Text = Lang.F("SetupRemoveText", Installer.InstallDirectory),
                     TextWrapping = TextWrapping.Wrap
                 });
             }
             else if (Installer.IsInstalled)
             {
-                Subtitle.Text = "Eine vorhandene Installation wird aktualisiert.";
-                InstallButton.Content = "Aktualisieren";
+                Subtitle.Text = Lang.T("SetupUpdateSubtitle");
+                InstallButton.Content = Lang.T("SetupUpdate");
             }
 
             if (RetroBarInstaller.IsInstalled)
             {
                 RetroBarBox.IsEnabled = false;
-                RetroBarBox.Content = "RetroBar ist bereits vorhanden";
+                RetroBarBox.Content = Lang.T("SetupRetroBarPresent");
                 RetroBarNote.Visibility = Visibility.Collapsed;
             }
         }
@@ -83,7 +98,7 @@ namespace RetroMenu.Views
             ProgressPanel.Visibility = Visibility.Visible;
             InstallButton.IsEnabled = false;
             CancelButton.IsEnabled = false;
-            StatusText.Text = _uninstalling ? "Wird entfernt…" : "Wird eingerichtet…";
+            StatusText.Text = Lang.T(_uninstalling ? "SetupRemoving" : "SetupWorking");
 
             bool ok = true;
 
@@ -103,16 +118,16 @@ namespace RetroMenu.Views
             catch (Exception ex)
             {
                 ok = false;
-                Log("Fehlgeschlagen: " + ex.Message);
+                Log(Lang.F("SetupFailed", ex.Message));
             }
 
             _finished = true;
             StatusText.Text = ok
-                ? (_uninstalling ? "Entfernt." : "Fertig.")
-                : "Mit Fehlern beendet.";
-            InstallButton.Content = _uninstalling ? "Schließen" : "Starten";
+                ? Lang.T(_uninstalling ? "SetupRemoved" : "SetupDone")
+                : Lang.T("SetupErrors");
+            InstallButton.Content = Lang.T(_uninstalling ? "Close" : "SetupStart");
             InstallButton.IsEnabled = true;
-            CancelButton.Content = "Schließen";
+            CancelButton.Content = Lang.T("Close");
             CancelButton.IsEnabled = true;
         }
 

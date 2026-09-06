@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,6 +10,9 @@ namespace RetroMenu.Views
     public partial class SettingsWindow : Window
     {
         private bool _loading = true;
+
+        /// <summary>Runs alongside the language box: the code behind each entry.</summary>
+        private List<string> _languageCodes = new List<string>();
 
         public SettingsWindow()
         {
@@ -39,10 +43,13 @@ namespace RetroMenu.Views
             SearchBoxToggle.Content = Lang.T("ShowSearchBox");
             StoreAppsToggle.Content = Lang.T("ShowStoreApps");
             XpExplorerToggle.Content = Lang.T("UseXpExplorer");
-            XpExplorerHint.Text = XpExplorerBridge.Path == null
-                ? Lang.T("UseXpExplorerMissing")
-                : Lang.T("UseXpExplorerHint");
-            XpExplorerToggle.IsEnabled = XpExplorerBridge.Path != null;
+            // Three states, not two: there, missing, or there but unusable — the
+            // remains of an installation that would only throw a crash box.
+            bool ready = XpExplorerBridge.Path != null;
+            XpExplorerHint.Text = ready
+                ? Lang.T("UseXpExplorerHint")
+                : Lang.T(XpExplorerBridge.IsBroken ? "UseXpExplorerBroken" : "UseXpExplorerMissing");
+            XpExplorerToggle.IsEnabled = ready;
             AutoStartToggle.Content = Lang.T("AutoStart");
             CloseButton.Content = Lang.T("Close");
             VersionText.Text = "Retro Menu " +
@@ -56,13 +63,20 @@ namespace RetroMenu.Views
             FollowRetroBarBox.IsChecked = settings.FollowRetroBarTheme;
             UpdateRetroBarStatus();
 
-            LanguageBox.ItemsSource = new[] { "auto", "Deutsch", "English" };
-            LanguageBox.SelectedIndex = settings.Language switch
+            // Two automatic entries first, then every language by its own name.
+            _languageCodes = new List<string> { Lang.AutoWindows, Lang.AutoRetroBar };
+            var names = new List<string> { Lang.T("LangAutoWindows"), Lang.T("LangAutoRetroBar") };
+            foreach (var language in Lang.Languages)
             {
-                "de" => 1,
-                "en" => 2,
-                _ => 0
-            };
+                _languageCodes.Add(language.Code);
+                names.Add(language.Native);
+            }
+
+            LanguageBox.ItemsSource = names;
+            int chosen = _languageCodes.FindIndex(
+                code => string.Equals(code, settings.Language, StringComparison.OrdinalIgnoreCase));
+            LanguageBox.SelectedIndex = chosen >= 0 ? chosen : 0;
+            UpdateLanguageHint();
 
             WinKeyBox.ItemsSource = new[]
             {
@@ -97,18 +111,22 @@ namespace RetroMenu.Views
         private void UpdateRetroBarStatus()
         {
             var bridge = App.Me.RetroBar;
-            if (bridge != null && bridge.IsPresent)
-            {
-                RetroBarStatus.Text = Lang.Current == "de"
-                    ? $"RetroBar gefunden – Design „{bridge.Theme}“ → „{ThemeManager.MapFromRetroBar(bridge.Theme)}“."
-                    : $"RetroBar found – theme \"{bridge.Theme}\" maps to \"{ThemeManager.MapFromRetroBar(bridge.Theme)}\".";
-            }
-            else
-            {
-                RetroBarStatus.Text = Lang.Current == "de"
-                    ? "RetroBar wurde nicht gefunden."
-                    : "RetroBar was not found.";
-            }
+            RetroBarStatus.Text = bridge != null && bridge.IsPresent
+                ? Lang.F("RetroBarFound", bridge.Theme, ThemeManager.MapFromRetroBar(bridge.Theme))
+                : Lang.T("RetroBarMissing");
+        }
+
+        /// <summary>
+        /// Says what Windows is set to and what the menu made of it — the line that
+        /// shows the automatic choice actually landed somewhere sensible.
+        /// </summary>
+        private void UpdateLanguageHint()
+        {
+            string windows = SystemLanguage.DisplayName();
+            LanguageHint.Text = Lang.F("LangDetected", windows) + " " +
+                (Lang.Source == "fallback"
+                    ? Lang.F("LangUntranslated", windows)
+                    : Lang.F("LangShowing", Lang.CurrentNative));
         }
 
         private void OnThemeChanged(object sender, SelectionChangedEventArgs e)
@@ -131,12 +149,10 @@ namespace RetroMenu.Views
         private void OnLanguageChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_loading) return;
-            AppSettings.Instance.Language = LanguageBox.SelectedIndex switch
-            {
-                1 => "de",
-                2 => "en",
-                _ => "auto"
-            };
+            int index = LanguageBox.SelectedIndex;
+            AppSettings.Instance.Language = index >= 0 && index < _languageCodes.Count
+                ? _languageCodes[index]
+                : Lang.AutoWindows;
             AppSettings.Instance.Save();
             App.Me.ApplySettings();
 

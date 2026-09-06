@@ -1,0 +1,257 @@
+<Window x:Class="RetroMenu.Views.ConnectDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Retro Menu"
+        Width="440" SizeToContent="Height"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        FontFamily="Tahoma"
+        FontSize="12"
+        KeyDown="OnKeyDown">
+
+    <Window.Resources>
+        <!-- Luna's window frame: a blue border that thickens into the title bar -->
+        <LinearGradientBrush x:Key="TitleBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#FF0A56C8" Offset="0" />
+            <GradientStop Color="#FF1F72E0" Offset="0.12" />
+            <GradientStop Color="#FF3C8CF0" Offset="0.4" />
+            <GradientStop Color="#FF1B6FDB" Offset="0.62" />
+            <GradientStop Color="#FF0A4FBF" Offset="1" />
+        </LinearGradientBrush>
+
+        <!-- the tan face of every XP dialog -->
+        <SolidColorBrush x:Key="FaceBrush" Color="#FFECE9D8" />
+
+        <Style x:Key="XpButton" TargetType="Button">
+            <Setter Property="Padding" Value="16,3" />
+            <Setter Property="Margin" Value="6,0,0,0" />
+            <Setter Property="MinWidth" Value="86" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{StaticResource FaceBrush}"
+                                BorderBrush="#FF7B9EBD" BorderThickness="1"
+                                CornerRadius="3" Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#FFFDF6D9" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#FFE9A600" />
+                            </Trigger>
+                            <Trigger Property="IsDefault" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#FF2F71CD" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#FFD8D4C4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- the drop-down of the era: white field, blue drop button, black wedge -->
+        <Style x:Key="XpComboItem" TargetType="ComboBoxItem">
+            <Setter Property="Padding" Value="4,2" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="Bd" Background="Transparent"
+                                Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#FF316AC5" />
+                                <Setter Property="TextElement.Foreground" Value="White" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="XpCombo" TargetType="ComboBox">
+            <Setter Property="Height" Value="22" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource XpComboItem}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border Background="White" BorderBrush="#FF7F9DB9" BorderThickness="1"
+                                    SnapsToDevicePixels="True" />
+                            <ToggleButton x:Name="PART_ToggleButton" Focusable="False"
+                                          ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay,
+                                                      RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Grid Background="Transparent">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="18" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border x:Name="Drop" Grid.Column="1" Margin="0,2,2,2"
+                                                    CornerRadius="2" BorderThickness="1"
+                                                    BorderBrush="#FF7B9EBD"
+                                                    SnapsToDevicePixels="True">
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                        <GradientStop Color="#FFFFFFFF" Offset="0" />
+                                                        <GradientStop Color="#FFE3ECFB" Offset="0.45" />
+                                                        <GradientStop Color="#FFBFD3F3" Offset="1" />
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                                <Path Data="M 0,0 L 7,0 L 3.5,4 Z" Fill="#FF1B3E7C"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center" />
+                                            </Border>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Drop" Property="BorderBrush"
+                                                        Value="#FFE9A600" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+
+                            <ContentPresenter Margin="5,0,22,0" VerticalAlignment="Center"
+                                              IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" />
+
+                            <Popup x:Name="PART_Popup" AllowsTransparency="True"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   Focusable="False" PopupAnimation="None">
+                                <Border Background="White" BorderBrush="#FF7F9DB9" BorderThickness="1"
+                                        MinWidth="{TemplateBinding ActualWidth}"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                        SnapsToDevicePixels="True">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- the red orb in the corner, the way Luna drew it -->
+        <Style x:Key="CloseButton" TargetType="Button">
+            <Setter Property="Width" Value="21" />
+            <Setter Property="Height" Value="21" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" CornerRadius="3" BorderThickness="1"
+                                BorderBrush="#FFF0F4FB" SnapsToDevicePixels="True">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="#FFE86A5A" Offset="0" />
+                                    <GradientStop Color="#FFD03A1E" Offset="0.5" />
+                                    <GradientStop Color="#FFA51F0A" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Path Data="M 0,0 L 7,7 M 7,0 L 0,7" Stroke="White" StrokeThickness="1.6"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  StrokeStartLineCap="Square" StrokeEndLineCap="Square" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.82" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- frame: blue all round, rounded at the top, as XP framed its dialogs -->
+    <Border Background="{StaticResource TitleBrush}" CornerRadius="8,8,2,2" Padding="4,0,4,4">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="10" ShadowDepth="3" Direction="315" Opacity="0.5" />
+        </Border.Effect>
+
+        <DockPanel>
+            <!-- title bar -->
+            <Grid DockPanel.Dock="Top" Height="28" MouseLeftButtonDown="OnDragTitle">
+                <TextBlock x:Name="TitleText" VerticalAlignment="Center" Margin="6,0,0,2"
+                           FontWeight="Bold" FontSize="13" Foreground="White">
+                    <TextBlock.Effect>
+                        <DropShadowEffect BlurRadius="3" ShadowDepth="1" Direction="270"
+                                          Color="#FF0A2E6E" Opacity="0.8" />
+                    </TextBlock.Effect>
+                </TextBlock>
+                <Button x:Name="CloseButton" Style="{StaticResource CloseButton}"
+                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Margin="0,0,2,1" Click="OnCancel" />
+            </Grid>
+
+            <!-- body -->
+            <Border Background="{StaticResource FaceBrush}" BorderBrush="#FF7B9EBD"
+                    BorderThickness="0" CornerRadius="0,0,1,1">
+                <StackPanel Margin="14,12,14,12">
+                    <TextBlock x:Name="Subtitle" Margin="0,0,0,12" TextWrapping="Wrap"
+                               Foreground="#FF37476B" />
+
+                    <!-- where to, and on which port; the port stays empty for the
+                         usual one, which every client knows for itself -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock x:Name="TargetLabel" Margin="0,0,0,3" />
+                            <Border Background="White" BorderBrush="#FF7F9DB9" BorderThickness="1"
+                                    Padding="4,3">
+                                <TextBox x:Name="TargetBox" BorderThickness="0" Background="Transparent" />
+                            </Border>
+                        </StackPanel>
+                        <StackPanel x:Name="PortRow" Grid.Column="1" Width="86" Margin="8,0,0,0">
+                            <TextBlock x:Name="PortLabel" Margin="0,0,0,3" />
+                            <Border Background="White" BorderBrush="#FF7F9DB9" BorderThickness="1"
+                                    Padding="4,3">
+                                <TextBox x:Name="PortBox" BorderThickness="0" Background="Transparent" />
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel x:Name="KeyRow">
+                        <TextBlock x:Name="KeyLabel" Margin="0,0,0,3" />
+                        <DockPanel Margin="0,0,0,4">
+                            <Button x:Name="BrowseButton" DockPanel.Dock="Right" MinWidth="32"
+                                    Padding="8,2" Style="{StaticResource XpButton}"
+                                    Click="OnBrowse" Content="…" />
+                            <ComboBox x:Name="KeyBox" Style="{StaticResource XpCombo}" />
+                        </DockPanel>
+                        <TextBlock x:Name="KeyHint" Opacity="0.75" TextWrapping="Wrap" Margin="0,0,0,12" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="CancelButton" Style="{StaticResource XpButton}"
+                                IsCancel="True" Click="OnCancel" />
+                        <Button x:Name="ConnectButton" Style="{StaticResource XpButton}"
+                                IsDefault="True" Click="OnConnect" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </DockPanel>
+    </Border>
+</Window>

@@ -34,10 +34,11 @@
             <CheckBox x:Name="FollowRetroBarBox" Margin="0,0,0,4" Click="OnFollowChanged" />
             <TextBlock x:Name="RetroBarStatus" Opacity="0.7" Margin="20,0,0,10" TextWrapping="Wrap" />
 
-            <DockPanel Margin="0,0,0,12">
+            <DockPanel Margin="0,0,0,3">
                 <TextBlock x:Name="LanguageLabel" Width="150" VerticalAlignment="Center" />
                 <ComboBox x:Name="LanguageBox" SelectionChanged="OnLanguageChanged" />
             </DockPanel>
+            <TextBlock x:Name="LanguageHint" Opacity="0.7" Margin="150,0,0,12" TextWrapping="Wrap" />
 
             <TextBlock x:Name="BehaviourLabel" FontWeight="Bold" Margin="0,0,0,6" />
 
