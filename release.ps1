@@ -12,7 +12,10 @@
 #>
 param(
     [switch]$Publish,
-    [string]$Tag
+    [string]$Tag,
+    # Was in dieser Ausgabe neu ist, als Markdown. Ohne Angabe wird die Datei
+    # release-notes\<Version>.md genommen, wenn es sie gibt.
+    [string]$Highlights
 )
 
 $ErrorActionPreference = 'Stop'
@@ -79,11 +82,21 @@ if (-not $Publish) {
     return
 }
 
+if (-not $Highlights) {
+    $candidate = Join-Path $root "release-notes\$version.md"
+    if (Test-Path $candidate) { $Highlights = $candidate }
+}
+$whatsNew = ''
+if ($Highlights -and (Test-Path $Highlights)) {
+    $whatsNew = "`n" + (Get-Content $Highlights -Raw).TrimEnd() + "`n"
+}
+
 $notes = @"
 Retro Menu $version
 
 Ein Startmenue im Stil aelterer Windows-Versionen fuer Windows 11, als Gegenstueck
 zu [RetroBar](https://github.com/dremin/RetroBar).
+$whatsNew
 
 **Welche Datei?**
 
