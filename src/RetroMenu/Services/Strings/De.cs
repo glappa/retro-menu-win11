@@ -208,6 +208,11 @@ namespace RetroMenu.Services.Strings
             ["PlacesHint"] = "Was hier ausgeschaltet ist, verschwindet aus der rechten Spalte — "
                              + "samt einer Trennlinie, die sonst allein stehen bliebe.",
             ["SelectAll"] = "Alle",
+            ["ControlPanelHeading"] = "Aus der Systemsteuerung",
+            ["ControlPanelHint"] = "Was hier angehakt ist, kommt unten in der rechten Spalte "
+                                   + "dazu, unter einer eigenen Trennlinie. Namen und Symbole "
+                                   + "steuert Windows selbst bei.",
+            ["ControlPanelEmpty"] = "Die Systemsteuerung konnte nicht gelesen werden.",
             ["SelectNone"] = "Keinen",
 
             ["HotkeyHeading"] = "Tastenkürzel",

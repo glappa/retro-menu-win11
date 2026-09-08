@@ -179,6 +179,15 @@ namespace RetroMenu.Services
                 return;
             }
 
+            if (command.StartsWith(ControlPanelPrefix, StringComparison.Ordinal))
+            {
+                // An applet is a dialog, not a folder: it wants its own default verb
+                // run, not the file window and not explorer.exe.
+                string applet = command.Substring(ControlPanelPrefix.Length);
+                if (!ShellItemLauncher.Open(applet)) Shell("explorer.exe", applet);
+                return;
+            }
+
             if (command.StartsWith("url:", StringComparison.Ordinal))
             {
                 Shell(command.Substring("url:".Length), null);
@@ -477,8 +486,45 @@ namespace RetroMenu.Services
             Add("SearchPlace", SearchShellItem, SearchInMenu);
             Add("Run", RunShellItem, "rundialog");
 
+            AppendControlPanelItems(places);
             TrimSeparators(places);
             return places;
+        }
+
+        /// <summary>Stands for "open this Control Panel applet".</summary>
+        public const string ControlPanelPrefix = "cpl:";
+
+        /// <summary>
+        /// The applets the user picked, in their own group below the rest. They are
+        /// named and drawn by the shell, so they look like the entries above them
+        /// and speak the same language.
+        /// </summary>
+        private static void AppendControlPanelItems(List<StartItem> places)
+        {
+            var wanted = AppSettings.Instance.ExtraPlaces;
+            if (wanted == null || wanted.Count == 0) return;
+
+            var added = new List<StartItem>();
+            foreach (var id in wanted)
+            {
+                var applet = ControlPanelItems.Find(id);
+                if (applet == null) continue;   // gone, or the folder is not read yet
+
+                added.Add(new StartItem
+                {
+                    Name = applet.Name,
+                    Kind = StartItemKind.Place,
+                    ParsingName = applet.ParsingName,
+                    Command = ControlPanelPrefix + applet.ParsingName
+                });
+            }
+
+            if (added.Count == 0) return;
+
+            if (places.Count > 0)
+                places.Add(new StartItem { Name = "-", Kind = StartItemKind.Command, Command = Separator });
+
+            places.AddRange(added);
         }
 
         /// <summary>

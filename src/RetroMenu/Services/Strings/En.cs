@@ -209,6 +209,11 @@ namespace RetroMenu.Services.Strings
             ["PlacesHint"] = "Everything switched off here disappears from the right hand column, "
                              + "along with any dividing line left standing on its own.",
             ["SelectAll"] = "All",
+            ["ControlPanelHeading"] = "From the Control Panel",
+            ["ControlPanelHint"] = "Anything ticked here is added to the bottom of the "
+                                   + "right column, under a line of its own. Windows names "
+                                   + "and draws these itself.",
+            ["ControlPanelEmpty"] = "The Control Panel could not be read.",
             ["SelectNone"] = "None",
 
             ["HotkeyHeading"] = "Shortcut",

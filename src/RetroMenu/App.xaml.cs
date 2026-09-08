@@ -173,6 +173,11 @@ namespace RetroMenu
             // follows behind the Start Menu catalogue.
             Programs.RefreshAsync();
             Settings.RefreshAsync();
+
+            // The Control Panel entries of the right hand column, if any were added.
+            ControlPanelItems.Refreshed += OnControlPanelRefreshed;
+            ControlPanelItems.RefreshAsync();
+
             WatchProgramFolders();
 
             if (e.Args.Any(a => string.Equals(a, "--show", StringComparison.OrdinalIgnoreCase)))
@@ -241,6 +246,12 @@ namespace RetroMenu
             };
 
             AppSettings.Load();
+
+            // Never on this thread: reading that folder loads the Control Panel's own
+            // shell extensions into the process, and doing that on the UI thread
+            // before the first frame leaves the window blank. The shell worker the
+            // icons already use is the place for it; the list fills itself in.
+            ControlPanelItems.RefreshAsync();
 
             // Only so the window can say what "follow RetroBar" currently lands on.
             RetroBar = new RetroBarBridge();
@@ -439,6 +450,12 @@ namespace RetroMenu
                     _menu?.Rebuild();
                 }
             }));
+        }
+
+        private void OnControlPanelRefreshed()
+        {
+            // Raised on the shell worker thread.
+            Dispatcher.BeginInvoke(new Action(() => _menu?.Rebuild()));
         }
 
         private void OnCatalogRefreshed()

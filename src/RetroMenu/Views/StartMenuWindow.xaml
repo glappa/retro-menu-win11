@@ -469,9 +469,12 @@
                                 BorderBrush="{DynamicResource ColumnDividerBrush}"
                                 TextElement.Foreground="{DynamicResource RightPaneForeground}"
                                 MouseMove="OnPlaceHover">
-                            <ItemsControl x:Name="PlaceItems"
-                                          ItemTemplateSelector="{StaticResource PlaceSelector}"
-                                          Button.Click="OnItemClick" />
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl x:Name="PlaceItems"
+                                              ItemTemplateSelector="{StaticResource PlaceSelector}"
+                                              Button.Click="OnItemClick" />
+                            </ScrollViewer>
                         </Border>
 
                         <!-- third panel: the favourites as tiles, folders included -->

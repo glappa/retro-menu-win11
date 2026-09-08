@@ -108,6 +108,13 @@ namespace RetroMenu.Services
         public List<string> HiddenPlaces { get; set; } = new List<string>();
 
         /// <summary>
+        /// Applets of the Control Panel the user has added to that column, by the
+        /// parsing name the shell knows them under. The other way round from
+        /// <see cref="HiddenPlaces"/>: these are switched on, not off.
+        /// </summary>
+        public List<string> ExtraPlaces { get; set; } = new List<string>();
+
+        /// <summary>
         /// Open folders in windows-xp-explorer-win-11 when it is installed, so the
         /// file window matches the menu instead of being the Windows 11 one.
         /// </summary>
@@ -184,6 +191,7 @@ namespace RetroMenu.Services
                         loaded.LaunchTimes ??= new Dictionary<string, DateTime>();
                         loaded.Favourites ??= new List<FavouriteEntry>();
                         loaded.HiddenPlaces ??= new List<string>();
+                        loaded.ExtraPlaces ??= new List<string>();
 
                         // Carry a flat pinned list from an older version over once,
                         // then let it go so the file does not keep two truths.

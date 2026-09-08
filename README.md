@@ -173,6 +173,10 @@ häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
   „Zuletzt gestartete Programme zeigen"). Nach XP-Regeln bleiben Installer,
   Deinstallationsprogramme und Systemwerkzeuge draußen; ein Programm kann sich per
   `NoStartPage` heraushalten. Neu installierte Programme werden hervorgehoben.
+* **Die Systemsteuerung zum Dazulegen.** Jedes ihrer Elemente – von „Sound" bis
+  „Geräte-Manager" – lässt sich unten in die rechte Spalte hängen, mit dem Namen und
+  dem Symbol, das Windows ihm selbst gibt. Wird die Spalte zu lang, bekommt sie eine
+  Bildlaufleiste.
 * **Windows+S gehört ebenfalls dem Menü.** Die Kombination öffnet es mit dem Zeiger im
   Suchfeld, statt die Windows-11-Suche aufzuklappen. Windows+Shift+S bleibt der
   Screenshot.
@@ -344,7 +348,7 @@ Sechs Seiten:
 | **Allgemein** | Hauptschalter, ob das Menü läuft, Autostart, Windows-Taste, Sprache |
 | **Darstellung** | Design und RetroBar folgen, Menügröße, Kontobild, angezeigter Name, Menüklang |
 | **Startmenü** | Angeheftete Programme ein/aus, Kachelbereich, Internet- und E-Mail-Platz, Anzahl der häufig verwendeten, „Alle Programme", Liste der verwendeten Programme leeren |
-| **Rechte Spalte** | Jeder Eintrag einzeln an- und abwählbar, wie in XPs „Startmenü anpassen" |
+| **Rechte Spalte** | Jeder Eintrag einzeln an- und abwählbar, wie in XPs „Startmenü anpassen" — dazu jedes Element der Systemsteuerung zum Hinzufügen |
 | **Suche** | Suchfeld, Dateisuche, Store-Apps |
 | **Erweitert** | Windows+S abfangen, Taskleiste einblenden, „Als Administrator ausführen", XP-Dateifenster, Einstellungsdatei sichern/laden/zurücksetzen, Protokoll |
 
@@ -383,6 +387,7 @@ Alles landet in `%AppData%\RetroMenuWin11\settings.json`:
 | `ShowAllProgramsButton` | Die Schaltfläche „Alle Programme" |
 | `ShowUserPicture` | Kontobild in der blauen Kopfzeile |
 | `HiddenPlaces` | Abgewählte Einträge der rechten Spalte, z. B. `["Run", "Help"]` |
+| `ExtraPlaces` | Hinzugefügte Elemente der Systemsteuerung, mit ihrem Shell-Pfad |
 | `Favourites` | Favoriten, samt Ordnern und deren Inhalt |
 | `LaunchCounts`, `LaunchTimes`, `KnownPrograms` | Startzähler, Startzeiten, bekannte Programme |
 | `UserName` | Überschreibt den angezeigten Namen |
@@ -391,6 +396,32 @@ Daneben liegt `retromenu.log`. Mit `RETROMENU_DEBUG=1` kommt jedes Ereignis der
 Windows-Taste dazu. `RetroMenu.exe --dumpmenu <Datei>` schreibt das Shell-Kontextmenü
 einer Datei ins Protokoll, `--demo` füllt das Menü mit Platzhaltern für Screenshots,
 `--settings` öffnet die Einstellungen, `--quit` beendet eine laufende Ausführung sauber.
+
+## Die Systemsteuerung in der rechten Spalte
+
+Jedes Element der Systemsteuerung lässt sich unten in die rechte Spalte legen –
+*Einstellungen → Rechte Spalte → Aus der Systemsteuerung*. Angehakte Einträge stehen
+unter einer eigenen Trennlinie, in der Reihenfolge, in der die Systemsteuerung sie
+führt.
+
+Die Liste ist **nicht abgeschrieben, sondern abgefragt**: das Menü zählt
+`shell:ControlPanelFolder` auf. Damit stimmen die Namen in jeder Sprache, die Symbole
+sind die der Elemente selbst, und ein Rechner mit einem Eintrag mehr oder weniger –
+etwa „Mail (Microsoft Outlook)", das es nur mit Outlook gibt – bekommt genau seine
+eigene Liste. Elemente, für die die Shell keinen Anzeigenamen kennt, bleiben draußen,
+so wie die Systemsteuerung sie auch nicht zeigt.
+
+Geöffnet wird ein Element über **`ShellExecuteEx` mit seiner ID-Liste**, nicht über
+`explorer.exe`. Das ist kein Selbstzweck: Ein Teil der Elemente sind Ordner, die der
+Explorer anzeigen kann, ein anderer Teil sind Dialoge, und der Geräte-Manager etwa tut
+auf dem Weg über `explorer.exe` schlicht gar nichts – auch von der Eingabeaufforderung
+aus nicht. Über die ID-Liste läuft derselbe Standardbefehl wie beim Doppelklick in der
+Systemsteuerung, und dann geht jedes Element auf.
+
+Werden es zu viele Einträge für den Bildschirm, bekommt die rechte Spalte eine
+**Bildlaufleiste** im Stil des jeweiligen Designs; das Mausrad fährt die Liste ebenfalls.
+Dasselbe gilt für die Auswahlliste im Einstellungsprogramm, die in einem eigenen
+Kästchen mit eigener Leiste sitzt.
 
 ## Woher die Details stammen
 
@@ -456,6 +487,13 @@ RetroBar's own Start button opens it too without any patching. An auto-hidden Re
 taskbar rises while the menu is open. Search covers every program on the machine,
 Windows settings and optionally files through the Windows Search index, grouped the way
 Windows 11 presents them. Right-clicking an entry gives the real Explorer context menu.
+
+Every item of the **Control Panel** can be added to the bottom of the right column.
+The list is enumerated from the shell rather than written down, so the names arrive in
+the display language and the icons are the items' own; opening one goes through
+ShellExecuteEx with its ID list, because a fair few of them — the Device Manager among
+them — do nothing at all when handed to explorer.exe. A column too long for the screen
+gets a scroll bar in the style of the theme.
 
 The same hook takes **Windows+S** away from the Windows 11 search and opens the menu
 with the cursor in its own search box instead. Windows+Shift+S stays the screenshot, and

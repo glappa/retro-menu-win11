@@ -29,6 +29,9 @@ namespace RetroMenu.Views
         /// <summary>One checkbox per entry of the right hand column, in its order.</summary>
         private readonly List<CheckBox> _placeBoxes = new List<CheckBox>();
 
+        /// <summary>The same again for the Control Panel, in the order it lists them.</summary>
+        private readonly List<CheckBox> _appletBoxes = new List<CheckBox>();
+
         private static readonly int[] ScaleChoices = { 100, 125, 150, 175, 200, 250 };
 
         public SettingsWindow()
@@ -36,7 +39,20 @@ namespace RetroMenu.Views
             InitializeComponent();
             Load();
             _loading = false;
+
+            // The Control Panel is read on the shell worker thread and may well
+            // arrive after this window is already up.
+            ControlPanelItems.Refreshed += OnControlPanelReady;
+            Closed += (_, __) => ControlPanelItems.Refreshed -= OnControlPanelReady;
         }
+
+        private void OnControlPanelReady() =>
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                _loading = true;
+                BuildControlPanelList();
+                _loading = false;
+            }));
 
         // ------------------------------------------------------------- filling in
 
@@ -96,6 +112,7 @@ namespace RetroMenu.Views
             XpExplorerToggle.IsChecked = settings.UseXpExplorer;
 
             BuildPlaceList();
+            BuildControlPanelList();
             UpdateStatus();
         }
 
@@ -158,6 +175,10 @@ namespace RetroMenu.Views
             PlacesHint.Text = Lang.T("PlacesHint");
             PlacesAllButton.Content = Lang.T("SelectAll");
             PlacesNoneButton.Content = Lang.T("SelectNone");
+            ControlPanelHeading.Text = Lang.T("ControlPanelHeading");
+            ControlPanelHint.Text = Lang.T("ControlPanelHint");
+            ControlPanelAllButton.Content = Lang.T("SelectAll");
+            ControlPanelNoneButton.Content = Lang.T("SelectNone");
 
             SearchHeading.Text = Lang.T("SearchHeading");
             SearchBoxToggle.Content = Lang.T("ShowSearchBox");
@@ -261,6 +282,46 @@ namespace RetroMenu.Views
             }
         }
 
+        /// <summary>
+        /// Every applet the Control Panel has, ticked where it was added. The names
+        /// and the order are the shell's, so this list says the same as the Control
+        /// Panel itself does.
+        /// </summary>
+        private void BuildControlPanelList()
+        {
+            var chosen = new HashSet<string>(
+                AppSettings.Instance.ExtraPlaces ?? new List<string>(),
+                StringComparer.OrdinalIgnoreCase);
+
+            ControlPanelList.Children.Clear();
+            _appletBoxes.Clear();
+
+            foreach (var applet in ControlPanelItems.All)
+            {
+                var box = new CheckBox
+                {
+                    Content = applet.Name,
+                    Tag = applet.ParsingName,
+                    IsChecked = chosen.Contains(applet.ParsingName),
+                    Margin = new Thickness(0, 0, 0, 6),
+                    Style = (System.Windows.Style)FindResource("RetroCheckBox")
+                };
+                box.Checked += OnChanged;
+                box.Unchecked += OnChanged;
+                ControlPanelList.Children.Add(box);
+                _appletBoxes.Add(box);
+            }
+
+            if (_appletBoxes.Count != 0) return;
+
+            ControlPanelList.Children.Add(new TextBlock
+            {
+                Text = Lang.T("ControlPanelEmpty"),
+                Opacity = 0.7,
+                TextWrapping = TextWrapping.Wrap
+            });
+        }
+
         private void UpdateRetroBarStatus()
         {
             var bridge = App.Me.RetroBar;
@@ -361,6 +422,11 @@ namespace RetroMenu.Views
 
             settings.HiddenPlaces = _placeBoxes
                 .Where(b => b.IsChecked != true)
+                .Select(b => (string)b.Tag)
+                .ToList();
+
+            settings.ExtraPlaces = _appletBoxes
+                .Where(b => b.IsChecked == true)
                 .Select(b => (string)b.Tag)
                 .ToList();
 
@@ -477,6 +543,16 @@ namespace RetroMenu.Views
         private void OnPlacesAll(object sender, RoutedEventArgs e) => SetAllPlaces(true);
 
         private void OnPlacesNone(object sender, RoutedEventArgs e) => SetAllPlaces(false);
+
+        private void OnControlPanelAll(object sender, RoutedEventArgs e) => SetAllApplets(true);
+
+        private void OnControlPanelNone(object sender, RoutedEventArgs e) => SetAllApplets(false);
+
+        private void SetAllApplets(bool on)
+        {
+            Quietly(() => { foreach (var box in _appletBoxes) box.IsChecked = on; });
+            Apply();
+        }
 
         private void SetAllPlaces(bool on)
         {
