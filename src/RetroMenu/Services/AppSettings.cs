@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Win32;
@@ -27,6 +28,15 @@ namespace RetroMenu.Services
         public static AppSettings Instance { get; private set; } = new AppSettings();
 
         // ---- persisted state ----
+
+        /// <summary>
+        /// The master switch, and the only setting the whole program hangs on.
+        /// Off leaves Windows 11 exactly as it was: the Windows key is not touched
+        /// any more and the retro menu never opens. The program keeps running so
+        /// the switch can be turned back on from the settings program.
+        /// </summary>
+        public bool Enabled { get; set; } = true;
+
         public string Theme { get; set; } = "Windows XP Blue";
         public bool FollowRetroBarTheme { get; set; } = true;
         /// <summary>
@@ -66,6 +76,29 @@ namespace RetroMenu.Services
         /// way Windows 11 lays its pinned apps out. Off keeps the classic width.
         /// </summary>
         public bool ShowTilePanel { get; set; } = false;
+
+        /// <summary>
+        /// Show the pinned programs at all. Off leaves the left column with the
+        /// Internet and e-mail slots above the frequently used ones, the way a
+        /// freshly installed XP looked before anything had been pinned.
+        /// </summary>
+        public bool ShowFavourites { get; set; } = true;
+
+        /// <summary>The two special slots at the top: "Internet" and "E-mail".</summary>
+        public bool ShowDefaultAppSlots { get; set; } = true;
+
+        /// <summary>The "All Programs" button at the foot of the left column.</summary>
+        public bool ShowAllProgramsButton { get; set; } = true;
+
+        /// <summary>The account picture in the blue header, next to the name.</summary>
+        public bool ShowUserPicture { get; set; } = true;
+
+        /// <summary>
+        /// Entries of the right hand column that are switched off, named by the
+        /// key they are built with in <see cref="Launcher.BuildPlaces"/>. This is
+        /// the list XP's "Customize Start Menu" put behind its Advanced tab.
+        /// </summary>
+        public List<string> HiddenPlaces { get; set; } = new List<string>();
 
         /// <summary>
         /// Open folders in windows-xp-explorer-win-11 when it is installed, so the
@@ -122,6 +155,13 @@ namespace RetroMenu.Services
             }
         }
 
+        /// <summary>
+        /// Reads the file again over the running instance. The settings program
+        /// writes it from another process, and says so through
+        /// <see cref="SettingsBridge"/>; this is what the menu does about it.
+        /// </summary>
+        public static void Reload() => Load();
+
         public static void Load()
         {
             try
@@ -136,6 +176,7 @@ namespace RetroMenu.Services
                         loaded.KnownPrograms ??= new List<string>();
                         loaded.LaunchTimes ??= new Dictionary<string, DateTime>();
                         loaded.Favourites ??= new List<FavouriteEntry>();
+                        loaded.HiddenPlaces ??= new List<string>();
 
                         // Carry a flat pinned list from an older version over once,
                         // then let it go so the file does not keep two truths.
@@ -166,6 +207,85 @@ namespace RetroMenu.Services
                 File.WriteAllText(FilePath, JsonSerializer.Serialize(this, JsonOptions));
             }
             catch { /* a read-only profile must not take the menu down */ }
+        }
+
+        /// <summary>
+        /// What the running menu keeps writing behind the settings program's back:
+        /// pins, launch counts and the list of programs it has already seen.
+        /// </summary>
+        private static readonly HashSet<string> MenuOwned = new HashSet<string>
+        {
+            nameof(Pinned), nameof(Favourites), nameof(LaunchCounts),
+            nameof(LaunchTimes), nameof(KnownPrograms), nameof(Seeded)
+        };
+
+        /// <summary>
+        /// Writes the preferences without touching the lists above. The settings
+        /// program runs in its own process, so between opening its window and
+        /// saving, the menu may well have pinned a program or counted a launch —
+        /// serialising our whole copy would quietly undo that. So the file is read
+        /// again here and only the switches are carried over.
+        /// </summary>
+        public void SaveOptions()
+        {
+            var target = ReadFile() ?? new AppSettings();
+
+            foreach (var property in typeof(AppSettings)
+                         .GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                if (!property.CanRead || !property.CanWrite) continue;
+                if (MenuOwned.Contains(property.Name)) continue;
+                // AutoStart lives in the registry, not in the file, and setting it
+                // here would write it a second time for no reason.
+                if (property.IsDefined(typeof(JsonIgnoreAttribute), true)) continue;
+
+                property.SetValue(target, property.GetValue(this));
+            }
+
+            target.Save();
+        }
+
+        /// <summary>
+        /// Empties the "frequently used" and "recently used" lists, which is the
+        /// button XP had under Customize Start Menu. They belong to the menu, so
+        /// they are cleared straight in the file and the menu is told to read it.
+        /// </summary>
+        public static void ClearLaunchHistory()
+        {
+            var target = ReadFile() ?? new AppSettings();
+            target.LaunchCounts.Clear();
+            target.LaunchTimes.Clear();
+            target.Save();
+
+            Instance.LaunchCounts.Clear();
+            Instance.LaunchTimes.Clear();
+        }
+
+        /// <summary>
+        /// Whether a file picked for import really is a settings file. Any JSON
+        /// deserialises into this class without complaint, so a value that is only
+        /// ever written by us has to answer for the rest.
+        /// </summary>
+        public static bool LooksLikeSettings(string path)
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(File.ReadAllText(path));
+                return document.RootElement.ValueKind == JsonValueKind.Object &&
+                       document.RootElement.TryGetProperty(nameof(Theme), out _) &&
+                       document.RootElement.TryGetProperty(nameof(WinKeyMode), out _);
+            }
+            catch { return false; }
+        }
+
+        private static AppSettings ReadFile()
+        {
+            try
+            {
+                if (!File.Exists(FilePath)) return null;
+                return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath), JsonOptions);
+            }
+            catch { return null; }
         }
 
         // ---- favourites ----

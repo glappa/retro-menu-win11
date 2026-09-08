@@ -30,6 +30,7 @@ namespace RetroMenu
         private FileSystemWatcher[] _programWatchers = Array.Empty<FileSystemWatcher>();
         private DispatcherTimer _rescanDebounce;
         private EventWaitHandle _quitSignal;
+        private EventWaitHandle _reloadSignal;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -65,6 +66,19 @@ namespace RetroMenu
                 return;
             }
 
+            // The same executable is also the settings program. Started under the
+            // name RetroMenuSettings.exe, which the installer puts next to it as a
+            // second name for the same file, or with --settings, it opens the
+            // settings window and nothing else: no keyboard hook, no notification
+            // icon, no menu. It has to work that way round, because the switch
+            // that turns the menu off and on again lives in there.
+            if (e.Args.Any(a => string.Equals(a, "--settings", StringComparison.OrdinalIgnoreCase))
+                || LooksLikeSettingsProgram())
+            {
+                RunSettingsProgram();
+                return;
+            }
+
             // The very same executable is the installer. Started under its Setup
             // name, or with --setup, it offers to install itself instead of
             // opening a menu.
@@ -86,6 +100,7 @@ namespace RetroMenu
             }
 
             ListenForQuitSignal();
+            ListenForSettingsChanges();
 
             // Last chance to take the notification icon down with us.
             AppDomain.CurrentDomain.ProcessExit += (_, __) => _tray?.Dispose();
@@ -117,6 +132,12 @@ namespace RetroMenu
             _tray = new TrayIconService();
             _tray.OpenRequested += () => ToggleMenu(true);
             _tray.SettingsRequested += ShowSettings;
+            _tray.EnabledToggled += on =>
+            {
+                AppSettings.Instance.Enabled = on;
+                AppSettings.Instance.SaveOptions();
+                ApplySettings();
+            };
             _tray.RefreshRequested += () =>
             {
                 Catalog.RefreshAsync();
@@ -126,11 +147,13 @@ namespace RetroMenu
             _tray.ExitRequested += Quit;
             _tray.Show();
 
-            _hook = new KeyboardHook { Mode = ParseWinKeyMode(AppSettings.Instance.WinKeyMode) };
+            _hook = new KeyboardHook { Mode = EffectiveWinKeyMode() };
             _hook.StartMenuRequested += OnStartMenuRequested;
             bool hooked = _hook.Install();
             Log.Write($"startup: hook={hooked} mode={_hook.Mode} theme={ThemeManager.Current} " +
                       $"retrobar={RetroBar.IsPresent}/{RetroBar.Theme}");
+            _tray.SetEnabled(AppSettings.Instance.Enabled);
+
             if (!hooked && _hook.Mode != WinKeyMode.Off)
             {
                 MessageBox.Show(
@@ -172,6 +195,93 @@ namespace RetroMenu
             catch { return false; }
         }
 
+        /// <summary>
+        /// Recognised by its own file name, the way the installer already is. The
+        /// installed folder holds RetroMenu.exe and RetroMenuSettings.exe as two
+        /// names for one file, so the name is all there is to go on.
+        /// </summary>
+        private static bool LooksLikeSettingsProgram()
+        {
+            try
+            {
+                string exe = Environment.ProcessPath;
+                if (string.IsNullOrEmpty(exe)) return false;
+                return Path.GetFileNameWithoutExtension(exe)
+                    .IndexOf("settings", StringComparison.OrdinalIgnoreCase) >= 0;
+            }
+            catch { return false; }
+        }
+
+        /// <summary>
+        /// The settings program: its own process, its own window, and no claim on
+        /// the Windows key. It stands on its own on purpose, because the menu may
+        /// be switched off or not installed at all, and this is where it is
+        /// switched back on.
+        /// </summary>
+        private void RunSettingsProgram()
+        {
+            _singleInstance = new Mutex(true, "RetroMenuWin11.Settings", out bool created);
+            if (!created)
+            {
+                SettingsBridge.NotifyFront();
+                Shutdown();
+                return;
+            }
+
+            DispatcherUnhandledException += (_, args) =>
+            {
+                MessageBox.Show(args.Exception.ToString(), "Retro Menu",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                args.Handled = true;
+            };
+
+            AppSettings.Load();
+
+            // Only so the window can say what "follow RetroBar" currently lands on.
+            RetroBar = new RetroBarBridge();
+            RetroBar.Watch();
+
+            Lang.Apply(AppSettings.Instance.Language, RetroBar.Language);
+            ThemeManager.Apply(ActiveThemeName());
+
+            var window = new SettingsWindow();
+            window.Closed += (_, __) => Shutdown();
+            window.Show();
+            window.Activate();
+
+            ListenForFrontSignal(window);
+        }
+
+        /// <summary>A second start of the settings program brings this one forward.</summary>
+        private void ListenForFrontSignal(Window window)
+        {
+            try
+            {
+                var signal = SettingsBridge.CreateFrontSignal();
+                var waiter = new Thread(() =>
+                {
+                    while (true)
+                    {
+                        signal.WaitOne();
+                        Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            if (window.WindowState == WindowState.Minimized)
+                                window.WindowState = WindowState.Normal;
+                            window.Show();
+                            Interop.NativeMethods.ForceForeground(
+                                new System.Windows.Interop.WindowInteropHelper(window).Handle);
+                        }));
+                    }
+                })
+                {
+                    IsBackground = true,
+                    Name = "RetroMenu settings front"
+                };
+                waiter.Start();
+            }
+            catch { }
+        }
+
         private void ShowSetup(bool uninstall)
         {
             ThemeManager.Apply("Windows XP Blue");
@@ -202,6 +312,45 @@ namespace RetroMenu
                 waiter.Start();
             }
             catch { /* without the signal --quit simply does nothing */ }
+        }
+
+        /// <summary>
+        /// Waits for the settings program to say it has written the file. Reading
+        /// it again is cheap; rescanning every program on the machine is not, so
+        /// that only happens when the setting it hangs on has actually moved.
+        /// </summary>
+        private void ListenForSettingsChanges()
+        {
+            try
+            {
+                _reloadSignal = SettingsBridge.CreateReloadSignal();
+                var waiter = new Thread(() =>
+                {
+                    while (true)
+                    {
+                        _reloadSignal.WaitOne();
+                        Dispatcher.BeginInvoke(new Action(ReloadSettings));
+                    }
+                })
+                {
+                    IsBackground = true,
+                    Name = "RetroMenu settings signal"
+                };
+                waiter.Start();
+            }
+            catch { /* without the signal the changes arrive at the next start */ }
+        }
+
+        private void ReloadSettings()
+        {
+            bool storeApps = AppSettings.Instance.ShowStoreApps;
+
+            AppSettings.Reload();
+            Log.Write("settings reloaded: enabled=" + AppSettings.Instance.Enabled +
+                      " theme=" + AppSettings.Instance.Theme);
+
+            ApplySettings();
+            if (storeApps != AppSettings.Instance.ShowStoreApps) Catalog.RefreshAsync();
         }
 
         private static void DumpShellMenu(string path)
@@ -235,6 +384,16 @@ namespace RetroMenu
         public static WinKeyMode ParseWinKeyMode(string value) =>
             Enum.TryParse<WinKeyMode>(value, true, out var mode) ? mode : WinKeyMode.Neutralize;
 
+        /// <summary>
+        /// Switched off, the Windows key is left completely alone, and that on its
+        /// own is what brings the Windows 11 menu back — including behind
+        /// RetroBar's Start button, which is a simulated Windows key press.
+        /// </summary>
+        private static WinKeyMode EffectiveWinKeyMode() =>
+            AppSettings.Instance.Enabled
+                ? ParseWinKeyMode(AppSettings.Instance.WinKeyMode)
+                : WinKeyMode.Off;
+
         public void ApplySettings()
         {
             // Someone may have changed the Windows display language since we last
@@ -242,8 +401,10 @@ namespace RetroMenu
             SystemLanguage.Forget();
             Lang.Apply(AppSettings.Instance.Language, RetroBar?.Language);
             ThemeManager.Apply(ActiveThemeName());
-            if (_hook != null) _hook.Mode = ParseWinKeyMode(AppSettings.Instance.WinKeyMode);
+            if (_hook != null) _hook.Mode = EffectiveWinKeyMode();
             _tray?.Localize();
+            _tray?.SetEnabled(AppSettings.Instance.Enabled);
+            if (!AppSettings.Instance.Enabled) _menu?.HideMenu();
             _menu?.Rebuild();
         }
 
@@ -279,6 +440,11 @@ namespace RetroMenu
         public void ToggleMenu(bool forceOpen)
         {
             if (_menu == null) return;
+            if (!AppSettings.Instance.Enabled)
+            {
+                Log.Write("toggle: ignored, the retro menu is switched off");
+                return;
+            }
 
             try
             {
@@ -299,15 +465,17 @@ namespace RetroMenu
             }
         }
 
+        /// <summary>
+        /// Hands over to the settings program, which is a process of its own. What
+        /// it changes finds its way back through <see cref="SettingsBridge"/>.
+        /// </summary>
         public void ShowSettings()
         {
             _menu?.HideMenu();
-            var existing = Windows.OfType<SettingsWindow>().FirstOrDefault();
-            if (existing != null) { existing.Activate(); return; }
+            if (SettingsBridge.OpenSettingsProgram()) return;
 
-            var window = new SettingsWindow();
-            window.Show();
-            window.Activate();
+            MessageBox.Show(Lang.T("SettingsProgramMissing"), "Retro Menu",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         private void WatchProgramFolders()
@@ -348,6 +516,7 @@ namespace RetroMenu
             _hook?.Dispose();
             _tray?.Dispose();
             _quitSignal?.Dispose();
+            _reloadSignal?.Dispose();
             RetroBar?.Dispose();
             foreach (var watcher in _programWatchers) watcher.Dispose();
             Shutdown();

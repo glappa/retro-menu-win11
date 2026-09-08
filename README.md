@@ -27,7 +27,10 @@ powershell -Command "Get-FileHash .\RetroMenu-Setup-x64.exe -Algorithm SHA256"
 
 Der Assistent legt das Programm in **Ihren eigenen Benutzerordner**
 (`%LocalAppData%\Programs\RetroMenu`). Keine Administratorrechte, keine Änderung am
-System. Auf Wunsch richtet er **RetroBar gleich mit ein** – geladen wird dabei das
+System. Mit dabei ist **Retro Menu Einstellungen** – ein eigenes Programm mit eigener
+Verknüpfung im Startmenü, siehe [Einstellungen](#einstellungen).
+
+Auf Wunsch richtet der Assistent **RetroBar gleich mit ein** – geladen wird dabei das
 Portable-Archiv direkt von dessen Releases, und die Prüfsumme des Downloads steht
 anschließend im Protokoll des Assistenten. Entfernen geht über die Programmliste von
 Windows.
@@ -172,8 +175,10 @@ häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
   `NoStartPage` heraushalten. Neu installierte Programme werden hervorgehoben.
 * **Auto-Hide-Taskleiste fährt mit hoch**, solange das Menü offen ist.
 * **Tastatur**: Pfeiltasten durch beide Spalten, Buchstaben springen, Eingabe startet.
-* **Einstellungen** über das Tray-Symbol: Design, Größe, Sprache, Verhalten der
-  Windows-Taste, Suchfeld, Autostart.
+* **Ein eigenes Einstellungsprogramm**, das mitinstalliert wird: Design, Größe,
+  Sprache, Verhalten der Windows-Taste, welche Einträge das Menü überhaupt zeigt —
+  und ganz oben der Schalter, der das Retro-Menü ab- und wieder anschaltet, ohne
+  etwas zu verlieren. Es läuft für sich, auch wenn das Menü gerade aus ist.
 * **Spricht die Sprache des Windows, auf dem es landet.** Gefragt wird die
   Anzeigesprache selbst (`GetUserPreferredUILanguages`, also die Liste aus
   „Zeit und Sprache" in der Reihenfolge des Benutzers) — 24 Sprachen sind
@@ -187,7 +192,7 @@ häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
 | Windows-Taste | Menü auf/zu |
 | Start-Knopf in RetroBar | Menü auf/zu |
 | Klick auf das Tray-Symbol | Menü auf |
-| Rechtsklick aufs Tray-Symbol | Einstellungen, Programmliste neu einlesen, Beenden |
+| Rechtsklick aufs Tray-Symbol | Menü ein/aus, Einstellungen, Programmliste neu einlesen, Beenden |
 | Esc | Menü zu |
 | Tippen | sucht in Programmen, Einstellungen und auf Wunsch Dateien |
 | Rechtsklick auf einen Eintrag | Favoriten, Ordner und das volle Explorer-Menü |
@@ -296,11 +301,48 @@ Fehlt darin ein Schlüssel, springt automatisch Englisch ein.
 
 ## Einstellungen
 
-Alles liegt in `%AppData%\RetroMenuWin11\settings.json`, das Meiste steht auch in der
-Oberfläche (Rechtsklick aufs Tray-Symbol → Einstellungen):
+Die Einstellungen sind ein **eigenes Programm**: `RetroMenuSettings.exe`, mit eigener
+Verknüpfung im Startmenü („Retro Menu Einstellungen") und auch über das Tray-Symbol
+des Menüs erreichbar. Es läuft für sich, ganz gleich ob das Menü gerade läuft –
+denn der Schalter, mit dem man es wieder einschaltet, wohnt darin.
+
+![Das Einstellungsprogramm](docs/einstellungen.png)
+
+Ganz oben steht der **Hauptschalter**: *Retro-Startmenü verwenden*. Ausgeschaltet
+behält Windows 11 sein eigenes Startmenü – die Windows-Taste wird nicht mehr
+angefasst, der Startknopf von RetroBar auch nicht. Alles andere bleibt stehen, das
+Wiedereinschalten ist also ein Klick, und angeheftete Programme gehen dabei nicht
+verloren.
+
+Sechs Seiten:
+
+| Seite | Was dort steht |
+| --- | --- |
+| **Allgemein** | Hauptschalter, ob das Menü läuft, Autostart, Windows-Taste, Sprache |
+| **Darstellung** | Design und RetroBar folgen, Menügröße, Kontobild, angezeigter Name, Menüklang |
+| **Startmenü** | Angeheftete Programme ein/aus, Kachelbereich, Internet- und E-Mail-Platz, Anzahl der häufig verwendeten, „Alle Programme", Liste der verwendeten Programme leeren |
+| **Rechte Spalte** | Jeder Eintrag einzeln an- und abwählbar, wie in XPs „Startmenü anpassen" |
+| **Suche** | Suchfeld, Dateisuche, Store-Apps |
+| **Erweitert** | Taskleiste einblenden, „Als Administrator ausführen", XP-Dateifenster, Einstellungsdatei sichern/laden/zurücksetzen, Protokoll |
+
+Es gibt **keinen OK-Knopf**: jede Änderung wird sofort geschrieben, und das laufende
+Menü baut sich neu auf, ohne Neustart. Technisch schreibt das Einstellungsprogramm die
+Datei und setzt ein benanntes Ereignis (`Local\RetroMenuWin11.Reload`); das Menü liest
+daraufhin neu. Dabei werden nur die Schalter übernommen – angeheftete Programme und
+Startzähler stehen weiter unter der Hoheit des Menüs und werden nicht überschrieben,
+selbst wenn während des Einstellens etwas angeheftet wird.
+
+Beide Programme sind **dieselbe Datei**: der Assistent legt `RetroMenuSettings.exe` als
+harte Verknüpfung neben `RetroMenu.exe`. Das kostet keinen zweiten Satz .NET-Laufzeit
+auf der Platte, und trotzdem ist es ein eigenes Programm mit eigenem Prozess und
+eigenem Eintrag im Startmenü. Wo harte Verknüpfungen nicht gehen, wird kopiert. Ohne
+Installation tut es `RetroMenu.exe --settings`.
+
+Alles landet in `%AppData%\RetroMenuWin11\settings.json`:
 
 | Schlüssel | Bedeutung |
 | --- | --- |
+| `Enabled` | Der Hauptschalter. `false` heißt: Windows 11 zeigt sein eigenes Startmenü |
 | `Theme`, `FollowRetroBarTheme` | Design, bzw. RetroBar folgen |
 | `UseXpExplorer`, `XpExplorerPath` | Ordner im XP-Dateifenster öffnen, und wo es liegt |
 | `Language` | `auto` (folgt Windows), `auto-retrobar` (folgt RetroBar) oder ein fester Code wie `de`, `pt-BR`, `zh-Hant` |
@@ -311,7 +353,12 @@ Oberfläche (Rechtsklick aufs Tray-Symbol → Einstellungen):
 | `ShowSearchBox`, `SearchFiles` | Suchfeld, und ob es Dateien mitsucht |
 | `ShowStoreApps`, `ShowRunAsAdmin`, `PlaySounds` | Ein/aus |
 | `ShowRecentPrograms` | Untere Liste nach Zeit statt nach Häufigkeit |
+| `ShowFavourites` | Angeheftete Programme überhaupt anzeigen |
 | `ShowTilePanel` | Favoriten als Kachelbereich rechts statt als Liste links |
+| `ShowDefaultAppSlots` | Internet- und E-Mail-Platz oben in der linken Spalte |
+| `ShowAllProgramsButton` | Die Schaltfläche „Alle Programme" |
+| `ShowUserPicture` | Kontobild in der blauen Kopfzeile |
+| `HiddenPlaces` | Abgewählte Einträge der rechten Spalte, z. B. `["Run", "Help"]` |
 | `Favourites` | Favoriten, samt Ordnern und deren Inhalt |
 | `LaunchCounts`, `LaunchTimes`, `KnownPrograms` | Startzähler, Startzeiten, bekannte Programme |
 | `UserName` | Überschreibt den angezeigten Namen |
@@ -319,7 +366,7 @@ Oberfläche (Rechtsklick aufs Tray-Symbol → Einstellungen):
 Daneben liegt `retromenu.log`. Mit `RETROMENU_DEBUG=1` kommt jedes Ereignis der
 Windows-Taste dazu. `RetroMenu.exe --dumpmenu <Datei>` schreibt das Shell-Kontextmenü
 einer Datei ins Protokoll, `--demo` füllt das Menü mit Platzhaltern für Screenshots,
-`--quit` beendet eine laufende Ausführung sauber.
+`--settings` öffnet die Einstellungen, `--quit` beendet eine laufende Ausführung sauber.
 
 ## Woher die Details stammen
 
@@ -385,6 +432,13 @@ RetroBar's own Start button opens it too without any patching. An auto-hidden Re
 taskbar rises while the menu is open. Search covers every program on the machine,
 Windows settings and optionally files through the Windows Search index, grouped the way
 Windows 11 presents them. Right-clicking an entry gives the real Explorer context menu.
+
+A separate settings program, `RetroMenuSettings.exe`, is installed alongside and gets
+its own Start menu entry. It runs on its own whether or not the menu does, because the
+master switch at the top of it — *use the retro start menu* — is what hands the start
+menu back to Windows 11, and has to keep working once it has. Everything else is kept,
+so switching back is one click. There is no OK button: each change is written at once
+and the running menu rebuilds itself.
 
 Grab `RetroMenu-Setup-x64.exe` from the releases page; SHA-256 checksums are in the
 release notes. It installs into your own user folder, needs no administrator, and can

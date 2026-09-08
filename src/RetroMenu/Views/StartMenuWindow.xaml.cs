@@ -558,6 +558,8 @@ namespace RetroMenu.Views
             }
 
             AllProgramsLabel.Text = Lang.T("AllPrograms");
+            AllProgramsButton.Visibility = AppSettings.Instance.ShowAllProgramsButton
+                ? Visibility.Visible : Visibility.Collapsed;
             SleepLabel.Text = Lang.T("Standby");
             LogOffLabel.Text = Lang.T("LogOff");
             ShutDownLabel.Text = Lang.T("ShutDown");
@@ -566,6 +568,9 @@ namespace RetroMenu.Views
 
             if (UserPicture.Source == null)
                 UserPicture.Source = UserInfo.Picture();
+
+            UserTile.Visibility = AppSettings.Instance.ShowUserPicture
+                ? Visibility.Visible : Visibility.Collapsed;
 
             SearchHost.Visibility = AppSettings.Instance.ShowSearchBox
                 ? Visibility.Visible : Visibility.Collapsed;
@@ -589,9 +594,12 @@ namespace RetroMenu.Views
         {
             if (Demo.IsActive)
             {
-                bool demoTiles = AppSettings.Instance.ShowTilePanel;
-                var demoTop = Launcher.BuildDefaultAppSlots();
-                var demoFavourites = Demo.Pinned();
+                bool demoTiles = AppSettings.Instance.ShowTilePanel
+                                 && AppSettings.Instance.ShowFavourites;
+                var demoTop = AppSettings.Instance.ShowDefaultAppSlots
+                    ? Launcher.BuildDefaultAppSlots() : new List<StartItem>();
+                var demoFavourites = AppSettings.Instance.ShowFavourites
+                    ? Demo.Pinned() : new List<StartItem>();
                 if (!demoTiles) demoTop.AddRange(demoFavourites);
 
                 TopItems.ItemsSource = demoTop;
@@ -610,14 +618,21 @@ namespace RetroMenu.Views
             // XP's top group: the Internet and E-mail slots, then the favourites.
             // A favourite may be a folder, which opens as a cascade like everything
             // else in this menu.
-            var top = Launcher.BuildDefaultAppSlots();
+            var top = settings.ShowDefaultAppSlots
+                ? Launcher.BuildDefaultAppSlots()
+                : new List<StartItem>();
             var taken = new HashSet<string>(top.Select(i => i.Id), StringComparer.OrdinalIgnoreCase);
 
-            var favourites = BuildFavourites(settings, taken);
+            // Switched off, the pinned programs are not merely hidden: they stay
+            // out of "taken" as well, so a program that is both pinned and often
+            // used still turns up in the list below rather than vanishing.
+            var favourites = settings.ShowFavourites
+                ? BuildFavourites(settings, taken)
+                : new List<StartItem>();
 
             // With the tile panel showing them, listing the favourites in the column
             // as well would just say everything twice.
-            bool tiles = settings.ShowTilePanel;
+            bool tiles = settings.ShowTilePanel && settings.ShowFavourites;
             if (!tiles) top.AddRange(favourites);
 
             TilePanel.Visibility = tiles ? Visibility.Visible : Visibility.Collapsed;

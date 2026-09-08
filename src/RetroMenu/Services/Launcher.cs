@@ -419,12 +419,29 @@ namespace RetroMenu.Services
         /// entries are the bold group; "My Recent Documents" and "Connect To" carry
         /// a submenu arrow.
         /// </summary>
+        /// <summary>
+        /// The right hand column, in the order XP had it. The settings program
+        /// shows this list so single entries can be switched off, which is what
+        /// XP's "Customize Start Menu" did.
+        /// </summary>
+        public static readonly string[] PlaceKeys =
+        {
+            "Documents", "RecentDocuments", "Pictures", "Music", "Computer",
+            "ControlPanel", "SetProgramAccess", "Connections", "PrintersAndFaxes",
+            "Help", "SearchPlace", "Run"
+        };
+
         public static List<StartItem> BuildPlaces()
         {
             var places = new List<StartItem>();
+            var hidden = new HashSet<string>(
+                AppSettings.Instance.HiddenPlaces ?? new List<string>(),
+                StringComparer.OrdinalIgnoreCase);
 
             void Add(string key, string parsingName, string command,
-                     bool bold = false, string submenu = null) =>
+                     bool bold = false, string submenu = null)
+            {
+                if (hidden.Contains(key)) return;
                 places.Add(new StartItem
                 {
                     Name = Lang.T(key),
@@ -434,6 +451,7 @@ namespace RetroMenu.Services
                     Bold = bold,
                     SubmenuSource = submenu
                 });
+            }
 
             void Line() => places.Add(new StartItem
             {
@@ -459,7 +477,23 @@ namespace RetroMenu.Services
             Add("SearchPlace", SearchShellItem, SearchInMenu);
             Add("Run", RunShellItem, "rundialog");
 
+            TrimSeparators(places);
             return places;
+        }
+
+        /// <summary>
+        /// Switching a whole group off would otherwise leave its dividing lines
+        /// standing: two in a row, or one against the top or bottom edge.
+        /// </summary>
+        private static void TrimSeparators(List<StartItem> rows)
+        {
+            bool IsLine(StartItem row) => row.Command == Separator;
+
+            for (int i = rows.Count - 1; i >= 0; i--)
+            {
+                if (!IsLine(rows[i])) continue;
+                if (i == 0 || i == rows.Count - 1 || IsLine(rows[i - 1])) rows.RemoveAt(i);
+            }
         }
 
         /// <summary>

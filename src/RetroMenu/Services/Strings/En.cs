@@ -158,6 +158,89 @@ namespace RetroMenu.Services.Strings
             ["Close"] = "Close",
             ["StoreApps"] = "Store apps",
 
+            // ---- the settings program ----
+            ["SettingsSubtitle"] = "Everything the start menu shows, and whether it shows at all.",
+            ["PageGeneral"] = "General",
+            ["PageAppearance"] = "Appearance",
+            ["PageMenu"] = "Start menu",
+            ["PagePlaces"] = "Right column",
+            ["PageSearch"] = "Search",
+            ["PageAdvanced"] = "Advanced",
+
+            ["UseRetroMenu"] = "Use the retro start menu",
+            ["UseRetroMenuHint"] = "Switched off, Windows 11 keeps its own start menu: "
+                                   + "the Windows key is not touched any more and neither is "
+                                   + "RetroBar's Start button. Everything else stays as it is, "
+                                   + "so switching it back on takes one click.",
+            ["MenuRunning"] = "The menu is running.",
+            ["MenuNotRunning"] = "The menu is not running.",
+            ["MenuOff"] = "Switched off — Windows 11 shows its own start menu.",
+            ["StartMenuNow"] = "Start now",
+            ["SwitchedOff"] = "switched off",
+            ["StartHeading"] = "Starting",
+            ["WinKeyHint"] = "How the Windows key is caught. \"Intercept\" leaves every Win+X "
+                             + "shortcut alone; \"Swallow\" is for machines where the Windows 11 "
+                             + "menu still slips through.",
+
+            ["HeaderHeading"] = "Blue header",
+            ["ShowUserPicture"] = "Show the account picture",
+            ["UserNameSetting"] = "Name shown",
+            ["UserNameHint"] = "Empty means the name Windows knows you by.",
+            ["SoundHeading"] = "Sound",
+            ["PlaySounds"] = "Play the menu sound when opening",
+            ["PlaySoundsHint"] = "Asks for the \"Menu popup\" sound of your own scheme, so nothing "
+                                 + "is heard where nothing is assigned.",
+
+            ["PinnedHeading"] = "Pinned programs",
+            ["ShowFavourites"] = "Show pinned programs",
+            ["ShowFavouritesHint"] = "Switched off, the left column holds the Internet and e-mail "
+                                     + "slots above the frequently used programs, the way a fresh "
+                                     + "XP looked before anything had been pinned. What is pinned "
+                                     + "is kept and comes back with the switch.",
+            ["ColumnHeading"] = "Left column",
+            ["ShowDefaultSlots"] = "Show the Internet and e-mail slots",
+            ["ShowDefaultSlotsHint"] = "The two entries at the very top, naming your default "
+                                       + "browser and mail program.",
+            ["ShowAllProgramsButton"] = "Show the \"All Programs\" button",
+            ["ForgetAll"] = "Empty the list of used programs",
+            ["ForgetAllDone"] = "The list is empty. It fills up again as programs are started.",
+
+            ["PlacesHeading"] = "Entries in the right column",
+            ["PlacesHint"] = "Everything switched off here disappears from the right hand column, "
+                             + "along with any dividing line left standing on its own.",
+            ["SelectAll"] = "All",
+            ["SelectNone"] = "None",
+
+            ["SearchHeading"] = "Search box",
+            ["ShowSearchBoxHint"] = "Windows XP had none; this one searches programs, Windows "
+                                    + "settings and, if you let it, files.",
+            ["SearchFilesHint"] = "Uses the Windows search index, so it only finds what Windows "
+                                  + "has already indexed.",
+            ["ProgramsHeading"] = "Program list",
+            ["ShowStoreAppsHint"] = "Apps from the Microsoft Store have no shortcut on disk and "
+                                    + "are gathered into a group of their own.",
+
+            ["DesktopHeading"] = "Desktop",
+            ["KeepTaskbarHint"] = "An auto-hidden RetroBar comes up while the menu is open, the "
+                                  + "way Windows XP did it.",
+            ["ShowRunAsAdmin"] = "Offer \"Run as administrator\" on right-click",
+
+            ["FilesHeading"] = "Settings file",
+            ["OpenSettingsFolder"] = "Open folder",
+            ["OpenLog"] = "Open log",
+            ["ExportSettings"] = "Save a copy…",
+            ["ImportSettings"] = "Load a copy…",
+            ["ResetSettings"] = "Reset",
+            ["ResetConfirm"] = "Put every setting back the way it came? Pinned programs and the "
+                               + "list of used programs are kept.",
+            ["ImportFailed"] = "That is not a Retro Menu settings file.",
+            ["SettingsFileFilter"] = "Settings",
+            ["AboutHeading"] = "About",
+            ["AboutText"] = "A start menu in the style of older Windows versions, as a companion "
+                            + "to RetroBar.",
+            ["SettingsProgramMissing"] = "The settings program could not be started.",
+            ["SettingsShortcut"] = "Retro Menu Settings",
+
             // ---- picking a language ----
             ["LangAutoWindows"] = "Automatic (Windows language)",
             ["LangAutoRetroBar"] = "Automatic (RetroBar)",

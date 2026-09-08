@@ -2,80 +2,291 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Retro Menu"
-        Width="420" SizeToContent="Height"
-        ResizeMode="NoResize"
+        Width="660" Height="580" MinWidth="560" MinHeight="440"
         WindowStartupLocation="CenterScreen"
         ShowInTaskbar="True"
         UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Display"
+        Icon="/RetroMenu;component/Assets/retromenu.ico"
+        Background="{DynamicResource LeftPaneBackground}"
+        TextElement.Foreground="{DynamicResource LeftPaneForeground}"
         FontFamily="{DynamicResource MenuFontFamily}"
         FontSize="{DynamicResource MenuFontSize}">
+
+    <Window.Resources>
+
+        <!-- a heading over a group of switches -->
+        <Style x:Key="GroupHeading" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Margin" Value="0,14,0,7" />
+        </Style>
+
+        <!-- the grey explanation under a switch -->
+        <Style x:Key="Hint" TargetType="TextBlock">
+            <Setter Property="Opacity" Value="0.7" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="17,1,0,9" />
+        </Style>
+
+        <Style x:Key="Switch" TargetType="CheckBox" BasedOn="{StaticResource RetroCheckBox}">
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+
+        <Style x:Key="RowLabel" TargetType="TextBlock">
+            <Setter Property="Width" Value="165" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- the list of pages down the left hand side -->
+        <Style x:Key="PageEntry" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Background="Transparent"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#28FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background"
+                                        Value="{DynamicResource ItemHighlightBackground}" />
+                                <Setter Property="TextElement.Foreground"
+                                        Value="{DynamicResource ItemHighlightForeground}" />
+                                <Setter Property="TextElement.FontWeight" Value="Bold" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="{DynamicResource HeaderBackground}" Padding="14,10">
-            <TextBlock x:Name="HeaderText" FontWeight="Bold" FontSize="15"
-                       Foreground="{DynamicResource HeaderForeground}" />
+        <!-- ============ header ============ -->
+        <Border Grid.Row="0" Background="{DynamicResource HeaderBackground}" Padding="16,11">
+            <Grid>
+                <Rectangle Height="3" VerticalAlignment="Top" Margin="-16,-11,-16,0"
+                           Fill="{DynamicResource HeaderTopHighlight}" />
+                <StackPanel>
+                    <TextBlock x:Name="HeaderText" FontWeight="Bold" FontSize="15"
+                               Foreground="{DynamicResource HeaderForeground}" />
+                    <TextBlock x:Name="HeaderSubtext" Opacity="0.85" Margin="0,2,0,0"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource HeaderForeground}" />
+                </StackPanel>
+            </Grid>
         </Border>
 
-        <StackPanel Grid.Row="1" Margin="16,14,16,6">
-            <TextBlock x:Name="AppearanceLabel" FontWeight="Bold" Margin="0,0,0,6" />
+        <!-- ============ pages ============ -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-            <DockPanel Margin="0,0,0,6">
-                <TextBlock x:Name="ThemeLabel" Width="150" VerticalAlignment="Center" />
-                <ComboBox x:Name="ThemeBox" SelectionChanged="OnThemeChanged" />
-            </DockPanel>
+            <Border Grid.Column="0" Width="150"
+                    Background="{DynamicResource RightPaneBackground}"
+                    TextElement.Foreground="{DynamicResource RightPaneForeground}"
+                    BorderThickness="0,0,1,0"
+                    BorderBrush="{DynamicResource ColumnDividerBrush}">
+                <ListBox x:Name="PageList" Background="Transparent" BorderThickness="0"
+                         Padding="0,8,0,0"
+                         ItemContainerStyle="{StaticResource PageEntry}"
+                         HorizontalContentAlignment="Stretch"
+                         SelectionChanged="OnPageChanged" />
+            </Border>
 
-            <CheckBox x:Name="FollowRetroBarBox" Margin="0,0,0,4" Click="OnFollowChanged" />
-            <TextBlock x:Name="RetroBarStatus" Opacity="0.7" Margin="20,0,0,10" TextWrapping="Wrap" />
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="18,4,18,14">
+                <Grid>
 
-            <DockPanel Margin="0,0,0,3">
-                <TextBlock x:Name="LanguageLabel" Width="150" VerticalAlignment="Center" />
-                <ComboBox x:Name="LanguageBox" SelectionChanged="OnLanguageChanged" />
-            </DockPanel>
-            <TextBlock x:Name="LanguageHint" Opacity="0.7" Margin="150,0,0,12" TextWrapping="Wrap" />
+                    <!-- ==== general ==== -->
+                    <StackPanel x:Name="GeneralPage">
+                        <TextBlock x:Name="MasterHeading" Style="{StaticResource GroupHeading}" />
+                        <CheckBox x:Name="EnabledToggle" FontWeight="Bold" Margin="0,0,0,4"
+                                  Style="{StaticResource RetroCheckBox}" Checked="OnEnabledChanged" Unchecked="OnEnabledChanged" />
+                        <TextBlock x:Name="EnabledHint" Style="{StaticResource Hint}" />
 
-            <TextBlock x:Name="BehaviourLabel" FontWeight="Bold" Margin="0,0,0,6" />
+                        <Border x:Name="StatusBox" Padding="9,7" Margin="0,0,0,4"
+                                Background="{DynamicResource RightPaneBackground}"
+                                TextElement.Foreground="{DynamicResource RightPaneForeground}">
+                            <DockPanel>
+                                <Button x:Name="StartMenuButton" DockPanel.Dock="Right" Padding="12,3"
+                                        Margin="10,0,0,0" Click="OnStartMenuClick" />
+                                <TextBlock x:Name="StatusText" VerticalAlignment="Center"
+                                           TextWrapping="Wrap" />
+                            </DockPanel>
+                        </Border>
 
-            <DockPanel Margin="0,0,0,8">
-                <TextBlock x:Name="WinKeyLabel" Width="150" VerticalAlignment="Center" />
-                <ComboBox x:Name="WinKeyBox" SelectionChanged="OnWinKeyChanged" />
-            </DockPanel>
+                        <TextBlock x:Name="StartHeading" Style="{StaticResource GroupHeading}" />
+                        <CheckBox x:Name="AutoStartToggle" Style="{StaticResource Switch}"
+                                  Checked="OnAutoStartChanged" Unchecked="OnAutoStartChanged" />
 
-            <DockPanel Margin="0,0,0,8">
-                <TextBlock x:Name="FrequentLabel" Width="150" VerticalAlignment="Center" />
-                <ComboBox x:Name="FrequentBox" SelectionChanged="OnFrequentChanged" />
-            </DockPanel>
+                        <DockPanel Margin="0,4,0,8">
+                            <TextBlock x:Name="WinKeyLabel" Style="{StaticResource RowLabel}" />
+                            <ComboBox x:Name="WinKeyBox" SelectionChanged="OnSelectionChanged" />
+                        </DockPanel>
+                        <TextBlock x:Name="WinKeyHint" Style="{StaticResource Hint}" Margin="0,0,0,9" />
 
-            <DockPanel Margin="0,0,0,8">
-                <TextBlock x:Name="ScaleLabel" Width="150" VerticalAlignment="Center" />
-                <ComboBox x:Name="ScaleBox" SelectionChanged="OnScaleChanged" />
-            </DockPanel>
+                        <DockPanel Margin="0,4,0,4">
+                            <TextBlock x:Name="LanguageLabel" Style="{StaticResource RowLabel}" />
+                            <ComboBox x:Name="LanguageBox" SelectionChanged="OnLanguageChanged" />
+                        </DockPanel>
+                        <TextBlock x:Name="LanguageHint" Style="{StaticResource Hint}" Margin="165,0,0,8" />
+                    </StackPanel>
 
-            <CheckBox x:Name="TilesToggle" Margin="0,0,0,2" Click="OnToggleChanged" />
-            <TextBlock x:Name="TilesHint" Margin="20,0,0,8" Opacity="0.7" TextWrapping="Wrap" />
+                    <!-- ==== appearance ==== -->
+                    <StackPanel x:Name="AppearancePage" Visibility="Collapsed">
+                        <TextBlock x:Name="ThemeHeading" Style="{StaticResource GroupHeading}" />
+                        <DockPanel Margin="0,0,0,7">
+                            <TextBlock x:Name="ThemeLabel" Style="{StaticResource RowLabel}" />
+                            <ComboBox x:Name="ThemeBox" SelectionChanged="OnSelectionChanged" />
+                        </DockPanel>
+                        <CheckBox x:Name="FollowRetroBarBox" Style="{StaticResource Switch}"
+                                  Checked="OnFollowChanged" Unchecked="OnFollowChanged" />
+                        <TextBlock x:Name="RetroBarStatus" Style="{StaticResource Hint}" />
 
-            <CheckBox x:Name="RecentToggle" Margin="0,0,0,2" Click="OnToggleChanged" />
-            <TextBlock x:Name="RecentHint" Margin="20,0,0,8" Opacity="0.7" TextWrapping="Wrap" />
+                        <DockPanel Margin="0,2,0,10">
+                            <TextBlock x:Name="ScaleLabel" Style="{StaticResource RowLabel}" />
+                            <ComboBox x:Name="ScaleBox" SelectionChanged="OnSelectionChanged" />
+                        </DockPanel>
 
-            <CheckBox x:Name="KeepTaskbarToggle" Margin="0,0,0,5" Click="OnToggleChanged" />
-            <CheckBox x:Name="SearchBoxToggle" Margin="0,0,0,5" Click="OnToggleChanged" />
-            <CheckBox x:Name="StoreAppsToggle" Margin="0,0,0,5" Click="OnToggleChanged" />
-            <CheckBox x:Name="XpExplorerToggle" Margin="0,0,0,2" Click="OnToggleChanged" />
-            <TextBlock x:Name="XpExplorerHint" Margin="20,0,0,8" Opacity="0.7" TextWrapping="Wrap" />
-            <CheckBox x:Name="AutoStartToggle" Margin="0,0,0,5" Click="OnAutoStartChanged" />
-        </StackPanel>
+                        <TextBlock x:Name="HeaderHeading" Style="{StaticResource GroupHeading}" />
+                        <CheckBox x:Name="UserPictureToggle" Style="{StaticResource Switch}"
+                                  Checked="OnChanged" Unchecked="OnChanged" />
+                        <DockPanel Margin="0,2,0,4">
+                            <TextBlock x:Name="UserNameLabel" Style="{StaticResource RowLabel}" />
+                            <TextBox x:Name="UserNameBox" LostFocus="OnUserNameChanged" />
+                        </DockPanel>
+                        <TextBlock x:Name="UserNameHint" Style="{StaticResource Hint}" Margin="165,0,0,8" />
 
-        <Border Grid.Row="2" Padding="16,8,16,12">
+                        <TextBlock x:Name="SoundHeading" Style="{StaticResource GroupHeading}" />
+                        <CheckBox x:Name="SoundsToggle" Style="{StaticResource Switch}" Checked="OnChanged" Unchecked="OnChanged" />
+                        <TextBlock x:Name="SoundsHint" Style="{StaticResource Hint}" />
+                    </StackPanel>
+
+                    <!-- ==== the menu itself ==== -->
+                    <StackPanel x:Name="MenuPage" Visibility="Collapsed">
+                        <TextBlock x:Name="PinnedHeading" Style="{StaticResource GroupHeading}" />
+                        <CheckBox x:Name="FavouritesToggle" Style="{StaticResource RetroCheckBox}"
+                                  Margin="0,0,0,4" Checked="OnFavouritesChanged" Unchecked="OnFavouritesChanged" />
+                        <TextBlock x:Name="FavouritesHint" Style="{StaticResource Hint}" />
+
+                        <CheckBox x:Name="TilesToggle" Style="{StaticResource RetroCheckBox}"
+                                  Margin="17,0,0,4" Checked="OnChanged" Unchecked="OnChanged" />
+                        <TextBlock x:Name="TilesHint" Style="{StaticResource Hint}" Margin="34,1,0,9" />
+
+                        <TextBlock x:Name="ColumnHeading" Style="{StaticResource GroupHeading}" />
+                        <CheckBox x:Name="SlotsToggle" Style="{StaticResource RetroCheckBox}"
+                                  Margin="0,0,0,4" Checked="OnChanged" Unchecked="OnChanged" />
+                        <TextBlock x:Name="SlotsHint" Style="{StaticResource Hint}" />
+
+                        <DockPanel Margin="0,2,0,8">
+                            <TextBlock x:Name="FrequentLabel" Style="{StaticResource RowLabel}" />
+                            <ComboBox x:Name="FrequentBox" SelectionChanged="OnSelectionChanged" />
+                        </DockPanel>
+
+                        <CheckBox x:Name="RecentToggle" Style="{StaticResource RetroCheckBox}"
+                                  Margin="0,0,0,4" Checked="OnChanged" Unchecked="OnChanged" />
+                        <TextBlock x:Name="RecentHint" Style="{StaticResource Hint}" />
+
+                        <CheckBox x:Name="AllProgramsToggle" Style="{StaticResource Switch}"
+                                  Checked="OnChanged" Unchecked="OnChanged" />
+
+                        <Button x:Name="ForgetButton" HorizontalAlignment="Left" Padding="12,4"
+                                Margin="0,8,0,0" Click="OnForgetClick" />
+                    </StackPanel>
+
+                    <!-- ==== right hand column ==== -->
+                    <StackPanel x:Name="PlacesPage" Visibility="Collapsed">
+                        <TextBlock x:Name="PlacesHeading" Style="{StaticResource GroupHeading}" />
+                        <TextBlock x:Name="PlacesHint" Style="{StaticResource Hint}" Margin="0,0,0,10" />
+                        <StackPanel x:Name="PlaceList" />
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button x:Name="PlacesAllButton" Padding="12,4" Margin="0,0,8,0"
+                                    Click="OnPlacesAll" />
+                            <Button x:Name="PlacesNoneButton" Padding="12,4" Click="OnPlacesNone" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ==== search ==== -->
+                    <StackPanel x:Name="SearchPage" Visibility="Collapsed">
+                        <TextBlock x:Name="SearchHeading" Style="{StaticResource GroupHeading}" />
+                        <CheckBox x:Name="SearchBoxToggle" Style="{StaticResource RetroCheckBox}"
+                                  Margin="0,0,0,4" Checked="OnChanged" Unchecked="OnChanged" />
+                        <TextBlock x:Name="SearchBoxHint" Style="{StaticResource Hint}" />
+
+                        <CheckBox x:Name="SearchFilesToggle" Style="{StaticResource RetroCheckBox}"
+                                  Margin="17,0,0,4" Checked="OnChanged" Unchecked="OnChanged" />
+                        <TextBlock x:Name="SearchFilesHint" Style="{StaticResource Hint}" Margin="34,1,0,9" />
+
+                        <TextBlock x:Name="ProgramsHeading" Style="{StaticResource GroupHeading}" />
+                        <CheckBox x:Name="StoreAppsToggle" Style="{StaticResource RetroCheckBox}"
+                                  Margin="0,0,0,4" Checked="OnChanged" Unchecked="OnChanged" />
+                        <TextBlock x:Name="StoreAppsHint" Style="{StaticResource Hint}" />
+                    </StackPanel>
+
+                    <!-- ==== advanced ==== -->
+                    <StackPanel x:Name="AdvancedPage" Visibility="Collapsed">
+                        <TextBlock x:Name="DesktopHeading" Style="{StaticResource GroupHeading}" />
+                        <CheckBox x:Name="KeepTaskbarToggle" Style="{StaticResource RetroCheckBox}"
+                                  Margin="0,0,0,4" Checked="OnChanged" Unchecked="OnChanged" />
+                        <TextBlock x:Name="KeepTaskbarHint" Style="{StaticResource Hint}" />
+
+                        <CheckBox x:Name="RunAsAdminToggle" Style="{StaticResource Switch}" Checked="OnChanged" Unchecked="OnChanged" />
+
+                        <CheckBox x:Name="XpExplorerToggle" Style="{StaticResource RetroCheckBox}"
+                                  Margin="0,4,0,4" Checked="OnChanged" Unchecked="OnChanged" />
+                        <TextBlock x:Name="XpExplorerHint" Style="{StaticResource Hint}" />
+
+                        <TextBlock x:Name="FilesHeading" Style="{StaticResource GroupHeading}" />
+                        <TextBlock x:Name="FolderPath" Style="{StaticResource Hint}" Margin="0,0,0,8" />
+                        <WrapPanel>
+                            <Button x:Name="OpenFolderButton" Padding="12,4" Margin="0,0,8,8"
+                                    Click="OnOpenFolder" />
+                            <Button x:Name="OpenLogButton" Padding="12,4" Margin="0,0,8,8"
+                                    Click="OnOpenLog" />
+                            <Button x:Name="ExportButton" Padding="12,4" Margin="0,0,8,8"
+                                    Click="OnExport" />
+                            <Button x:Name="ImportButton" Padding="12,4" Margin="0,0,8,8"
+                                    Click="OnImport" />
+                            <Button x:Name="ResetButton" Padding="12,4" Margin="0,0,8,8"
+                                    Click="OnReset" />
+                        </WrapPanel>
+
+                        <TextBlock x:Name="AboutHeading" Style="{StaticResource GroupHeading}" />
+                        <TextBlock x:Name="AboutText" Style="{StaticResource Hint}" Margin="0,0,0,4" />
+                        <TextBlock Margin="0,0,0,4">
+                            <Hyperlink NavigateUri="https://github.com/glappa/retro-menu-win11"
+                                       RequestNavigate="OnLink">
+                                <Run Text="github.com/glappa/retro-menu-win11" />
+                            </Hyperlink>
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ============ footer ============ -->
+        <Border Grid.Row="2" Padding="16,9"
+                Background="{DynamicResource RightPaneBackground}"
+                TextElement.Foreground="{DynamicResource RightPaneForeground}"
+                BorderThickness="0,1,0,0"
+                BorderBrush="{DynamicResource ColumnDividerBrush}">
             <DockPanel>
-                <TextBlock x:Name="VersionText" VerticalAlignment="Center" Opacity="0.6" />
-                <Button x:Name="CloseButton" HorizontalAlignment="Right" Padding="18,4"
-                        Click="OnClose" />
+                <TextBlock x:Name="VersionText" VerticalAlignment="Center" Opacity="0.7" />
+                <Button x:Name="CloseButton" HorizontalAlignment="Right" Padding="20,4"
+                        IsDefault="True" IsCancel="True" Click="OnClose" />
             </DockPanel>
         </Border>
     </Grid>

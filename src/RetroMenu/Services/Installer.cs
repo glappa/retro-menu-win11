@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using Microsoft.Win32;
 
 namespace RetroMenu.Services
@@ -29,6 +30,14 @@ namespace RetroMenu.Services
 
         public static string InstalledExecutable => Path.Combine(InstallDirectory, "RetroMenu.exe");
 
+        /// <summary>
+        /// The settings program. It is the same executable under a second name:
+        /// started as RetroMenuSettings.exe it opens the settings window instead
+        /// of a menu, and it runs whether or not the menu itself is up.
+        /// </summary>
+        public static string SettingsExecutable =>
+            Path.Combine(InstallDirectory, "RetroMenuSettings.exe");
+
         public static bool IsInstalled => File.Exists(InstalledExecutable);
 
         public static string CurrentExecutable => Environment.ProcessPath;
@@ -44,6 +53,10 @@ namespace RetroMenu.Services
         private static string DesktopShortcutPath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
             "Retro Menu.lnk");
+
+        private static string SettingsShortcutPath => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.StartMenu),
+            "Programs", Lang.T("SettingsShortcut") + ".lnk");
 
         public static void Install(InstallOptions options, Action<string> log)
         {
@@ -61,10 +74,13 @@ namespace RetroMenu.Services
                 log("Programmdatei kopiert.");
             }
 
+            LinkSettingsProgram(log);
+
             if (options.StartMenuShortcut)
             {
                 CreateShortcut(StartMenuShortcutPath, InstalledExecutable, "Startmenü im Retro-Stil");
-                log("Verknüpfung im Startmenü angelegt.");
+                CreateShortcut(SettingsShortcutPath, SettingsExecutable, "Retro Menu einstellen");
+                log("Verknüpfungen im Startmenü angelegt.");
             }
 
             if (options.DesktopShortcut)
@@ -85,14 +101,7 @@ namespace RetroMenu.Services
             StopRunningCopy(log);
             SetAutoStart(false);
 
-            foreach (var shortcut in new[] { StartMenuShortcutPath, DesktopShortcutPath })
-            {
-                try
-                {
-                    if (File.Exists(shortcut)) { File.Delete(shortcut); log("Verknüpfung entfernt."); }
-                }
-                catch { }
-            }
+            RemoveOurShortcuts(log);
 
             try { Registry.CurrentUser.DeleteSubKeyTree(UninstallKey, false); }
             catch { }
@@ -101,6 +110,92 @@ namespace RetroMenu.Services
 
             // The folder cannot delete itself while we are running out of it.
             ScheduleFolderRemoval(InstallDirectory);
+        }
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true,
+                   EntryPoint = "CreateHardLinkW")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CreateHardLink(string linkName, string existingFileName,
+                                                  IntPtr securityAttributes);
+
+        /// <summary>
+        /// Puts the second name next to the first. A hard link is used rather than
+        /// a copy because both names would otherwise carry their own 66 MB of .NET
+        /// runtime for what is byte for byte the same program; the link costs a
+        /// directory entry. Where hard links are not to be had — a FAT stick, a
+        /// stray sharing lock — a plain copy does the same job.
+        /// </summary>
+        private static void LinkSettingsProgram(Action<string> log)
+        {
+            try
+            {
+                // Its own window would hold the file open.
+                foreach (var running in Process.GetProcessesByName("RetroMenuSettings"))
+                {
+                    try
+                    {
+                        running.CloseMainWindow();
+                        running.WaitForExit(2000);
+                        if (!running.HasExited) running.Kill();
+                    }
+                    catch { }
+                }
+
+                if (File.Exists(SettingsExecutable)) File.Delete(SettingsExecutable);
+
+                if (CreateHardLink(SettingsExecutable, InstalledExecutable, IntPtr.Zero))
+                {
+                    log("Einstellungsprogramm angelegt.");
+                    return;
+                }
+
+                File.Copy(InstalledExecutable, SettingsExecutable, true);
+                log("Einstellungsprogramm kopiert.");
+            }
+            catch (Exception ex)
+            {
+                log("Einstellungsprogramm konnte nicht angelegt werden: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Takes back every shortcut that points into our own folder, wherever it
+        /// was put and whatever it is called. The names are localised at install
+        /// time, and the display language may well have changed since, so looking
+        /// at what a shortcut points at is the only reliable way to recognise it.
+        /// </summary>
+        private static void RemoveOurShortcuts(Action<string> log)
+        {
+            string[] folders =
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs"),
+                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory)
+            };
+
+            var type = Type.GetTypeFromProgID("WScript.Shell");
+            dynamic shell = type == null ? null : Activator.CreateInstance(type);
+
+            foreach (var folder in folders)
+            {
+                if (!Directory.Exists(folder)) continue;
+
+                foreach (var file in Directory.EnumerateFiles(folder, "*.lnk"))
+                {
+                    try
+                    {
+                        string target = null;
+                        if (shell != null) target = (string)shell.CreateShortcut(file).TargetPath;
+
+                        if (string.IsNullOrEmpty(target)) continue;
+                        if (!string.Equals(Path.GetDirectoryName(target), InstallDirectory,
+                                           StringComparison.OrdinalIgnoreCase)) continue;
+
+                        File.Delete(file);
+                        log("Verknüpfung entfernt: " + Path.GetFileNameWithoutExtension(file));
+                    }
+                    catch { }
+                }
+            }
         }
 
         private static void StopRunningCopy(Action<string> log)

@@ -341,7 +341,8 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="5,0"
                                 Background="Transparent" Cursor="Hand"
                                 MouseLeftButtonUp="OnHeaderClick">
-                        <Border Width="48" Height="48" CornerRadius="3" Margin="0,0,6,0"
+                        <Border x:Name="UserTile"
+                                Width="48" Height="48" CornerRadius="3" Margin="0,0,6,0"
                                 BorderThickness="2"
                                 BorderBrush="{DynamicResource UserTileBorder}"
                                 Background="#20FFFFFF">

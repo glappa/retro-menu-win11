@@ -155,6 +155,92 @@ namespace RetroMenu.Services.Strings
             ["Close"] = "Schließen",
             ["StoreApps"] = "Store-Apps",
 
+            // ---- the settings program ----
+            ["SettingsSubtitle"] = "Alles, was das Startmenü zeigt — und ob es überhaupt erscheint.",
+            ["PageGeneral"] = "Allgemein",
+            ["PageAppearance"] = "Darstellung",
+            ["PageMenu"] = "Startmenü",
+            ["PagePlaces"] = "Rechte Spalte",
+            ["PageSearch"] = "Suche",
+            ["PageAdvanced"] = "Erweitert",
+
+            ["UseRetroMenu"] = "Retro-Startmenü verwenden",
+            ["UseRetroMenuHint"] = "Ausgeschaltet behält Windows 11 sein eigenes Startmenü: die "
+                                   + "Windows-Taste wird nicht mehr angefasst und der Startknopf "
+                                   + "von RetroBar auch nicht. Alles andere bleibt stehen, das "
+                                   + "Wiedereinschalten ist also ein Klick.",
+            ["MenuRunning"] = "Das Menü läuft.",
+            ["MenuNotRunning"] = "Das Menü läuft gerade nicht.",
+            ["MenuOff"] = "Ausgeschaltet — Windows 11 zeigt sein eigenes Startmenü.",
+            ["StartMenuNow"] = "Jetzt starten",
+            ["SwitchedOff"] = "ausgeschaltet",
+            ["StartHeading"] = "Start",
+            ["WinKeyHint"] = "Wie die Windows-Taste abgefangen wird. „Abfangen“ lässt alle "
+                             + "Win+X-Tastenkürzel unberührt; „Schlucken“ ist für Rechner, auf "
+                             + "denen das Windows-11-Menü trotzdem durchkommt.",
+
+            ["HeaderHeading"] = "Blaue Kopfzeile",
+            ["ShowUserPicture"] = "Kontobild anzeigen",
+            ["UserNameSetting"] = "Angezeigter Name",
+            ["UserNameHint"] = "Leer heißt: der Name, unter dem Windows Sie kennt.",
+            ["SoundHeading"] = "Klang",
+            ["PlaySounds"] = "Beim Öffnen den Menüklang abspielen",
+            ["PlaySoundsHint"] = "Fragt nach dem Klang „Menü öffnen“ Ihres eigenen Schemas — wo "
+                                 + "keiner zugewiesen ist, bleibt es still.",
+
+            ["PinnedHeading"] = "Angeheftete Programme",
+            ["ShowFavourites"] = "Angeheftete Programme anzeigen",
+            ["ShowFavouritesHint"] = "Ausgeschaltet stehen in der linken Spalte nur noch die "
+                                     + "Internet- und E-Mail-Plätze über den häufig verwendeten "
+                                     + "Programmen, so wie ein frisches XP aussah, bevor etwas "
+                                     + "angeheftet war. Das Angeheftete bleibt gespeichert und "
+                                     + "kommt mit dem Schalter zurück.",
+            ["ColumnHeading"] = "Linke Spalte",
+            ["ShowDefaultSlots"] = "Internet- und E-Mail-Platz anzeigen",
+            ["ShowDefaultSlotsHint"] = "Die beiden Einträge ganz oben, die Ihren Standardbrowser "
+                                       + "und Ihr Mailprogramm nennen.",
+            ["ShowAllProgramsButton"] = "Schaltfläche „Alle Programme“ anzeigen",
+            ["ForgetAll"] = "Liste der verwendeten Programme leeren",
+            ["ForgetAllDone"] = "Die Liste ist leer. Sie füllt sich wieder, sobald Programme "
+                                + "gestartet werden.",
+
+            ["PlacesHeading"] = "Einträge der rechten Spalte",
+            ["PlacesHint"] = "Was hier ausgeschaltet ist, verschwindet aus der rechten Spalte — "
+                             + "samt einer Trennlinie, die sonst allein stehen bliebe.",
+            ["SelectAll"] = "Alle",
+            ["SelectNone"] = "Keinen",
+
+            ["SearchHeading"] = "Suchfeld",
+            ["ShowSearchBoxHint"] = "Windows XP hatte keins; dieses findet Programme, "
+                                    + "Windows-Einstellungen und auf Wunsch auch Dateien.",
+            ["SearchFilesHint"] = "Nutzt den Suchindex von Windows und findet deshalb nur, was "
+                                  + "Windows bereits erfasst hat.",
+            ["ProgramsHeading"] = "Programmliste",
+            ["ShowStoreAppsHint"] = "Apps aus dem Microsoft Store haben keine Verknüpfung auf der "
+                                    + "Platte und stehen in einer eigenen Gruppe.",
+
+            ["DesktopHeading"] = "Desktop",
+            ["KeepTaskbarHint"] = "Eine automatisch ausgeblendete RetroBar fährt hoch, solange das "
+                                  + "Menü offen ist — so wie Windows XP es gemacht hat.",
+            ["ShowRunAsAdmin"] = "„Als Administrator ausführen“ im Rechtsklickmenü anbieten",
+
+            ["FilesHeading"] = "Einstellungsdatei",
+            ["OpenSettingsFolder"] = "Ordner öffnen",
+            ["OpenLog"] = "Protokoll öffnen",
+            ["ExportSettings"] = "Kopie sichern…",
+            ["ImportSettings"] = "Kopie laden…",
+            ["ResetSettings"] = "Zurücksetzen",
+            ["ResetConfirm"] = "Alle Einstellungen wieder so setzen, wie sie ausgeliefert wurden? "
+                               + "Angeheftete Programme und die Liste der verwendeten Programme "
+                               + "bleiben erhalten.",
+            ["ImportFailed"] = "Das ist keine Einstellungsdatei von Retro Menu.",
+            ["SettingsFileFilter"] = "Einstellungen",
+            ["AboutHeading"] = "Über",
+            ["AboutText"] = "Ein Startmenü im Stil älterer Windows-Versionen, als Gegenstück zu "
+                            + "RetroBar.",
+            ["SettingsProgramMissing"] = "Das Einstellungsprogramm konnte nicht gestartet werden.",
+            ["SettingsShortcut"] = "Retro Menu Einstellungen",
+
             // ---- picking a language ----
             ["LangAutoWindows"] = "Automatisch (Windows-Sprache)",
             ["LangAutoRetroBar"] = "Automatisch (RetroBar)",
