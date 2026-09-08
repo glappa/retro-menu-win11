@@ -52,6 +52,13 @@ namespace RetroMenu.Services
         public bool SearchFiles { get; set; } = false;
 
         /// <summary>
+        /// Take Windows+S away from the Windows 11 search and open this menu's own
+        /// search instead. Unlike the Windows key on its own, this holds even when
+        /// <see cref="WinKeyMode"/> is set to leave that key alone.
+        /// </summary>
+        public bool SearchHotkey { get; set; } = true;
+
+        /// <summary>
         /// The XP menu is 384 device pixels wide. On a big modern screen that can
         /// read as tiny, so the whole menu can be scaled without losing proportions.
         /// </summary>

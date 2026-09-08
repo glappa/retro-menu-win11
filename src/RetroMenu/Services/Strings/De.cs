@@ -210,6 +210,12 @@ namespace RetroMenu.Services.Strings
             ["SelectAll"] = "Alle",
             ["SelectNone"] = "Keinen",
 
+            ["HotkeyHeading"] = "Tastenkürzel",
+            ["SearchHotkey"] = "Windows+S öffnet diese Suche",
+            ["SearchHotkeyHint"] = "Nimmt der Windows-11-Suche die Tastenkombination ab. "
+                                   + "Gilt auch, wenn die Windows-Taste selbst unangetastet "
+                                   + "bleiben soll; ohne Suchfeld öffnet sich stattdessen die "
+                                   + "große Suche.",
             ["SearchHeading"] = "Suchfeld",
             ["ShowSearchBoxHint"] = "Windows XP hatte keins; dieses findet Programme, "
                                     + "Windows-Einstellungen und auf Wunsch auch Dateien.",

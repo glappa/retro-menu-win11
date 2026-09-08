@@ -25,7 +25,7 @@ namespace RetroMenu.Interop
 
     /// <summary>
     /// Low level keyboard hook that turns a lone Windows key press into a request
-    /// for our own start menu.
+    /// for our own start menu, and Windows+S into a request for its search.
     ///
     /// RetroBar's Start button calls ManagedShell's ShellHelper.ShowStartMenu(),
     /// which simulates exactly such a lone Win key press. Because a WH_KEYBOARD_LL
@@ -42,6 +42,13 @@ namespace RetroMenu.Interop
         private IntPtr _hook;
         private bool _winDown;
         private bool _winCombo;
+
+        /// <summary>
+        /// Set when the combination was Win+S and we ate the S. It has to be told
+        /// apart from a real combination, which in Swallow mode gets the Windows
+        /// key handed back to the system — this one must not.
+        /// </summary>
+        private bool _searchCombo;
         private int _lastRaise;
 
         /// <summary>Set RETROMENU_DEBUG=1 to trace every Windows key event to the log.</summary>
@@ -50,8 +57,18 @@ namespace RetroMenu.Interop
 
         public WinKeyMode Mode { get; set; } = WinKeyMode.Neutralize;
 
+        /// <summary>
+        /// Take Windows+S away from the Windows 11 search and hand it to the menu's
+        /// own. Works whatever <see cref="Mode"/> is: leaving the Windows key alone
+        /// is a promise about the key on its own, not about this combination.
+        /// </summary>
+        public bool SearchHotkey { get; set; } = true;
+
         /// <summary>Raised on the hook thread. Handlers must return immediately.</summary>
         public event Action StartMenuRequested;
+
+        /// <summary>Windows+S. Raised on the hook thread, like the one above.</summary>
+        public event Action SearchRequested;
 
         public bool IsInstalled => _hook != IntPtr.Zero;
 
@@ -75,11 +92,14 @@ namespace RetroMenu.Interop
             _hook = IntPtr.Zero;
             _winDown = false;
             _winCombo = false;
+            _searchCombo = false;
         }
 
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-            if (nCode < 0 || Mode == WinKeyMode.Off)
+            // "Leave the Windows key alone" still leaves Windows+S to catch, so the
+            // hook only steps aside entirely when there is nothing at all to do.
+            if (nCode < 0 || (Mode == WinKeyMode.Off && !SearchHotkey))
                 return NativeMethods.CallNextHookEx(_hook, nCode, wParam, lParam);
 
             var info = Marshal.PtrToStructure<NativeMethods.KBDLLHOOKSTRUCT>(lParam);
@@ -108,6 +128,7 @@ namespace RetroMenu.Interop
                     {
                         _winDown = true;
                         _winCombo = false;
+                        _searchCombo = false;
                     }
 
                     if (Mode == WinKeyMode.Swallow)
@@ -116,19 +137,23 @@ namespace RetroMenu.Interop
                 else if (isUp)
                 {
                     bool wasCombo = _winCombo;
+                    bool wasSearch = _searchCombo;
                     _winDown = false;
                     _winCombo = false;
+                    _searchCombo = false;
 
                     if (Mode == WinKeyMode.Swallow)
                     {
-                        if (wasCombo)
+                        // Win+S never reached the system, so there is no Windows key
+                        // out there to let go of.
+                        if (wasCombo && !wasSearch)
                             Inject((ushort)info.vkCode, true);
-                        else
+                        else if (!wasCombo)
                             Raise();
                         return (IntPtr)1;
                     }
 
-                    if (!wasCombo)
+                    if (Mode == WinKeyMode.Neutralize && !wasCombo)
                     {
                         // Make Windows believe this was a combination, then let the
                         // real key-up through so no modifier stays stuck.
@@ -137,6 +162,33 @@ namespace RetroMenu.Interop
                         Raise();
                     }
                 }
+            }
+            else if (_winDown && isDown && SearchHotkey && info.vkCode == NativeMethods.VK_S
+                     && !OtherModifierDown())
+            {
+                // Windows would open its own search on this key down. Eat it whole —
+                // and because the S is gone, Windows would then see a Windows key
+                // pressed and released on its own and open its start menu instead.
+                // The neutraliser is what tells it otherwise; in Swallow mode it
+                // never saw the Windows key go down in the first place.
+                if (!_winCombo && Mode != WinKeyMode.Swallow)
+                {
+                    Inject(NativeMethods.VK_NEUTRALIZER, false);
+                    Inject(NativeMethods.VK_NEUTRALIZER, true);
+                }
+
+                bool first = !_searchCombo;
+                _winCombo = true;
+                _searchCombo = true;
+
+                // Holding the keys down repeats the key; the search is already open.
+                if (first) RaiseSearch();
+                return (IntPtr)1;
+            }
+            else if (_searchCombo && info.vkCode == NativeMethods.VK_S)
+            {
+                // The key-up of an S nobody downstream ever saw pressed.
+                return (IntPtr)1;
             }
             else if (_winDown && isDown && !_winCombo)
             {
@@ -162,6 +214,22 @@ namespace RetroMenu.Interop
             _lastRaise = now;
 
             try { StartMenuRequested?.Invoke(); }
+            catch { /* a broken handler must never stall the input queue */ }
+        }
+
+        /// <summary>
+        /// Win+S is ours; Win+Shift+S is the screenshot everybody uses and
+        /// Win+Ctrl+S is speech recognition. Only the plain combination is taken.
+        /// </summary>
+        private static bool OtherModifierDown() =>
+            Down(NativeMethods.VK_SHIFT) || Down(NativeMethods.VK_CONTROL) || Down(NativeMethods.VK_MENU);
+
+        private static bool Down(int key) =>
+            (NativeMethods.GetAsyncKeyState(key) & 0x8000) != 0;
+
+        private void RaiseSearch()
+        {
+            try { SearchRequested?.Invoke(); }
             catch { /* a broken handler must never stall the input queue */ }
         }
 

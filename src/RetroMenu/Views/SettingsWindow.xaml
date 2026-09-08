@@ -238,6 +238,11 @@
 
                     <!-- ==== advanced ==== -->
                     <StackPanel x:Name="AdvancedPage" Visibility="Collapsed">
+                        <TextBlock x:Name="HotkeyHeading" Style="{StaticResource GroupHeading}" />
+                        <CheckBox x:Name="SearchHotkeyToggle" Style="{StaticResource RetroCheckBox}"
+                                  Margin="0,0,0,4" Checked="OnChanged" Unchecked="OnChanged" />
+                        <TextBlock x:Name="SearchHotkeyHint" Style="{StaticResource Hint}" />
+
                         <TextBlock x:Name="DesktopHeading" Style="{StaticResource GroupHeading}" />
                         <CheckBox x:Name="KeepTaskbarToggle" Style="{StaticResource RetroCheckBox}"
                                   Margin="0,0,0,4" Checked="OnChanged" Unchecked="OnChanged" />

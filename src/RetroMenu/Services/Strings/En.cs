@@ -211,6 +211,12 @@ namespace RetroMenu.Services.Strings
             ["SelectAll"] = "All",
             ["SelectNone"] = "None",
 
+            ["HotkeyHeading"] = "Shortcut",
+            ["SearchHotkey"] = "Windows+S opens this search",
+            ["SearchHotkeyHint"] = "Takes the key away from the Windows 11 search. It "
+                                   + "holds even when the Windows key itself is set to be "
+                                   + "left alone, and with the search box switched off it "
+                                   + "opens the full search instead.",
             ["SearchHeading"] = "Search box",
             ["ShowSearchBoxHint"] = "Windows XP had none; this one searches programs, Windows "
                                     + "settings and, if you let it, files.",

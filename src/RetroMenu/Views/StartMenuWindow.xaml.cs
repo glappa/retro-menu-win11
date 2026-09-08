@@ -197,6 +197,35 @@ namespace RetroMenu.Views
             }
         }
 
+        /// <summary>
+        /// Windows+S: the menu, with the cursor already in its search box. Where
+        /// there is no box — it is switched off, or a 9x theme never had one — the
+        /// search that theme did have opens instead.
+        /// </summary>
+        public void ShowSearch()
+        {
+            if (IsClassic)
+            {
+                // Windows 95 through 2000 kept their Find in a window of its own,
+                // and so does this.
+                HideMenu();
+                Launcher.Run("search");
+                return;
+            }
+
+            if (!IsOpen) ShowMenu();
+            else NativeMethods.ForceForeground(_handle);
+
+            if (SearchHost.Visibility != Visibility.Visible)
+            {
+                if (!_searchView) EnterSearchView(string.Empty);
+                return;
+            }
+
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+        }
+
         public void HideMenu()
         {
             _taskbarPresence.Hide();

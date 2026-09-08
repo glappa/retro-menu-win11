@@ -17,6 +17,9 @@ namespace RetroMenu.Interop
         public const int VK_RWIN = 0x5C;
         public const int VK_ESCAPE = 0x1B;
         public const int VK_CONTROL = 0x11;
+        public const int VK_SHIFT = 0x10;
+        public const int VK_MENU = 0x12;      // Alt
+        public const int VK_S = 0x53;
 
         // 0x07 is an undefined virtual key. Pressing it while Win is held makes
         // Windows treat the Win press as a combination, so the Windows 11 Start
@@ -112,6 +115,9 @@ namespace RetroMenu.Interop
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        public static extern short GetAsyncKeyState(int vKey);
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]

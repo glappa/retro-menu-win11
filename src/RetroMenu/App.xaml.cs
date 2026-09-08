@@ -147,8 +147,13 @@ namespace RetroMenu
             _tray.ExitRequested += Quit;
             _tray.Show();
 
-            _hook = new KeyboardHook { Mode = EffectiveWinKeyMode() };
+            _hook = new KeyboardHook
+            {
+                Mode = EffectiveWinKeyMode(),
+                SearchHotkey = SearchHotkeyWanted()
+            };
             _hook.StartMenuRequested += OnStartMenuRequested;
+            _hook.SearchRequested += OnSearchRequested;
             bool hooked = _hook.Install();
             Log.Write($"startup: hook={hooked} mode={_hook.Mode} theme={ThemeManager.Current} " +
                       $"retrobar={RetroBar.IsPresent}/{RetroBar.Theme}");
@@ -394,6 +399,13 @@ namespace RetroMenu
                 ? ParseWinKeyMode(AppSettings.Instance.WinKeyMode)
                 : WinKeyMode.Off;
 
+        /// <summary>
+        /// Windows+S belongs to Windows again as soon as the menu is switched off —
+        /// there would be nothing to open it into.
+        /// </summary>
+        private static bool SearchHotkeyWanted() =>
+            AppSettings.Instance.Enabled && AppSettings.Instance.SearchHotkey;
+
         public void ApplySettings()
         {
             // Someone may have changed the Windows display language since we last
@@ -401,7 +413,11 @@ namespace RetroMenu
             SystemLanguage.Forget();
             Lang.Apply(AppSettings.Instance.Language, RetroBar?.Language);
             ThemeManager.Apply(ActiveThemeName());
-            if (_hook != null) _hook.Mode = EffectiveWinKeyMode();
+            if (_hook != null)
+            {
+                _hook.Mode = EffectiveWinKeyMode();
+                _hook.SearchHotkey = SearchHotkeyWanted();
+            }
             _tray?.Localize();
             _tray?.SetEnabled(AppSettings.Instance.Enabled);
             if (!AppSettings.Instance.Enabled) _menu?.HideMenu();
@@ -435,6 +451,30 @@ namespace RetroMenu
             // Called on the hook thread: hand over and get out of the input queue.
             Log.Write("hook: start menu requested");
             Dispatcher.BeginInvoke(new Action(() => ToggleMenu(false)));
+        }
+
+        private void OnSearchRequested()
+        {
+            Log.Write("hook: search requested");
+            Dispatcher.BeginInvoke(new Action(ShowSearch));
+        }
+
+        /// <summary>
+        /// Windows+S. Unlike the Windows key it does not toggle: pressing it while
+        /// the menu is already open puts the cursor back in the search box, which is
+        /// what the Windows 11 search does too.
+        /// </summary>
+        public void ShowSearch()
+        {
+            if (_menu == null) return;
+            if (!AppSettings.Instance.Enabled)
+            {
+                Log.Write("search: ignored, the retro menu is switched off");
+                return;
+            }
+
+            try { _menu.ShowSearch(); }
+            catch (Exception ex) { Log.Write("search failed: " + ex); }
         }
 
         public void ToggleMenu(bool forceOpen)

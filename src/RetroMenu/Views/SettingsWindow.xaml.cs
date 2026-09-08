@@ -85,6 +85,7 @@ namespace RetroMenu.Views
             RecentToggle.IsChecked = settings.ShowRecentPrograms;
             AllProgramsToggle.IsChecked = settings.ShowAllProgramsButton;
 
+            SearchHotkeyToggle.IsChecked = settings.SearchHotkey;
             SearchBoxToggle.IsChecked = settings.ShowSearchBox;
             SearchFilesToggle.IsChecked = settings.SearchFiles;
             SearchFilesToggle.IsEnabled = settings.ShowSearchBox;
@@ -167,6 +168,9 @@ namespace RetroMenu.Views
             StoreAppsToggle.Content = Lang.T("ShowStoreApps");
             StoreAppsHint.Text = Lang.T("ShowStoreAppsHint");
 
+            HotkeyHeading.Text = Lang.T("HotkeyHeading");
+            SearchHotkeyToggle.Content = Lang.T("SearchHotkey");
+            SearchHotkeyHint.Text = Lang.T("SearchHotkeyHint");
             DesktopHeading.Text = Lang.T("DesktopHeading");
             KeepTaskbarToggle.Content = Lang.T("KeepTaskbar");
             KeepTaskbarHint.Text = Lang.T("KeepTaskbarHint");
@@ -346,6 +350,7 @@ namespace RetroMenu.Views
             settings.ShowRecentPrograms = RecentToggle.IsChecked == true;
             settings.ShowAllProgramsButton = AllProgramsToggle.IsChecked == true;
 
+            settings.SearchHotkey = SearchHotkeyToggle.IsChecked == true;
             settings.ShowSearchBox = SearchBoxToggle.IsChecked == true;
             settings.SearchFiles = SearchFilesToggle.IsChecked == true;
             settings.ShowStoreApps = StoreAppsToggle.IsChecked == true;

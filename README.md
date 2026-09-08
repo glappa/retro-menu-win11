@@ -173,6 +173,9 @@ häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
   „Zuletzt gestartete Programme zeigen"). Nach XP-Regeln bleiben Installer,
   Deinstallationsprogramme und Systemwerkzeuge draußen; ein Programm kann sich per
   `NoStartPage` heraushalten. Neu installierte Programme werden hervorgehoben.
+* **Windows+S gehört ebenfalls dem Menü.** Die Kombination öffnet es mit dem Zeiger im
+  Suchfeld, statt die Windows-11-Suche aufzuklappen. Windows+Shift+S bleibt der
+  Screenshot.
 * **Auto-Hide-Taskleiste fährt mit hoch**, solange das Menü offen ist.
 * **Tastatur**: Pfeiltasten durch beide Spalten, Buchstaben springen, Eingabe startet.
 * **Ein eigenes Einstellungsprogramm**, das mitinstalliert wird: Design, Größe,
@@ -190,6 +193,7 @@ häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
 | Aktion | Wirkung |
 | --- | --- |
 | Windows-Taste | Menü auf/zu |
+| Windows+S | Menü auf, Zeiger gleich im Suchfeld |
 | Start-Knopf in RetroBar | Menü auf/zu |
 | Klick auf das Tray-Symbol | Menü auf |
 | Rechtsklick aufs Tray-Symbol | Menü ein/aus, Einstellungen, Programmliste neu einlesen, Beenden |
@@ -226,6 +230,25 @@ Falls das auf einem Rechner nicht greift, gibt es in den Einstellungen zwei Alte
 | **Abfangen** (Standard) | Windows-Taste läuft durch, wird nur neutralisiert |
 | **Vollständig schlucken** | Taste wird abgefangen und nur bei echten Kombinationen wieder eingespeist |
 | **Nicht anfassen** | Hook aus; das Menü geht dann nur über Tray-Symbol und RetroBar |
+
+### Windows+S
+
+Derselbe Hook nimmt der Windows-11-Suche **Windows+S** ab und öffnet stattdessen das
+Menü mit dem Zeiger im eigenen Suchfeld. Das S wird ganz geschluckt, damit die Suche von
+Windows gar nicht erst anspringt; weil damit aber auch die Windows-Taste wieder allein
+dastünde, geht die unbelegte Taste von oben mit hinterher – sonst käme statt der Suche
+das Windows-11-Startmenü.
+
+Zwei Dinge sind dabei Absicht:
+
+* **Windows+Shift+S** (Screenshot) und **Windows+Strg+S** bleiben unangetastet; genommen
+  wird nur die Kombination ohne weitere Zusatztaste.
+* Es gilt **auch bei „Nicht anfassen"** – dass die Windows-Taste in Ruhe gelassen wird,
+  ist ein Versprechen über die Taste allein, nicht über diese Kombination. Abschalten
+  lässt sich das in den Einstellungen unter *Erweitert → Tastenkürzel*.
+
+Ist das Suchfeld ausgeschaltet, öffnet Windows+S stattdessen die große Suchansicht; in
+den 9x-Menüs, die nie ein Suchfeld hatten, das Suchfenster jener Zeit.
 
 ## Die Taskleiste kommt mit hoch
 
@@ -323,7 +346,7 @@ Sechs Seiten:
 | **Startmenü** | Angeheftete Programme ein/aus, Kachelbereich, Internet- und E-Mail-Platz, Anzahl der häufig verwendeten, „Alle Programme", Liste der verwendeten Programme leeren |
 | **Rechte Spalte** | Jeder Eintrag einzeln an- und abwählbar, wie in XPs „Startmenü anpassen" |
 | **Suche** | Suchfeld, Dateisuche, Store-Apps |
-| **Erweitert** | Taskleiste einblenden, „Als Administrator ausführen", XP-Dateifenster, Einstellungsdatei sichern/laden/zurücksetzen, Protokoll |
+| **Erweitert** | Windows+S abfangen, Taskleiste einblenden, „Als Administrator ausführen", XP-Dateifenster, Einstellungsdatei sichern/laden/zurücksetzen, Protokoll |
 
 Es gibt **keinen OK-Knopf**: jede Änderung wird sofort geschrieben, und das laufende
 Menü baut sich neu auf, ohne Neustart. Technisch schreibt das Einstellungsprogramm die
@@ -351,6 +374,7 @@ Alles landet in `%AppData%\RetroMenuWin11\settings.json`:
 | `FrequentCount` | Wie viele „häufig verwendet"-Einträge |
 | `KeepTaskbarVisible` | Auto-Hide-Taskleiste einblenden, solange das Menü offen ist |
 | `ShowSearchBox`, `SearchFiles` | Suchfeld, und ob es Dateien mitsucht |
+| `SearchHotkey` | Windows+S öffnet die Suche des Menüs statt der von Windows 11 |
 | `ShowStoreApps`, `ShowRunAsAdmin`, `PlaySounds` | Ein/aus |
 | `ShowRecentPrograms` | Untere Liste nach Zeit statt nach Häufigkeit |
 | `ShowFavourites` | Angeheftete Programme überhaupt anzeigen |
@@ -432,6 +456,10 @@ RetroBar's own Start button opens it too without any patching. An auto-hidden Re
 taskbar rises while the menu is open. Search covers every program on the machine,
 Windows settings and optionally files through the Windows Search index, grouped the way
 Windows 11 presents them. Right-clicking an entry gives the real Explorer context menu.
+
+The same hook takes **Windows+S** away from the Windows 11 search and opens the menu
+with the cursor in its own search box instead. Windows+Shift+S stays the screenshot, and
+the shortcut can be switched off under Advanced.
 
 A separate settings program, `RetroMenuSettings.exe`, is installed alongside and gets
 its own Start menu entry. It runs on its own whether or not the menu does, because the
