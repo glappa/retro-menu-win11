@@ -35,13 +35,23 @@ namespace RetroMenu.Interop
     public sealed class KeyboardHook : IDisposable
     {
         // dwExtraInfo stamp on the input we inject ourselves, so the hook can
-        // recognise it and let it pass untouched.
-        private const uint Marker = 0x52544D31; // "RTM1"
+        // recognise it and let it pass untouched. The guard injects with the same
+        // stamp when it shows the Windows 11 menu the door.
+        private const uint Marker = NativeMethods.InputMarker;
 
         private readonly NativeMethods.HookProc _callback; // kept alive on purpose
+
+        // The hook is called on the thread that installed it, and Windows drops
+        // one whose thread answers too slowly — so it gets a thread of its own
+        // rather than the WPF one, which has menus to build and icons to fetch.
+        private readonly HookThread _thread = new HookThread("RetroMenu keyboard hook");
+
         private IntPtr _hook;
         private bool _winDown;
         private bool _winCombo;
+
+        /// <summary>Set while we ate a Ctrl+Esc, so its key-up goes the same way.</summary>
+        private bool _ctrlEsc;
 
         /// <summary>
         /// Set when the combination was Win+S and we ate the S. It has to be told
@@ -64,6 +74,16 @@ namespace RetroMenu.Interop
         /// </summary>
         public bool SearchHotkey { get; set; } = true;
 
+        /// <summary>
+        /// Ctrl+Esc is the other way to the start menu, older than the Windows key
+        /// itself and still wired up in Windows 11. Taken along with the key, so
+        /// that suppressing the Windows menu does not leave a second door open.
+        /// </summary>
+        public bool CatchCtrlEsc { get; set; } = true;
+
+        /// <summary>When the hook last saw a key. Zero means: not once so far.</summary>
+        public int LastSeen { get; private set; }
+
         /// <summary>Raised on the hook thread. Handlers must return immediately.</summary>
         public event Action StartMenuRequested;
 
@@ -80,27 +100,63 @@ namespace RetroMenu.Interop
         public bool Install()
         {
             if (_hook != IntPtr.Zero) return true;
-            IntPtr module = NativeMethods.GetModuleHandle(null);
-            _hook = NativeMethods.SetWindowsHookEx(NativeMethods.WH_KEYBOARD_LL, _callback, module, 0);
+            _thread.Invoke(Attach);
             return _hook != IntPtr.Zero;
         }
 
         public void Uninstall()
         {
             if (_hook == IntPtr.Zero) return;
-            NativeMethods.UnhookWindowsHookEx(_hook);
+            _thread.Invoke(Detach);
+        }
+
+        /// <summary>
+        /// Takes the hook down and puts it straight back up.
+        ///
+        /// There is no way to ask Windows whether a low level hook is still in the
+        /// chain: one that answered too slowly is removed silently and never told
+        /// about. What there is instead is evidence — the Windows 11 menu turning
+        /// up although the key should have been caught. The guard calls this when
+        /// it sees that, and a fresh hook also lands at the front of the chain,
+        /// ahead of anything installed after us.
+        /// </summary>
+        public void Reinstall()
+        {
+            _thread.Invoke(() =>
+            {
+                Detach();
+                Attach();
+                Services.Log.Write("hook: put up again, handle=" + (_hook == IntPtr.Zero ? "none" : "ok"));
+            });
+        }
+
+        /// <summary>On the hook thread, always.</summary>
+        private void Attach()
+        {
+            if (_hook != IntPtr.Zero) return;
+            IntPtr module = NativeMethods.GetModuleHandle(null);
+            _hook = NativeMethods.SetWindowsHookEx(NativeMethods.WH_KEYBOARD_LL, _callback, module, 0);
+        }
+
+        private void Detach()
+        {
+            if (_hook != IntPtr.Zero) NativeMethods.UnhookWindowsHookEx(_hook);
             _hook = IntPtr.Zero;
             _winDown = false;
             _winCombo = false;
             _searchCombo = false;
+            _ctrlEsc = false;
         }
 
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-            // "Leave the Windows key alone" still leaves Windows+S to catch, so the
-            // hook only steps aside entirely when there is nothing at all to do.
-            if (nCode < 0 || (Mode == WinKeyMode.Off && !SearchHotkey))
+            // "Leave the Windows key alone" still leaves Windows+S and Ctrl+Esc to
+            // catch, so the hook only steps aside entirely when there is nothing
+            // at all to do.
+            if (nCode < 0 || (Mode == WinKeyMode.Off && !SearchHotkey && !CatchCtrlEsc))
                 return NativeMethods.CallNextHookEx(_hook, nCode, wParam, lParam);
+
+            LastSeen = Environment.TickCount;
 
             var info = Marshal.PtrToStructure<NativeMethods.KBDLLHOOKSTRUCT>(lParam);
 
@@ -190,6 +246,23 @@ namespace RetroMenu.Interop
                 // The key-up of an S nobody downstream ever saw pressed.
                 return (IntPtr)1;
             }
+            else if (isDown && CatchCtrlEsc && info.vkCode == NativeMethods.VK_ESCAPE
+                     && Down(NativeMethods.VK_CONTROL)
+                     && !Down(NativeMethods.VK_SHIFT) && !Down(NativeMethods.VK_MENU))
+            {
+                // Ctrl+Esc, the start menu of every Windows since 3.1 — and
+                // Ctrl+Shift+Esc, the task manager, which is why the other
+                // modifiers have to be clear.
+                _ctrlEsc = true;
+                Raise();
+                return (IntPtr)1;
+            }
+            else if (isUp && _ctrlEsc && info.vkCode == NativeMethods.VK_ESCAPE)
+            {
+                // The key-up of an Esc nobody downstream ever saw pressed.
+                _ctrlEsc = false;
+                return (IntPtr)1;
+            }
             else if (_winDown && isDown && !_winCombo)
             {
                 _winCombo = true;
@@ -254,6 +327,10 @@ namespace RetroMenu.Interop
             NativeMethods.SendInput(1, new[] { input }, Marshal.SizeOf<NativeMethods.INPUT>());
         }
 
-        public void Dispose() => Uninstall();
+        public void Dispose()
+        {
+            Uninstall();
+            _thread.Dispose();
+        }
     }
 }

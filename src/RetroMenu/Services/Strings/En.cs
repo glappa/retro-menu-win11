@@ -101,6 +101,8 @@ namespace RetroMenu.Services.Strings
             ["TurnOff"] = "Turn Off",
             ["Restart"] = "Restart",
             ["Lock"] = "Lock",
+            ["SwitchUser"] = "Switch User",
+            ["LogOffTitle"] = "Log Off Windows",
             ["Cancel"] = "Cancel",
             ["PowerQuestion"] = "What should the computer do?",
 
@@ -136,6 +138,9 @@ namespace RetroMenu.Services.Strings
             ["WinKeyNeutralize"] = "Intercept (recommended)",
             ["WinKeySwallow"] = "Swallow completely",
             ["WinKeyOff"] = "Leave alone",
+            ["Win11Menu"] = "Windows 11 menu",
+            ["Win11MenuWatch"] = "Suppress (recommended)",
+            ["Win11MenuKeep"] = "Keep it",
             ["FrequentCount"] = "Frequently used: count",
             ["ShowRecent"] = "Show recently started programs",
             ["ShowTiles"] = "Favourites as a tile panel on the right",
@@ -181,6 +186,15 @@ namespace RetroMenu.Services.Strings
             ["WinKeyHint"] = "How the Windows key is caught. \"Intercept\" leaves every Win+X "
                              + "shortcut alone; \"Swallow\" is for machines where the Windows 11 "
                              + "menu still slips through.",
+            ["Win11MenuHint"] = "For when the Windows 11 menu comes up all the same – through the "
+                             + "Start button of the Windows taskbar, through Ctrl+Esc, above a window "
+                             + "running as administrator, or because Windows quietly dropped the "
+                             + "keyboard hook. \"Suppress\" sends it straight back and shows this menu "
+                             + "instead; \"Keep it\" leaves Windows 11 its own.",
+            ["Win11MenuOffHint"] = "While the Windows key is left alone, the Windows 11 menu is left "
+                             + "alone as well.",
+            ["HookFailed"] = "The keyboard hook could not be set. The Windows key will keep "
+                             + "opening the Windows 11 menu.",
 
             ["HeaderHeading"] = "Blue header",
             ["ShowUserPicture"] = "Show the account picture",
@@ -202,6 +216,10 @@ namespace RetroMenu.Services.Strings
             ["ShowDefaultSlotsHint"] = "The two entries at the very top, naming your default "
                                        + "browser and mail program.",
             ["ShowAllProgramsButton"] = "Show the \"All Programs\" button",
+            ["ShowSwitchUserButton"] = "Show the \"Switch User\" button",
+            ["FooterHeading"] = "Bottom bar",
+            ["ShowSwitchUserButtonHint"] = "Changes to another account without closing your programs. "
+                                           + "Log Off offers it either way.",
             ["ForgetAll"] = "Empty the list of used programs",
             ["ForgetAllDone"] = "The list is empty. It fills up again as programs are started.",
 

@@ -27,13 +27,16 @@ namespace RetroMenu.Views
                               Color.FromRgb(0xFF, 0xB8, 0x43), Color.FromRgb(0xC0, 0x6A, 0x00)),
                 ["lock"] = ("M 5,9 L 15,9 L 15,17 L 5,17 Z M 7,9 A 3,3 0 0 1 13,9",
                             Color.FromRgb(0x8E, 0xB8, 0xE8), Color.FromRgb(0x21, 0x50, 0xA8)),
+                ["switchuser"] = ("M 3,6 A 3,3 0 1 1 9,6 A 3,3 0 1 1 3,6 Z M 1,17 A 5,4.5 0 0 1 11,17 " +
+                                  "M 12,5 L 18,5 M 16,3 L 18,5 L 16,7 M 18,12 L 12,12 M 14,10 L 12,12 L 14,14",
+                                  Color.FromRgb(0x8C, 0xCB, 0x4A), Color.FromRgb(0x33, 0x74, 0x14)),
             };
 
-        public PowerDialog((string Key, string Command)[] choices)
+        public PowerDialog(string titleKey, (string Key, string Command)[] choices)
         {
             InitializeComponent();
 
-            TitleText.Text = Lang.T("PowerTitle");
+            TitleText.Text = Lang.T(titleKey);
             CancelButton.Content = Lang.T("Cancel");
 
             foreach (var (key, command) in choices)
@@ -83,7 +86,9 @@ namespace RetroMenu.Views
                 FontWeight = FontWeights.Bold,
                 Margin = new Thickness(0, 7, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Center,
-                TextAlignment = TextAlignment.Center
+                TextAlignment = TextAlignment.Center,
+                // "Benutzer wechseln" and its kind are wider than an orb's column.
+                TextWrapping = TextWrapping.Wrap
             };
 
             var stack = new StackPanel { Width = 96 };

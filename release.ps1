@@ -88,7 +88,9 @@ if (-not $Highlights) {
 }
 $whatsNew = ''
 if ($Highlights -and (Test-Path $Highlights)) {
-    $whatsNew = "`n" + (Get-Content $Highlights -Raw).TrimEnd() + "`n"
+    # Windows PowerShell liest ohne -Encoding als ANSI; aus jedem Gedankenstrich
+    # wurde so "â€”" in den Notizen von 1.5.0.
+    $whatsNew = "`n" + (Get-Content $Highlights -Raw -Encoding UTF8).TrimEnd() + "`n"
 }
 
 $notes = @"
@@ -122,7 +124,9 @@ Get-FileHash .\RetroMenu-Setup-x64.exe -Algorithm SHA256
 "@
 
 $notesFile = Join-Path $out 'notes.md'
-Set-Content -Path $notesFile -Value $notes -Encoding UTF8
+# Ohne BOM: Set-Content -Encoding UTF8 setzt eines davor, und gh reicht es als
+# unsichtbares erstes Zeichen in den Text der Ausgabe durch.
+[IO.File]::WriteAllText($notesFile, $notes, (New-Object Text.UTF8Encoding $false))
 
 Write-Host "Lege GitHub-Ausgabe $Tag an..."
 & gh release create $Tag $setup $portable $sums --title "Retro Menu $version" --notes-file $notesFile

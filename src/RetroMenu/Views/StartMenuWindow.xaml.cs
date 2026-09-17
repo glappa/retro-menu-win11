@@ -96,6 +96,7 @@ namespace RetroMenu.Views
             // them either move the menu or mean it should not be on screen at all.
             SizeChanged += (_, __) => Reposition();
             DpiChanged += (_, __) => Reposition();
+            ColumnsHost.SizeChanged += (_, __) => FitFooter();
             SystemEvents.DisplaySettingsChanged += OnDisplayChanged;
             SystemEvents.SessionSwitch += OnSessionSwitch;
             SystemEvents.PowerModeChanged += OnPowerModeChanged;
@@ -224,6 +225,18 @@ namespace RetroMenu.Views
 
             SearchBox.Focus();
             SearchBox.SelectAll();
+        }
+
+        /// <summary>
+        /// Puts the menu back in front after something else took the foreground.
+        /// That is what sends the Windows 11 menu away again: it closes as soon as
+        /// it is no longer the window in front.
+        /// </summary>
+        public void ToFront()
+        {
+            if (!IsVisible) return;
+            if (_handle == IntPtr.Zero) EnsureHandle();
+            NativeMethods.ForceForeground(_handle);
         }
 
         public void HideMenu()
@@ -590,8 +603,12 @@ namespace RetroMenu.Views
             AllProgramsButton.Visibility = AppSettings.Instance.ShowAllProgramsButton
                 ? Visibility.Visible : Visibility.Collapsed;
             SleepLabel.Text = Lang.T("Standby");
+            SwitchUserLabel.Text = Lang.T("SwitchUser");
+            SwitchUserButton.Visibility = AppSettings.Instance.ShowSwitchUserButton && Launcher.CanSwitchUser
+                ? Visibility.Visible : Visibility.Collapsed;
             LogOffLabel.Text = Lang.T("LogOff");
             ShutDownLabel.Text = Lang.T("ShutDown");
+            Dispatcher.BeginInvoke(new Action(FitFooter), DispatcherPriority.Loaded);
             SearchHint.Text = Lang.T("SearchHint");
             NoResults.Text = Lang.T("NoResults");
 
@@ -1097,6 +1114,67 @@ namespace RetroMenu.Views
             }
         }
 
+        /// <summary>
+        /// Lets the programs in an open favourites folder be dragged back out onto
+        /// the pinned row, or on into another folder, like the tiles themselves.
+        /// </summary>
+        private void LetEntriesBeDraggedOut(ContextMenu menu)
+        {
+            if (Demo.IsActive) return;
+
+            foreach (var entry in menu.Items.OfType<MenuItem>())
+            {
+                if (entry.DataContext is not StartItem item) continue;
+
+                entry.PreviewMouseLeftButtonDown += (_, e) =>
+                {
+                    _dragKey = item.Id;
+                    _dragFrom = e.GetPosition(menu);
+                };
+            }
+
+            // On the menu rather than the entries: it holds the mouse while open,
+            // so it hears the move even once the pointer has left the entry.
+            menu.PreviewMouseMove += (_, e) => DragOutOfFolder(menu, e);
+            menu.Closed += (_, __) => { if (!_dragging) _dragKey = null; };
+        }
+
+        private void DragOutOfFolder(ContextMenu menu, MouseEventArgs e)
+        {
+            if (_dragKey == null || _dragging) return;
+
+            if (e.LeftButton != MouseButtonState.Pressed)
+            {
+                _dragKey = null;
+                return;
+            }
+
+            var now = e.GetPosition(menu);
+            if (Math.Abs(now.X - _dragFrom.X) < SystemParameters.MinimumHorizontalDragDistance &&
+                Math.Abs(now.Y - _dragFrom.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+
+            string key = _dragKey;
+
+            // The drag takes the mouse away from the flyout, which then folds up by
+            // itself and, finding the pointer nowhere near the menu, takes the menu
+            // with it. Folding it up on purpose keeps the menu open, and clears the
+            // view onto the tiles the entry is about to land on.
+            _popupKeepsMenu = true;
+            menu.IsOpen = false;
+
+            _dragging = true;
+            try
+            {
+                DragDrop.DoDragDrop(this, new DataObject(PinFormat, key), DragDropEffects.Move);
+            }
+            finally
+            {
+                _dragging = false;
+                _dragKey = null;
+                ClearDropMark();
+            }
+        }
+
         private void OnPinDragOver(object sender, DragEventArgs e)
         {
             bool fits = PlanDrop(sender, e, out var target, out var place, out bool sideways);
@@ -1158,7 +1236,10 @@ namespace RetroMenu.Views
 
             // A folder cannot go into a folder: there is one level of them, as in
             // the Windows 11 menu, and that is the level the settings file keeps.
-            if (!IsFolderKey(dragged) && across > 0.3 && across < 0.7) place = DropPlace.Into;
+            // Putting something into a folder is what a drop on one usually means,
+            // so a folder gives the middle more room than a program does.
+            double edge = IsFolderKey(key) ? 0.2 : 0.3;
+            if (!IsFolderKey(dragged) && across > edge && across < 1 - edge) place = DropPlace.Into;
             else place = across < 0.5 ? DropPlace.Before : DropPlace.After;
 
             return true;
@@ -1288,9 +1369,14 @@ namespace RetroMenu.Views
                     item.SubmenuSource.Substring(Launcher.FavouriteFolderPrefix.Length));
 
                 if (contents.Count == 0)
+                {
                     menu.Items.Add(new MenuItem { Header = Lang.T("Empty"), IsEnabled = false });
+                }
                 else
+                {
                     Populate(menu.Items, contents);
+                    LetEntriesBeDraggedOut(menu);
+                }
             }
             else
             {
@@ -2430,23 +2516,69 @@ namespace RetroMenu.Views
 
         // ---------------------------------------------------------------- power
 
+        /// <summary>
+        /// XP's "Log Off Windows" panel offered Switch User next to Log Off; it
+        /// stays there even when the footer button is switched off, as it did in XP.
+        /// </summary>
         private void OnLogOffClick(object sender, RoutedEventArgs e)
         {
-            ShowPowerDialog(new[]
-            {
-                ("Lock", "lock"),
-                ("LogOff", "logoff")
-            });
+            var choices = new List<(string Key, string Command)> { ("Lock", "lock") };
+            if (Launcher.CanSwitchUser) choices.Add(("SwitchUser", "switchuser"));
+            choices.Add(("LogOff", "logoff"));
+
+            ShowPowerDialog("LogOffTitle", choices.ToArray());
         }
 
         private void OnShutDownClick(object sender, RoutedEventArgs e)
         {
-            ShowPowerDialog(new[]
+            ShowPowerDialog("PowerTitle", new[]
             {
                 ("Standby", "standby"),
                 ("TurnOff", "shutdown"),
                 ("Restart", "restart")
             });
+        }
+
+        /// <summary>Like Standby: one unambiguous thing, so no dialog in between.</summary>
+        private void OnSwitchUserClick(object sender, RoutedEventArgs e)
+        {
+            HideMenu();
+            Launcher.Power("switchuser");
+        }
+
+        /// <summary>
+        /// Four entries do not fit under the two classic columns — in German
+        /// "Benutzer wechseln" and "Computer ausschalten" alone take most of the
+        /// width. Rather than let the footer push the menu wider, the two newer
+        /// entries give up their words, Switch User first, and keep their picture
+        /// with the name as a tooltip. Next to the tile panel everything fits.
+        /// </summary>
+        private void FitFooter()
+        {
+            if (IsClassic) return;
+
+            // The columns have fixed widths, plus the 2 px their grid keeps on each
+            // side; the footer is what must not decide the width. Their desired
+            // width, not the actual one: that is stretched along once the footer
+            // has already pushed the menu wider.
+            if (ColumnsHost.DesiredSize.Width <= 0) return;
+            double room = ColumnsHost.DesiredSize.Width + 4;
+
+            var infinite = new Size(double.PositiveInfinity, double.PositiveInfinity);
+            foreach (var (button, label) in new[] { (SwitchUserButton, SwitchUserLabel), (SleepButton, SleepLabel) })
+            {
+                label.Visibility = Visibility.Visible;
+                button.ToolTip = null;
+            }
+
+            foreach (var (button, label) in new[] { (SwitchUserButton, SwitchUserLabel), (SleepButton, SleepLabel) })
+            {
+                FooterButtons.Measure(infinite);
+                if (FooterButtons.DesiredSize.Width <= room) return;
+
+                label.Visibility = Visibility.Collapsed;
+                button.ToolTip = label.Text;
+            }
         }
 
         /// <summary>
@@ -2459,10 +2591,10 @@ namespace RetroMenu.Views
             Launcher.Power("standby");
         }
 
-        private void ShowPowerDialog((string Key, string Command)[] choices)
+        private void ShowPowerDialog(string titleKey, (string Key, string Command)[] choices)
         {
             HideMenu();
-            var dialog = new PowerDialog(choices);
+            var dialog = new PowerDialog(titleKey, choices);
             dialog.ShowDialog();
         }
     }

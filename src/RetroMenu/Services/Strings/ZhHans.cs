@@ -95,6 +95,8 @@ namespace RetroMenu.Services.Strings
             ["TurnOff"] = "关闭",
             ["Restart"] = "重新启动",
             ["Lock"] = "锁定",
+            ["SwitchUser"] = "切换用户",
+            ["LogOffTitle"] = "注销 Windows",
             ["Cancel"] = "取消",
             ["PowerQuestion"] = "希望计算机做什么?",
 

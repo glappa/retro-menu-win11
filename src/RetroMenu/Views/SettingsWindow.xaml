@@ -138,6 +138,12 @@
                         </DockPanel>
                         <TextBlock x:Name="WinKeyHint" Style="{StaticResource Hint}" Margin="0,0,0,9" />
 
+                        <DockPanel Margin="0,4,0,8">
+                            <TextBlock x:Name="Win11MenuLabel" Style="{StaticResource RowLabel}" />
+                            <ComboBox x:Name="Win11MenuBox" SelectionChanged="OnSelectionChanged" />
+                        </DockPanel>
+                        <TextBlock x:Name="Win11MenuHint" Style="{StaticResource Hint}" Margin="0,0,0,9" />
+
                         <DockPanel Margin="0,4,0,4">
                             <TextBlock x:Name="LanguageLabel" Style="{StaticResource RowLabel}" />
                             <ComboBox x:Name="LanguageBox" SelectionChanged="OnLanguageChanged" />
@@ -205,6 +211,11 @@
 
                         <Button x:Name="ForgetButton" HorizontalAlignment="Left" Padding="12,4"
                                 Margin="0,8,0,0" Click="OnForgetClick" />
+
+                        <TextBlock x:Name="FooterHeading" Style="{StaticResource GroupHeading}" />
+                        <CheckBox x:Name="SwitchUserToggle" Style="{StaticResource Switch}"
+                                  Checked="OnChanged" Unchecked="OnChanged" />
+                        <TextBlock x:Name="SwitchUserHint" Style="{StaticResource Hint}" />
                     </StackPanel>
 
                     <!-- ==== right hand column ==== -->

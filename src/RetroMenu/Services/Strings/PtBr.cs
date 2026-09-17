@@ -95,6 +95,8 @@ namespace RetroMenu.Services.Strings
             ["TurnOff"] = "Desligar",
             ["Restart"] = "Reiniciar",
             ["Lock"] = "Bloquear",
+            ["SwitchUser"] = "Trocar usuário",
+            ["LogOffTitle"] = "Fazer logoff do Windows",
             ["Cancel"] = "Cancelar",
             ["PowerQuestion"] = "O que o computador deve fazer?",
 

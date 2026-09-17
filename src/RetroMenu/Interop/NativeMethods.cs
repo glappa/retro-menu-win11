@@ -29,6 +29,34 @@ namespace RetroMenu.Interop
         public const uint KEYEVENTF_KEYUP = 0x0002;
         public const uint INPUT_KEYBOARD = 1;
 
+        /// <summary>
+        /// The stamp on every key this program injects itself, so its own hook can
+        /// tell them from what the user typed and let them through untouched.
+        /// </summary>
+        public const uint InputMarker = 0x52544D31; // "RTM1"
+
+        /// <summary>Presses or releases a key, stamped as ours.</summary>
+        public static void SendKey(int vk, bool keyUp)
+        {
+            var input = new INPUT
+            {
+                type = INPUT_KEYBOARD,
+                u = new InputUnion
+                {
+                    ki = new KEYBDINPUT
+                    {
+                        wVk = (ushort)vk,
+                        wScan = 0,
+                        dwFlags = keyUp ? KEYEVENTF_KEYUP : 0,
+                        time = 0,
+                        dwExtraInfo = (IntPtr)InputMarker
+                    }
+                }
+            };
+
+            SendInput(1, new[] { input }, Marshal.SizeOf<INPUT>());
+        }
+
         [StructLayout(LayoutKind.Sequential)]
         public struct KBDLLHOOKSTRUCT
         {
@@ -160,6 +188,15 @@ namespace RetroMenu.Interop
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool LockWorkStation();
+
+        // ---------- sessions ----------
+        public static readonly IntPtr WTS_CURRENT_SERVER_HANDLE = IntPtr.Zero;
+        public const int WTS_CURRENT_SESSION = -1;
+
+        [DllImport("wtsapi32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool WTSDisconnectSession(IntPtr hServer, int sessionId,
+            [MarshalAs(UnmanagedType.Bool)] bool bWait);
 
         [DllImport("user32.dll")]
         public static extern uint GetDpiForWindow(IntPtr hWnd);
@@ -297,6 +334,99 @@ namespace RetroMenu.Interop
         [DllImport("shell32.dll", CharSet = CharSet.Unicode, EntryPoint = "ExtractIconExW")]
         public static extern uint ExtractIconEx(string lpszFile, int nIconIndex,
             out IntPtr phiconLarge, out IntPtr phiconSmall, uint nIcons);
+
+        // ---------- window events ----------
+        // Everything the Windows 11 start menu does when it appears: it is shown,
+        // or it is only uncloaked again (it stays around between times), and it
+        // takes the foreground. All three are watched, because which of them
+        // arrives differs from one Windows build to the next.
+        public const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
+        public const uint EVENT_OBJECT_SHOW = 0x8002;
+        public const uint EVENT_OBJECT_HIDE = 0x8003;
+        public const uint EVENT_OBJECT_CLOAKED = 0x8017;
+        public const uint EVENT_OBJECT_UNCLOAKED = 0x8018;
+
+        public const uint WINEVENT_OUTOFCONTEXT = 0x0000;
+        public const uint WINEVENT_SKIPOWNPROCESS = 0x0002;
+
+        public const int OBJID_WINDOW = 0;
+        public const int CHILDID_SELF = 0;
+
+        public delegate void WinEventProc(IntPtr hWinEventHook, uint eventType, IntPtr hwnd,
+            int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr hmodWinEventProc,
+            WinEventProc lpfnWinEventProc, uint idProcess, uint idThread, uint dwFlags);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool UnhookWinEvent(IntPtr hWinEventHook);
+
+        // ---------- message loop of the hook threads ----------
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MSG
+        {
+            public IntPtr hwnd;
+            public uint message;
+            public IntPtr wParam;
+            public IntPtr lParam;
+            public uint time;
+            public POINT pt;
+        }
+
+        public const uint PM_NOREMOVE = 0x0000;
+        public const uint WM_USER = 0x0400;
+        public const uint WM_QUIT = 0x0012;
+
+        [DllImport("user32.dll")]
+        public static extern int GetMessage(out MSG lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool PeekMessage(out MSG lpMsg, IntPtr hWnd, uint wMsgFilterMin,
+            uint wMsgFilterMax, uint wRemoveMsg);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool TranslateMessage(ref MSG lpMsg);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr DispatchMessage(ref MSG lpMsg);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool PostThreadMessage(uint idThread, uint msg, IntPtr wParam, IntPtr lParam);
+
+        // ---------- looking at a window that is not ours ----------
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool IsWindow(IntPtr hWnd);
+
+        /// <summary>
+        /// A closed Windows 11 start menu is often not hidden at all — it stays a
+        /// visible window and is only cloaked away by the desktop composition. So
+        /// "is it on screen" has to ask DWM, not just <see cref="IsWindowVisible"/>.
+        /// </summary>
+        public const uint DWMWA_CLOAKED = 14;
+
+        [DllImport("dwmapi.dll")]
+        public static extern int DwmGetWindowAttribute(IntPtr hwnd, uint dwAttribute, out int pvAttribute, int cbAttribute);
+
+        public static bool IsOnScreen(IntPtr hWnd)
+        {
+            if (hWnd == IntPtr.Zero || !IsWindow(hWnd) || !IsWindowVisible(hWnd)) return false;
+            if (DwmGetWindowAttribute(hWnd, DWMWA_CLOAKED, out int cloaked, sizeof(int)) == 0 && cloaked != 0)
+                return false;
+            return GetWindowRect(hWnd, out var rect) && rect.Width > 0 && rect.Height > 0;
+        }
+
+        public static string ClassNameOf(IntPtr hWnd)
+        {
+            var buffer = new StringBuilder(256);
+            int length = GetClassName(hWnd, buffer, buffer.Capacity);
+            return length > 0 ? buffer.ToString(0, length) : string.Empty;
+        }
 
         // ---------- power ----------
         [DllImport("powrprof.dll", SetLastError = true)]

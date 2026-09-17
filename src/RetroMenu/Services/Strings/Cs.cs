@@ -95,6 +95,8 @@ namespace RetroMenu.Services.Strings
             ["TurnOff"] = "Vypnout",
             ["Restart"] = "Restartovat",
             ["Lock"] = "Zamknout",
+            ["SwitchUser"] = "Přepnout uživatele",
+            ["LogOffTitle"] = "Odhlásit se ze systému Windows",
             ["Cancel"] = "Storno",
             ["PowerQuestion"] = "Co má počítač udělat?",
 

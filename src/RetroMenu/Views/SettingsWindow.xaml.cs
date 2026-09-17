@@ -79,6 +79,9 @@ namespace RetroMenu.Views
                 _ => 0
             };
 
+            Win11MenuBox.SelectedIndex =
+                string.Equals(settings.StartMenuGuard, "Off", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+
             FrequentBox.ItemsSource = Enumerable.Range(0, 13).ToList();
             FrequentBox.SelectedItem = Math.Max(0, Math.Min(12, settings.FrequentCount));
 
@@ -100,6 +103,7 @@ namespace RetroMenu.Views
             SlotsToggle.IsChecked = settings.ShowDefaultAppSlots;
             RecentToggle.IsChecked = settings.ShowRecentPrograms;
             AllProgramsToggle.IsChecked = settings.ShowAllProgramsButton;
+            SwitchUserToggle.IsChecked = settings.ShowSwitchUserButton;
 
             SearchHotkeyToggle.IsChecked = settings.SearchHotkey;
             SearchBoxToggle.IsChecked = settings.ShowSearchBox;
@@ -143,6 +147,7 @@ namespace RetroMenu.Views
             AutoStartToggle.Content = Lang.T("AutoStart");
             WinKeyLabel.Text = Lang.T("WinKey");
             WinKeyHint.Text = Lang.T("WinKeyHint");
+            Win11MenuLabel.Text = Lang.T("Win11Menu");
             LanguageLabel.Text = Lang.T("Language");
 
             ThemeHeading.Text = Lang.T("Appearance");
@@ -169,6 +174,9 @@ namespace RetroMenu.Views
             RecentToggle.Content = Lang.T("ShowRecent");
             RecentHint.Text = Lang.T("ShowRecentHint");
             AllProgramsToggle.Content = Lang.T("ShowAllProgramsButton");
+            FooterHeading.Text = Lang.T("FooterHeading");
+            SwitchUserToggle.Content = Lang.T("ShowSwitchUserButton");
+            SwitchUserHint.Text = Lang.T("ShowSwitchUserButtonHint");
             ForgetButton.Content = Lang.T("ForgetAll");
 
             PlacesHeading.Text = Lang.T("PlacesHeading");
@@ -233,6 +241,14 @@ namespace RetroMenu.Views
                 };
                 WinKeyBox.SelectedIndex = winKey;
 
+                int guard = Math.Max(0, Win11MenuBox.SelectedIndex);
+                Win11MenuBox.ItemsSource = new[]
+                {
+                    Lang.T("Win11MenuWatch"),
+                    Lang.T("Win11MenuKeep")
+                };
+                Win11MenuBox.SelectedIndex = guard;
+
                 // Two automatic entries first, then every language by its own name.
                 int language = Math.Max(0, LanguageBox.SelectedIndex);
                 _languageCodes = new List<string> { Lang.AutoWindows, Lang.AutoRetroBar };
@@ -249,6 +265,7 @@ namespace RetroMenu.Views
 
             UpdateLanguageHint();
             UpdateRetroBarStatus();
+            UpdateWin11MenuRow();
             foreach (var box in _placeBoxes) box.Content = Lang.T((string)box.Tag);
         }
 
@@ -347,6 +364,17 @@ namespace RetroMenu.Views
         /// Whether the menu is up, and the offer to start it. Switched off, it says
         /// so instead — a stopped menu is then the expected state, not a fault.
         /// </summary>
+        /// <summary>
+        /// "Leave the Windows key alone" is a promise to leave Windows 11 its own
+        /// start menu, so the guard has nothing to decide while it is chosen.
+        /// </summary>
+        private void UpdateWin11MenuRow()
+        {
+            bool handsOff = WinKeyBox.SelectedIndex == 2;
+            Win11MenuBox.IsEnabled = !handsOff;
+            Win11MenuHint.Text = Lang.T(handsOff ? "Win11MenuOffHint" : "Win11MenuHint");
+        }
+
         private void UpdateStatus()
         {
             bool on = AppSettings.Instance.Enabled;
@@ -400,6 +428,8 @@ namespace RetroMenu.Views
                 _ => "Neutralize"
             };
 
+            settings.StartMenuGuard = Win11MenuBox.SelectedIndex == 1 ? "Off" : "Watch";
+
             settings.ShowUserPicture = UserPictureToggle.IsChecked == true;
             settings.UserName = UserNameBox.Text.Trim();
             settings.PlaySounds = SoundsToggle.IsChecked == true;
@@ -410,6 +440,7 @@ namespace RetroMenu.Views
             if (FrequentBox.SelectedItem is int count) settings.FrequentCount = count;
             settings.ShowRecentPrograms = RecentToggle.IsChecked == true;
             settings.ShowAllProgramsButton = AllProgramsToggle.IsChecked == true;
+            settings.ShowSwitchUserButton = SwitchUserToggle.IsChecked == true;
 
             settings.SearchHotkey = SearchHotkeyToggle.IsChecked == true;
             settings.ShowSearchBox = SearchBoxToggle.IsChecked == true;
@@ -437,6 +468,7 @@ namespace RetroMenu.Views
             ThemeManager.Apply(App.ActiveThemeName());
 
             // A switch that only makes sense while another one is on.
+            UpdateWin11MenuRow();
             TilesToggle.IsEnabled = settings.ShowFavourites;
             SearchFilesToggle.IsEnabled = settings.ShowSearchBox;
             ThemeBox.IsEnabled = !settings.FollowRetroBarTheme;

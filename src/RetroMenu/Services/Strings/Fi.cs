@@ -95,6 +95,8 @@ namespace RetroMenu.Services.Strings
             ["TurnOff"] = "Sammuta",
             ["Restart"] = "Käynnistä uudelleen",
             ["Lock"] = "Lukitse",
+            ["SwitchUser"] = "Vaihda käyttäjää",
+            ["LogOffTitle"] = "Kirjaudu ulos Windowsista",
             ["Cancel"] = "Peruuta",
             ["PowerQuestion"] = "Mitä tietokoneen pitäisi tehdä?",
 

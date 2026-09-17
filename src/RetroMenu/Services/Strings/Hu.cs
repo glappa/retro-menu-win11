@@ -95,6 +95,8 @@ namespace RetroMenu.Services.Strings
             ["TurnOff"] = "Kikapcsolás",
             ["Restart"] = "Újraindítás",
             ["Lock"] = "Zárolás",
+            ["SwitchUser"] = "Felhasználóváltás",
+            ["LogOffTitle"] = "Kijelentkezés a Windowsból",
             ["Cancel"] = "Mégse",
             ["PowerQuestion"] = "Mit tegyen a számítógép?",
 

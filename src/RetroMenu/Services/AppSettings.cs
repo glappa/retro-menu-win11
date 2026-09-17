@@ -45,6 +45,15 @@ namespace RetroMenu.Services
         /// </summary>
         public string Language { get; set; } = "auto";
         public string WinKeyMode { get; set; } = "Neutralize"; // Neutralize | Swallow | Off
+
+        /// <summary>
+        /// What happens when the Windows 11 start menu comes up all the same —
+        /// through the taskbar's own Start button, through Ctrl+Esc, above a
+        /// window running as administrator, or because Windows quietly dropped
+        /// our keyboard hook. "Watch" sends it away again and shows ours instead;
+        /// "Off" leaves the Windows 11 menu to whoever wants to keep it.
+        /// </summary>
+        public string StartMenuGuard { get; set; } = "Watch"; // Watch | Off
         public int FrequentCount { get; set; } = 6;
         public bool ShowSearchBox { get; set; } = true;
 
@@ -96,6 +105,12 @@ namespace RetroMenu.Services
 
         /// <summary>The "All Programs" button at the foot of the left column.</summary>
         public bool ShowAllProgramsButton { get; set; } = true;
+
+        /// <summary>
+        /// "Switch User" in the footer, next to Log Off. The Log Off panel offers
+        /// it either way, as XP's did.
+        /// </summary>
+        public bool ShowSwitchUserButton { get; set; } = true;
 
         /// <summary>The account picture in the blue header, next to the name.</summary>
         public bool ShowUserPicture { get; set; } = true;
@@ -419,8 +434,32 @@ namespace RetroMenu.Services
             return Favourites.FindIndex(f => f.IsFolder && Same(f.Folder, name));
         }
 
-        /// <summary>Carries a pinned program to another place in the row.</summary>
-        public void ReorderFavourite(string id, int to) => Move(IndexOfFavourite(id), to);
+        /// <summary>
+        /// Carries a pinned program to another place in the row. One that sits in a
+        /// folder is lifted out of it on the way: that is how it is dragged back out.
+        /// </summary>
+        public void ReorderFavourite(string id, int to)
+        {
+            int from = IndexOfFavourite(id);
+            if (from >= 0)
+            {
+                Move(from, to);
+                return;
+            }
+
+            if (to < 0 || FolderOf(id) == null) return;
+
+            // Remember the entry it is to stand in front of rather than the number:
+            // the folder it leaves may be left empty and drop out of the row.
+            var before = to < Favourites.Count ? Favourites[to] : null;
+
+            Detach(id);
+            int at = before == null ? Favourites.Count : Favourites.IndexOf(before);
+            Favourites.Insert(at, new FavouriteEntry { Id = id });
+
+            PruneEmptyFolders();
+            Save();
+        }
 
         public void ReorderFolder(string name, int to) => Move(IndexOfFolder(name), to);
 

@@ -70,7 +70,8 @@ Versionsnamen von unten nach oben.
 
 **Zwei Spalten mit Kopf und Fuß** (Windows XP in vier Farben): links die beiden
 Sonderplätze „Internet" und „E-Mail" samt Standardprogramm, darunter Angeheftetes und
-häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
+häufig Verwendetes, rechts die Systemorte, unten Standby, Benutzer wechseln, Abmelden
+und Ausschalten.
 
 ## Was drin ist
 
@@ -162,7 +163,9 @@ häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
   gezogen macht aus beiden einen Ordner – die Geste des Windows-11-Menüs, ohne
   Nachfrage; umbenennen lässt er sich danach. Auf einen Ordner gezogen wandert er
   hinein, an den Rand eines Nachbarn gezogen schiebt er sich dazwischen. Eine Linie
-  oder ein Rahmen zeigt vorher, wo er landet.
+  oder ein Rahmen zeigt vorher, wo er landet. Aus einem aufgeklappten Ordner lassen
+  sich die Einträge genauso wieder herausziehen – zwischen die übrigen, in einen
+  anderen Ordner oder auf ein Programm.
 * **Wahlweise als Kachelbereich.** Ein Häkchen setzt die Favoriten stattdessen in
   einen dritten Bereich rechts neben das Menü: Programme und Ordner als Raster, wie
   das Angeheftet-Feld von Windows 11, nur im Anstrich der jeweiligen Epoche. Ordner
@@ -206,14 +209,30 @@ häufig Verwendetes, rechts die Systemorte, unten Abmelden und Ausschalten.
 | Rechtsklick auf einen Eintrag | Favoriten, Ordner und das volle Explorer-Menü |
 | Zeigen auf einen Favoritenordner | klappt ihn auf |
 | Angeheftetes ziehen | umsortieren, in einen Ordner legen, zu einem Ordner zusammenlegen |
+| Eintrag aus einem aufgeklappten Ordner ziehen | holt ihn wieder heraus |
 | „Alle Programme" | öffnet die Programme im ganzen Menü, Esc führt zurück |
 | Umschalt + Rechtsklick | dazu die erweiterten Befehle |
 | Zeigen auf ▸-Einträge | klappt das Untermenü auf |
 | Pfeiltasten / Buchstaben / Eingabe | Bedienung ohne Maus |
 | Klick auf das Benutzerbild | Benutzerkonten |
+| „Benutzer wechseln" unten | zum Anmeldebildschirm; die eigenen Programme laufen weiter |
+| „Abmelden" unten | Sperren, Benutzer wechseln oder Abmelden, wie in XPs „Windows abmelden" |
 
 Alle Kombinationen mit der Windows-Taste (Win+E, Win+R, Win+D, Win+L …) funktionieren
 unverändert weiter.
+
+### Benutzer wechseln
+
+Der Eintrag **trennt die Sitzung, statt sie zu beenden** – über `WTSDisconnectSession`,
+dasselbe, was `tsdiscon.exe` tut, das Home-Ausgaben gar nicht mitbringen. Windows
+zeigt dann den Anmeldebildschirm mit allen Konten, und alles Geöffnete läuft weiter,
+bis man zurückkommt. Verweigert Windows das, wird stattdessen gesperrt; auch der
+Sperrbildschirm bietet die anderen Konten an.
+
+Hat ein Administrator den schnellen Benutzerwechsel per Richtlinie abgeschaltet
+(`HideFastUserSwitching`), fehlt der Eintrag, so wie bei Windows selbst. Im
+schmalen XP-Menü ohne Kachelbereich passen vier beschriftete Einträge nicht nebeneinander;
+dann zeigen Standby und Benutzer wechseln nur ihr Symbol, den Namen gibt es als Tooltip.
 
 ## Wie das Abfangen der Windows-Taste funktioniert
 
@@ -234,6 +253,55 @@ Falls das auf einem Rechner nicht greift, gibt es in den Einstellungen zwei Alte
 | **Abfangen** (Standard) | Windows-Taste läuft durch, wird nur neutralisiert |
 | **Vollständig schlucken** | Taste wird abgefangen und nur bei echten Kombinationen wieder eingespeist |
 | **Nicht anfassen** | Hook aus; das Menü geht dann nur über Tray-Symbol und RetroBar |
+
+### Der Wächter: wenn das Windows-11-Menü trotzdem hochkommt
+
+Die Windows-Taste abzufangen ist der billigste Weg, das Windows-11-Menü zuzuhalten —
+aber nicht der einzige Weg, auf dem es aufgeht, und auf manchen Rechnern hält er gar
+nicht:
+
+* Der **Start-Knopf der Windows-Taskleiste** ist ein Mausklick. Ein Tastatur-Hook
+  sieht davon nichts.
+* **Strg+Esc** und die Start-Taste mancher Tastaturen nehmen eigene Wege.
+* Über einem Fenster mit **Administratorrechten** wird ein gewöhnlicher Hook gar
+  nicht erst gefragt.
+* Und Windows wirft einen Low-Level-Hook **stillschweigend aus der Kette**, wenn
+  dessen Thread einmal länger als `LowLevelHooksTimeout` (voreingestellt 300 ms)
+  gebraucht hat — und setzt ihn nie wieder ein.
+
+Deshalb wird seit 1.6.0 das andere Ende beobachtet: `StartMenuExperienceHost`, der
+Prozess, in dem das Windows-11-Menü wohnt. Geht dessen Fenster auf, schickt der
+Wächter ihm ein **Esc** und zeigt das Retro-Menü an seiner Stelle. Esc ist das, worauf
+das Windows-Menü selbst hört: es schließt sich samt dem Suchfeld darüber, das als
+eigenes Fenster von `SearchHost` sonst den Vordergrund behält. Die Taste geht nur raus,
+solange wirklich das Windows-Menü vorne ist, kann also nirgendwo sonst landen; steht es
+danach noch, wird bis zu viermal in kurzem Abstand nachgeklopft.
+
+Das Fenster einfach auszublenden wurde ausprobiert und wieder verworfen: das Menü ist
+dann zwar weg, aber die Shell hält es weiter für offen und zeigt es nie wieder – die
+Windows-Taste tut danach gar nichts mehr, bis `StartMenuExperienceHost` neu startet.
+Kommt das Windows-Menü binnen drei Sekunden mehr als zehnmal zurück, tritt der Wächter
+für zehn Sekunden beiseite, statt einen endlosen Schlagabtausch zu führen.
+
+| Wahl unter *Allgemein → Windows-11-Menü* | Verhalten |
+| --- | --- |
+| **Unterdrücken** (Standard) | Wächter an, wie eben beschrieben |
+| **Behalten** | Windows 11 behält sein eigenes Menü |
+
+Zwei Dinge hängen daran mit:
+
+* **Strg+Esc** wird vom selben Schalter mitgefangen — die zweite Tür zum Startmenü
+  wäre sonst offen geblieben.
+* Sieht der Wächter einen Durchrutscher, wird der **Tastatur-Hook neu gesetzt**. Das
+  ist das einzige Indiz, das es gibt: dass Windows ihn verworfen hat, sagt niemand.
+
+Und **„Nicht anfassen"** schaltet den Wächter mit ab: dass die Windows-Taste in Ruhe
+gelassen wird, ist ein Versprechen über das ganze Windows-Menü.
+
+Die Hooks haben dafür **einen eigenen Thread mit eigener Nachrichtenschleife**
+bekommen. Vorher hing der Tastatur-Hook am WPF-Thread, der Menüs aufbaut, Symbole aus
+der Shell holt und die Systemsteuerung aufzählt — also genau an dem Thread, der die
+300 ms reißen kann.
 
 ### Windows+S
 
@@ -345,9 +413,9 @@ Sechs Seiten:
 
 | Seite | Was dort steht |
 | --- | --- |
-| **Allgemein** | Hauptschalter, ob das Menü läuft, Autostart, Windows-Taste, Sprache |
+| **Allgemein** | Hauptschalter, ob das Menü läuft, Autostart, Windows-Taste, Windows-11-Menü, Sprache |
 | **Darstellung** | Design und RetroBar folgen, Menügröße, Kontobild, angezeigter Name, Menüklang |
-| **Startmenü** | Angeheftete Programme ein/aus, Kachelbereich, Internet- und E-Mail-Platz, Anzahl der häufig verwendeten, „Alle Programme", Liste der verwendeten Programme leeren |
+| **Startmenü** | Angeheftete Programme ein/aus, Kachelbereich, Internet- und E-Mail-Platz, Anzahl der häufig verwendeten, „Alle Programme", Liste der verwendeten Programme leeren, „Benutzer wechseln" in der unteren Leiste |
 | **Rechte Spalte** | Jeder Eintrag einzeln an- und abwählbar, wie in XPs „Startmenü anpassen" — dazu jedes Element der Systemsteuerung zum Hinzufügen |
 | **Suche** | Suchfeld, Dateisuche, Store-Apps |
 | **Erweitert** | Windows+S abfangen, Taskleiste einblenden, „Als Administrator ausführen", XP-Dateifenster, Einstellungsdatei sichern/laden/zurücksetzen, Protokoll |
@@ -374,6 +442,7 @@ Alles landet in `%AppData%\RetroMenuWin11\settings.json`:
 | `UseXpExplorer`, `XpExplorerPath` | Ordner im XP-Dateifenster öffnen, und wo es liegt |
 | `Language` | `auto` (folgt Windows), `auto-retrobar` (folgt RetroBar) oder ein fester Code wie `de`, `pt-BR`, `zh-Hant` |
 | `WinKeyMode` | `Neutralize`, `Swallow` oder `Off` |
+| `StartMenuGuard` | `Watch` (unterdrücken) oder `Off` (behalten) |
 | `MenuScale` | 1.0 ist Originalgröße; auf großen Bildschirmen darf es mehr sein |
 | `FrequentCount` | Wie viele „häufig verwendet"-Einträge |
 | `KeepTaskbarVisible` | Auto-Hide-Taskleiste einblenden, solange das Menü offen ist |
@@ -385,6 +454,7 @@ Alles landet in `%AppData%\RetroMenuWin11\settings.json`:
 | `ShowTilePanel` | Favoriten als Kachelbereich rechts statt als Liste links |
 | `ShowDefaultAppSlots` | Internet- und E-Mail-Platz oben in der linken Spalte |
 | `ShowAllProgramsButton` | Die Schaltfläche „Alle Programme" |
+| `ShowSwitchUserButton` | „Benutzer wechseln" in der unteren Leiste (im Abmelden-Dialog steht es immer) |
 | `ShowUserPicture` | Kontobild in der blauen Kopfzeile |
 | `HiddenPlaces` | Abgewählte Einträge der rechten Spalte, z. B. `["Run", "Help"]` |
 | `ExtraPlaces` | Hinzugefügte Elemente der Systemsteuerung, mit ihrem Shell-Pfad |
@@ -446,8 +516,9 @@ der Schlüssel und der Ausschalter – sind als Vektor nachgezeichnet.
 ## Bekannte Grenzen
 
 * Über Fenstern, die **als Administrator** laufen, sieht ein normaler Tastatur-Hook
-  nichts. Wer das Menü auch dort per Windows-Taste braucht, muss RetroMenu selbst
-  erhöht starten.
+  nichts. Das Menü kommt dort trotzdem, weil der Wächter nicht an der Tastatur hängt
+  — aber das Windows-Menü blitzt dabei kurz auf. Wer auch das nicht will, muss
+  RetroMenu selbst erhöht starten.
 * Windows 11 liefert für „Arbeitsplatz" über jede Icon-API nur ein
   Standard-Ordnersymbol. Solche Symbole holt das Menü direkt aus `imageres.dll`.
 * Die Dateisuche fragt den Windows-Suchindex. Ist der Dienst aus oder ein Ordner nicht

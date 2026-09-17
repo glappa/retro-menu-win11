@@ -36,6 +36,12 @@
         <GradientStop Color="#FF0B4E8E" Offset="1" />
     </LinearGradientBrush>
 
+    <LinearGradientBrush x:Key="SwitchUserIconBackground" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFC6E8A4" Offset="0" />
+        <GradientStop Color="#FF6BBE3A" Offset="0.5" />
+        <GradientStop Color="#FF1E6A0A" Offset="1" />
+    </LinearGradientBrush>
+
     <SolidColorBrush x:Key="IconGlyphBrush" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="IconEdgeBrush" Color="#59FFFFFF" />
 
@@ -116,6 +122,44 @@
                         <GeometryGroup>
                             <EllipseGeometry Center="16,17.5" RadiusX="7.4" RadiusY="7.4" />
                             <LineGeometry StartPoint="16,10.6" EndPoint="16,17.6" />
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="SwitchUserIconImage">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="{StaticResource SwitchUserIconBackground}">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{StaticResource IconEdgeBrush}" Thickness="1" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0.5,0.5,31,31" RadiusX="4.5" RadiusY="4.5" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+
+                <GeometryDrawing Brush="{StaticResource IconGlossBrush}">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="2,2,28,13" RadiusX="3.5" RadiusY="3.5" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+
+                <!-- a person on the left, head and shoulders, and two arrows
+                     passing each other on the right -->
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{StaticResource IconGlyphBrush}" Thickness="2.4"
+                             StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <EllipseGeometry Center="11.5,12" RadiusX="3.6" RadiusY="3.6" />
+                            <PathGeometry Figures="M 4.5,25.5 A 7,6.5 0 0 1 18.5,25.5" />
+                            <PathGeometry Figures="M 19.5,9.5 L 27,9.5 M 24.5,7 L 27,9.5 L 24.5,12" />
+                            <PathGeometry Figures="M 27,17 L 19.5,17 M 22,14.5 L 19.5,17 L 22,19.5" />
                         </GeometryGroup>
                     </GeometryDrawing.Geometry>
                 </GeometryDrawing>

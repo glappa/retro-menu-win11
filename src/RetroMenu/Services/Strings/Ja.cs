@@ -95,6 +95,8 @@ namespace RetroMenu.Services.Strings
             ["TurnOff"] = "電源を切る",
             ["Restart"] = "再起動",
             ["Lock"] = "ロック",
+            ["SwitchUser"] = "ユーザーの切り替え",
+            ["LogOffTitle"] = "Windows のログオフ",
             ["Cancel"] = "キャンセル",
             ["PowerQuestion"] = "コンピュータをどうしますか?",
 

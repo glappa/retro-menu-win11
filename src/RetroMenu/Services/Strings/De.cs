@@ -98,6 +98,8 @@ namespace RetroMenu.Services.Strings
             ["TurnOff"] = "Ausschalten",
             ["Restart"] = "Neu starten",
             ["Lock"] = "Sperren",
+            ["SwitchUser"] = "Benutzer wechseln",
+            ["LogOffTitle"] = "Windows abmelden",
             ["Cancel"] = "Abbrechen",
             ["PowerQuestion"] = "Was soll der Computer tun?",
 
@@ -133,6 +135,9 @@ namespace RetroMenu.Services.Strings
             ["WinKeyNeutralize"] = "Abfangen (empfohlen)",
             ["WinKeySwallow"] = "Vollständig schlucken",
             ["WinKeyOff"] = "Nicht anfassen",
+            ["Win11Menu"] = "Windows-11-Menü",
+            ["Win11MenuWatch"] = "Unterdrücken (empfohlen)",
+            ["Win11MenuKeep"] = "Behalten",
             ["FrequentCount"] = "Häufig verwendet: Anzahl",
             ["ShowRecent"] = "Zuletzt gestartete Programme zeigen",
             ["ShowTiles"] = "Favoriten als Kachelbereich rechts",
@@ -178,6 +183,15 @@ namespace RetroMenu.Services.Strings
             ["WinKeyHint"] = "Wie die Windows-Taste abgefangen wird. „Abfangen“ lässt alle "
                              + "Win+X-Tastenkürzel unberührt; „Schlucken“ ist für Rechner, auf "
                              + "denen das Windows-11-Menü trotzdem durchkommt.",
+            ["Win11MenuHint"] = "Falls das Windows-11-Menü trotzdem aufgeht – über den Start-Knopf "
+                             + "der Windows-Taskleiste, über Strg+Esc, über einem Fenster mit "
+                             + "Administratorrechten oder weil Windows den Tastatur-Hook stillschweigend "
+                             + "verworfen hat. „Unterdrücken“ schickt es dann sofort wieder weg und "
+                             + "zeigt stattdessen dieses Menü; „Behalten“ lässt Windows 11 sein eigenes.",
+            ["Win11MenuOffHint"] = "Solange die Windows-Taste nicht angefasst wird, bleibt auch das "
+                             + "Windows-11-Menü unangetastet.",
+            ["HookFailed"] = "Der Tastatur-Hook konnte nicht gesetzt werden. Die Windows-Taste "
+                             + "öffnet weiter das Windows-11-Menü.",
 
             ["HeaderHeading"] = "Blaue Kopfzeile",
             ["ShowUserPicture"] = "Kontobild anzeigen",
@@ -200,6 +214,10 @@ namespace RetroMenu.Services.Strings
             ["ShowDefaultSlotsHint"] = "Die beiden Einträge ganz oben, die Ihren Standardbrowser "
                                        + "und Ihr Mailprogramm nennen.",
             ["ShowAllProgramsButton"] = "Schaltfläche „Alle Programme“ anzeigen",
+            ["ShowSwitchUserButton"] = "Schaltfläche „Benutzer wechseln“ anzeigen",
+            ["FooterHeading"] = "Untere Leiste",
+            ["ShowSwitchUserButtonHint"] = "Wechselt zu einem anderen Konto, ohne dass Ihre Programme "
+                                           + "geschlossen werden. Unter „Abmelden“ steht es in jedem Fall.",
             ["ForgetAll"] = "Liste der verwendeten Programme leeren",
             ["ForgetAllDone"] = "Die Liste ist leer. Sie füllt sich wieder, sobald Programme "
                                 + "gestartet werden.",

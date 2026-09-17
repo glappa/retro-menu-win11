@@ -25,12 +25,20 @@ namespace RetroMenu
 
         private Mutex _singleInstance;
         private KeyboardHook _hook;
+        private StartMenuGuard _guard;
         private StartMenuWindow _menu;
         private TrayIconService _tray;
         private FileSystemWatcher[] _programWatchers = Array.Empty<FileSystemWatcher>();
         private DispatcherTimer _rescanDebounce;
         private EventWaitHandle _quitSignal;
         private EventWaitHandle _reloadSignal;
+
+        /// <summary>When the menu was last toggled, and whether that opened it.</summary>
+        private int _lastToggle;
+        private bool _lastToggleOpened;
+
+        /// <summary>When the keyboard hook was last put up again after a leak.</summary>
+        private int _lastRepair;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -150,20 +158,30 @@ namespace RetroMenu
             _hook = new KeyboardHook
             {
                 Mode = EffectiveWinKeyMode(),
-                SearchHotkey = SearchHotkeyWanted()
+                SearchHotkey = SearchHotkeyWanted(),
+                CatchCtrlEsc = EffectiveGuardMode() != GuardMode.Off
             };
             _hook.StartMenuRequested += OnStartMenuRequested;
             _hook.SearchRequested += OnSearchRequested;
             bool hooked = _hook.Install();
-            Log.Write($"startup: hook={hooked} mode={_hook.Mode} theme={ThemeManager.Current} " +
-                      $"retrobar={RetroBar.IsPresent}/{RetroBar.Theme}");
+
+            // The second line of defence, and the one that does not depend on the
+            // keyboard at all: whatever brings the Windows 11 menu up, it is sent
+            // away again and ours takes its place.
+            _guard = new StartMenuGuard { Mode = EffectiveGuardMode() };
+            _guard.Appeared += OnWindowsMenuAppeared;
+            _guard.Start();
+
+            Log.Write($"startup: hook={hooked} mode={_hook.Mode} guard={_guard.Mode} " +
+                      $"theme={ThemeManager.Current} retrobar={RetroBar.IsPresent}/{RetroBar.Theme}");
             _tray.SetEnabled(AppSettings.Instance.Enabled);
 
-            if (!hooked && _hook.Mode != WinKeyMode.Off)
+            if (!hooked && _hook.Mode != WinKeyMode.Off && _guard.Mode == GuardMode.Off)
             {
-                MessageBox.Show(
-                    "Der Tastatur-Hook konnte nicht gesetzt werden. Die Windows-Taste öffnet weiter das Windows-11-Menü.",
-                    "Retro Menu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                // Only worth saying when nothing at all is left to catch the key:
+                // with the guard on, our menu still comes up, hook or no hook.
+                MessageBox.Show(Lang.T("HookFailed"), "Retro Menu",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
             Catalog.Refreshed += OnCatalogRefreshed;
@@ -410,6 +428,20 @@ namespace RetroMenu
                 ? ParseWinKeyMode(AppSettings.Instance.WinKeyMode)
                 : WinKeyMode.Off;
 
+        public static GuardMode ParseGuardMode(string value) =>
+            Enum.TryParse<GuardMode>(value, true, out var mode) ? mode : GuardMode.Watch;
+
+        /// <summary>
+        /// The guard goes off with the master switch, and with "do not touch the
+        /// Windows key" as well: that setting is a promise to leave Windows 11 its
+        /// own start menu, and taking that menu away behind its back would break
+        /// the promise.
+        /// </summary>
+        private static GuardMode EffectiveGuardMode() =>
+            AppSettings.Instance.Enabled && EffectiveWinKeyMode() != WinKeyMode.Off
+                ? ParseGuardMode(AppSettings.Instance.StartMenuGuard)
+                : GuardMode.Off;
+
         /// <summary>
         /// Windows+S belongs to Windows again as soon as the menu is switched off —
         /// there would be nothing to open it into.
@@ -428,7 +460,9 @@ namespace RetroMenu
             {
                 _hook.Mode = EffectiveWinKeyMode();
                 _hook.SearchHotkey = SearchHotkeyWanted();
+                _hook.CatchCtrlEsc = EffectiveGuardMode() != GuardMode.Off;
             }
+            if (_guard != null) _guard.Mode = EffectiveGuardMode();
             _tray?.Localize();
             _tray?.SetEnabled(AppSettings.Instance.Enabled);
             if (!AppSettings.Instance.Enabled) _menu?.HideMenu();
@@ -470,6 +504,75 @@ namespace RetroMenu
             Dispatcher.BeginInvoke(new Action(() => ToggleMenu(false)));
         }
 
+        /// <summary>
+        /// The Windows 11 menu turned up. Raised on the guard thread, so the first
+        /// thing to do is get off it.
+        /// </summary>
+        private void OnWindowsMenuAppeared()
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (!AppSettings.Instance.Enabled) return;
+
+                // The user may have just closed our menu with the very key press
+                // that let the Windows one through. Opening ours again now would
+                // undo what they asked for, so in that case the Windows menu is
+                // sent away on its own and nothing else happens.
+                bool justClosed = !_lastToggleOpened &&
+                                  unchecked(Environment.TickCount - _lastToggle) < 700;
+
+                if (justClosed)
+                {
+                    _guard?.CloseNow();
+                }
+                else
+                {
+                    if (_menu != null && _menu.IsOpen) _menu.ToFront();
+                    else ToggleMenu(true);
+                    ToFrontAgain();
+                }
+
+                RepairHook();
+            }));
+        }
+
+        /// <summary>
+        /// While the Windows menu is still on its way out it holds the foreground,
+        /// so ours opens behind it and has no keyboard. Once that menu is gone,
+        /// nobody hands the focus on — so ours asks again, twice. If the user has
+        /// clicked elsewhere in the meantime, our menu has closed itself and there
+        /// is nothing left to bring forward.
+        /// </summary>
+        private void ToFrontAgain()
+        {
+            foreach (int delay in new[] { 250, 600 })
+            {
+                var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(delay) };
+                timer.Tick += (_, __) =>
+                {
+                    timer.Stop();
+                    if (_menu != null && _menu.IsOpen) _menu.ToFront();
+                };
+                timer.Start();
+            }
+        }
+
+        /// <summary>
+        /// A leak is the only evidence there is that Windows has quietly dropped
+        /// our keyboard hook — nothing else ever says so, and it is never put back
+        /// on its own. So the hook goes up again whenever one happens, but not
+        /// more than once every few seconds.
+        /// </summary>
+        private void RepairHook()
+        {
+            if (_hook == null || _hook.Mode == WinKeyMode.Off) return;
+
+            int now = Environment.TickCount;
+            if (_lastRepair != 0 && unchecked(now - _lastRepair) < 3000) return;
+            _lastRepair = now;
+            _hook.Reinstall();
+        }
+
         private void OnSearchRequested()
         {
             Log.Write("hook: search requested");
@@ -505,6 +608,9 @@ namespace RetroMenu
 
             try
             {
+                _lastToggle = Environment.TickCount;
+                _lastToggleOpened = forceOpen || !_menu.IsOpen;
+
                 if (_menu.IsOpen && !forceOpen)
                 {
                     Log.Write("toggle: hiding");
@@ -570,6 +676,7 @@ namespace RetroMenu
 
         public void Quit()
         {
+            _guard?.Dispose();
             _hook?.Dispose();
             _tray?.Dispose();
             _quitSignal?.Dispose();
@@ -581,6 +688,7 @@ namespace RetroMenu
 
         protected override void OnExit(ExitEventArgs e)
         {
+            _guard?.Dispose();
             _hook?.Dispose();
             _tray?.Dispose();
             _singleInstance?.Dispose();

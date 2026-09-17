@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
+using Microsoft.Win32;
 using RetroMenu.Interop;
 using RetroMenu.Model;
 
@@ -262,6 +264,9 @@ namespace RetroMenu.Services
                 case "lock":
                     NativeMethods.LockWorkStation();
                     break;
+                case "switchuser":
+                    SwitchUser();
+                    break;
                 case "logoff":
                     Process.Start("shutdown.exe", "/l");
                     break;
@@ -391,6 +396,43 @@ namespace RetroMenu.Services
         }
 
         public static void Power(string command) => RunCommand(command);
+
+        /// <summary>
+        /// Fast user switching, as XP's "Switch User" and the account menu of
+        /// Windows 11 do it: the session is disconnected, not ended — every program
+        /// goes on running — and Windows shows its sign-in screen with all accounts.
+        /// tsdiscon.exe would do the same, but Home editions do not ship it, so the
+        /// call goes straight to the API underneath. Should that be refused, locking
+        /// is the nearest thing: the lock screen offers the other accounts too.
+        /// </summary>
+        private static void SwitchUser()
+        {
+            if (NativeMethods.WTSDisconnectSession(NativeMethods.WTS_CURRENT_SERVER_HANDLE,
+                    NativeMethods.WTS_CURRENT_SESSION, false))
+                return;
+
+            Log.Write($"switch user: WTSDisconnectSession failed ({Marshal.GetLastWin32Error()}), locking instead");
+            NativeMethods.LockWorkStation();
+        }
+
+        /// <summary>
+        /// False where an administrator has switched fast user switching off
+        /// (HideFastUserSwitching). Windows then hides its own entry, and so does
+        /// the menu: a button that could only lock the screen would promise too much.
+        /// </summary>
+        public static bool CanSwitchUser
+        {
+            get
+            {
+                try
+                {
+                    using var key = Registry.LocalMachine.OpenSubKey(
+                        @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System");
+                    return !(key?.GetValue("HideFastUserSwitching") is int hide && hide != 0);
+                }
+                catch { return true; }
+            }
+        }
 
         /// <summary>Runs one of the named commands from outside the item list.</summary>
         public static void Run(string command) => RunCommand(command);

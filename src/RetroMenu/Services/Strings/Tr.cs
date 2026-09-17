@@ -95,6 +95,8 @@ namespace RetroMenu.Services.Strings
             ["TurnOff"] = "Kapat",
             ["Restart"] = "Yeniden Başlat",
             ["Lock"] = "Kilitle",
+            ["SwitchUser"] = "Kullanıcı Değiştir",
+            ["LogOffTitle"] = "Windows Oturumunu Kapat",
             ["Cancel"] = "İptal",
             ["PowerQuestion"] = "Bilgisayar ne yapsın?",
 
