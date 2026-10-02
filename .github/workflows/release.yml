@@ -1,9 +1,11 @@
 name: Release
 
-# Ein Tag v<Version> baut mit release.ps1 beide Dateien und legt die GitHub-Ausgabe an.
+# Baut mit release.ps1 beide Dateien und legt die GitHub-Ausgabe v<Version> an,
+# fuer einen neuen Tag v* oder von Hand gestartet (der Tag entsteht dann mit).
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -16,6 +18,6 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-      - run: .\release.ps1 -Publish -Tag $env:GITHUB_REF_NAME
+      - run: .\release.ps1 -Publish
         env:
           GH_TOKEN: ${{ github.token }}
