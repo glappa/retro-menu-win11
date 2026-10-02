@@ -79,6 +79,7 @@ namespace RetroMenu.Views
             InitializeComponent();
             Deactivated += OnDeactivated;
             PreviewKeyDown += OnPreviewKeyDown;
+            PreviewTextInput += OnPreviewTextInput;
 
             // XP opened the "My Recent Documents" and "Connect To" flyouts on hover.
             _hoverTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(320) };
@@ -345,6 +346,10 @@ namespace RetroMenu.Views
 
             if (_popupOpen) return;
 
+            // The All Programs filter keeps these for itself: left and right move
+            // its caret, and Down goes to the programs rather than to the groups.
+            if (ProgramsFilterBox.IsKeyboardFocusWithin && e.Key is Key.Left or Key.Right or Key.Down) return;
+
             switch (e.Key)
             {
                 case Key.Down:
@@ -376,9 +381,26 @@ namespace RetroMenu.Views
             }
 
             // Typing a letter jumps to the next entry starting with it, as in XP.
-            if (SearchBox.IsKeyboardFocusWithin) return;
+            // Not in a text box, where it is written, nor in All Programs, where
+            // everything typed goes to the filter (OnPreviewTextInput).
+            if (_programsView || Keyboard.FocusedElement is TextBox) return;
             if (e.Key < Key.A || e.Key > Key.Z) return;
             e.Handled = JumpToLetter(e.Key.ToString()[0]);
+        }
+
+        /// <summary>
+        /// In All Programs whatever is typed lands in the filter box, wherever the
+        /// focus happens to be — on a group or a program as much as in the box.
+        /// </summary>
+        private void OnPreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!_programsView || ProgramsFilterBox.IsKeyboardFocusWithin) return;
+            if (string.IsNullOrEmpty(e.Text) || char.IsControl(e.Text[0])) return;
+
+            ProgramsFilterBox.Focus();
+            ProgramsFilterBox.AppendText(e.Text);
+            ProgramsFilterBox.CaretIndex = ProgramsFilterBox.Text.Length;
+            e.Handled = true;
         }
 
         // ---------------------------------------------------------------- keyboard walk

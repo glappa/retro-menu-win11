@@ -651,7 +651,7 @@
                                                  Background="Transparent" Padding="0"
                                                  Foreground="{DynamicResource SearchBoxForeground}"
                                                  TextChanged="OnProgramsFilterChanged"
-                                                 KeyDown="OnProgramsFilterKeyDown" />
+                                                 PreviewKeyDown="OnProgramsFilterKeyDown" />
                                     </Border>
                                     <TextBlock x:Name="ProgramsGroupsLabel" FontWeight="Bold"
                                                Margin="0,0,0,4" />
